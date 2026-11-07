@@ -6,6 +6,12 @@ import teamRouter from "./team";
 import companiesRouter from "./companies";
 import adminRouter from "./admin";
 import platformContentRouter from "./platformContent";
+import leadsRouter from "./leads";
+import siteContentRouter from "./siteContent";
+import reviewsRouter from "./reviews";
+import rubricRouter from "./rubric";
+import settingsRouter from "./settings";
+import publicSiteRouter from "./publicSite";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -15,5 +21,11 @@ router.use(companiesRouter);
 router.use(teamRouter);
 router.use(adminRouter);
 router.use(platformContentRouter);
+router.use(leadsRouter);
+router.use(siteContentRouter);
+router.use(reviewsRouter);
+router.use(rubricRouter);
+router.use(settingsRouter);
+router.use(publicSiteRouter);
 
 export default router;

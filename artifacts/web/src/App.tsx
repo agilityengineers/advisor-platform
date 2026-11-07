@@ -14,7 +14,7 @@ import { ForgotPassword, ResetPassword } from "@/pages/auth/Password";
 import { AcceptInvite } from "@/pages/auth/AcceptInvite";
 import { ClientPortalPlaceholder } from "@/pages/Placeholders";
 import { PlatformAdmin } from "@/pages/admin";
-import { ConsoleEntry } from "@/pages/console/ConsoleEntry";
+import { CompanyConsole } from "@/pages/console/CompanyConsole";
 import { ToastProvider } from "@/hooks/use-toast";
 
 const queryClient = new QueryClient({
@@ -63,7 +63,7 @@ export default function App() {
                 <Route path="/accept-invite" component={AcceptInvite} />
                 <Route path="/admin/companies/:companyId/console">
                   <ProtectedRoute roles={["super_admin"]}>
-                    <ConsoleEntry />
+                    <CompanyConsole />
                   </ProtectedRoute>
                 </Route>
                 <Route path="/admin" nest>
@@ -73,7 +73,7 @@ export default function App() {
                 </Route>
                 <Route path="/app" nest>
                   <ProtectedRoute roles={["super_admin", "admin", "manager", "advisor"]}>
-                    <ConsoleEntry />
+                    <CompanyConsole />
                   </ProtectedRoute>
                 </Route>
                 <Route path="/portal" nest>
