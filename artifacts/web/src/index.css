@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens from design_handoff/README.md.
+ *
+ * Company default (My Target Client / company consoles): navy, brand blue, pale.
+ * Advisor Platform (platform landing, platform sign-in): cream, ink, brass, deep green.
+ * Per-company branding is injected at runtime on :root as --brand-* (see use-tenant.tsx)
+ * and wins over the defaults below.
+ */
+@theme {
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-ap-display: "Newsreader", Georgia, serif;
+  --font-ap-sans: "Hanken Grotesk", system-ui, sans-serif;
+
+  --color-navy: #0a1626;
+  --color-blue: #1668f0;
+  --color-blue-hover: #0b4fd0;
+  --color-pale: #eaf2fd;
+  --color-page: #f4f8fe;
+  --color-line: #dde8f7;
+  --color-line-soft: #e4edf9;
+  --color-body: #3d556f;
+  --color-body-2: #425973;
+  --color-muted: #6a809a;
+  --color-muted-2: #7c93ad;
+  --color-success: #2fbf71;
+  --color-success-deep: #1e7a4c;
+  --color-warn: #e39a2b;
+  --color-warn-deep: #8a6320;
+  --color-danger: #c2361f;
+
+  --color-ap-cream: #f6f2ea;
+  --color-ap-surface: #fcfaf5;
+  --color-ap-ink: #16130f;
+  --color-ap-brass: #b07c2e;
+  --color-ap-green: #13231c;
+
+  --color-brand: var(--brand-primary);
+  --color-brand-hover: var(--brand-primary-hover);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-tint: var(--brand-tint);
+
+  --radius-pill: 999px;
+  --radius-card: 16px;
+  --radius-card-lg: 22px;
+  --radius-input: 10px;
+
+  --shadow-card: 0 14px 40px rgba(10, 22, 38, 0.06);
+  --shadow-hero: 0 30px 70px rgba(10, 22, 38, 0.12);
+  --shadow-cta: 0 14px 30px rgba(22, 104, 240, 0.3);
+}
+
+:root {
+  --brand-primary: #1668f0;
+  --brand-primary-hover: #0b4fd0;
+  --brand-accent: #0a1626;
+  --brand-tint: #eaf2fd;
+  --brand-on-primary: #ffffff;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-navy);
+  background: var(--color-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+::placeholder {
+  color: #9aaabf;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

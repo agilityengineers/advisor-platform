@@ -1,0 +1,27 @@
+packages:
+  - artifacts/*
+  - lib/*
+
+autoInstallPeers: false
+
+catalog:
+  '@tailwindcss/vite': ^4.1.14
+  '@tanstack/react-query': ^5.90.21
+  '@types/node': ^22.18.0
+  '@types/react': ^19.2.0
+  '@types/react-dom': ^19.2.0
+  '@vitejs/plugin-react': ^5.0.4
+  clsx: 2.1.1
+  drizzle-orm: ^0.45.2
+  lucide-react: 0.545.0
+  react: 19.1.0
+  react-dom: 19.1.0
+  tailwindcss: ^4.1.14
+  tsx: ^4.21.0
+  vite: ^7.3.6
+  vitest: ^4.1.9
+  zod: 3.25.76
+
+onlyBuiltDependencies:
+  - esbuild
+  - '@tailwindcss/oxide'
