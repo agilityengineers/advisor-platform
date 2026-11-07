@@ -131,3 +131,19 @@ export const IntegrationSaveBody = z.object({
   secrets: z.record(z.string(), z.string().max(500)).default({}),
 });
 export const integrationProviderSchema = z.enum(INTEGRATION_PROVIDERS);
+
+/** Advisor Platform landing form: demo or trial request → the platform pipeline. */
+export const PlatformLeadBody = z.object({
+  name: z.string().trim().min(2).max(120),
+  company: z.string().trim().min(1).max(160),
+  email: emailSchema,
+  linkedin: z.string().trim().max(300).default(""),
+  intent: z.enum(["demo", "trial"]).default("demo"),
+  website: z.string().max(0).optional(),
+});
+
+export const PlatformLeadUpdateBody = z.object({
+  status: z.enum(["new", "contacted", "demo_booked", "trial_started", "converted", "closed"]).optional(),
+  notes: z.string().trim().max(4000).optional(),
+  convertedCompanyId: z.number().int().positive().nullable().optional(),
+});

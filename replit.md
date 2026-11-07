@@ -13,7 +13,7 @@ pnpm workspace (Node 22, TypeScript 5.9):
 | `@workspace/web` | `artifacts/web` | Vite 7 + React 19 + Tailwind 4 client (wouter, TanStack Query). Built to `artifacts/web/dist`. |
 | `@workspace/api` | `artifacts/api` | Express 5 API. Serves the built client in production and runs Vite in middleware mode in development, so **one process on one port** handles API + pages (host-based tenant resolution works in the Replit preview). Bundled with esbuild to `dist/index.mjs`. |
 | `@workspace/db` | `lib/db` | Drizzle ORM schema (`src/schema/*`), connection, migration runner. SQL migrations in `lib/db/drizzle` (drizzle-kit). |
-| `@workspace/shared` | `lib/shared` | Pure TypeScript shared by both sides: feature registry + plans + roles/permissions (`platform.ts`), landing content model (`siteContent.ts`), templates, reviews seed, **Profile Grader rubric + scoring engine** (`grader.ts`), zod request schemas. |
+| `@workspace/shared` | `lib/shared` | Pure TypeScript shared by both sides: feature registry + plans + roles/permissions (`platform.ts`), landing content model incl. the About page (`siteContent.ts`), offer catalogue for the pricing pages and checkout (`offers.ts`), templates, reviews seed, **Profile Grader rubric + scoring engine** (`grader.ts`), zod request schemas. |
 
 `design_handoff/` holds the design bundle (`.dc.html` references, `*.js` data files, BUILD-SPEC, README). It is documentation, not shipped code.
 
@@ -91,6 +91,7 @@ The SPA asks `GET /api/tenant` first, then injects the company's colours as CSS 
 - **Templates** — apply a template to a company (writes that company's CMS draft; the Admin publishes it), remove non-default templates; "Save page as template" in the drawer snapshots a company's published page with logo/photos/testimonials stripped and `{company}` / `{owner}` / `{ownerFirst}` tokens restored.
 - **Feature registry** — features × plans tick matrix (edits `plans.feature_keys`). **Plans** — cards with name/price/description editing.
 - **Platform landing** — CMS for every text block on the Advisor Platform landing page (`platform_content`, draft → publish). `GET /api/platform-content` serves the published copy; `?preview=1` returns the draft to the super admin only.
+- **Requests** — the platform's own pipeline (`platform_leads`): demo and trial requests from the landing form, with status (new → contacted → demo booked / trial started → converted / closed), notes, and a link to the company a request became. A new request emails the super admin from the platform sender; the nav badge counts the new ones.
 - All super-admin actions write `audit_logs` (`GET /api/admin/audit`).
 
 ## Company console (`/app` for company staff, `/admin/companies/:id/console` for the super admin)
@@ -104,6 +105,17 @@ One long page with anchored panels, all under `/api/companies/:companyId/*` (`re
 - **Profile Grader** — rubric editor (weights must total 100, check shares, tiers, grade thresholds), Reset to platform default, **Publish as vN** (published versions are immutable rows so reports can stamp the version that graded them).
 - **Company settings** — Branding (colours injected as CSS variables; without `white_label` the public site falls back to platform defaults), Domain (platform subdomain always on; custom domain → generated TXT/CNAME/apex records with provider steps, Verify, 48h auto-recheck), Integrations (BYO SendGrid / Twilio / Stripe Connect / Calendly; secrets AES-256-GCM in `company_secrets`, API returns last-4 only; credentials are checked against the provider), Team (invite managers/advisors, per-area read/write grid).
 - "Not in your plan" lock banner lists every gated feature with the plan name; nothing disappears silently.
+
+## Public pages
+
+Every company site is served from the same SPA, resolved by host (`/`, `/about`, `/pricing`, `/commercial-pricing`, `/grade/:publicId`, `/buy`); platform hosts serve the Advisor Platform landing at `/`. Pages are recreated from the `.dc.html` designs in `design_handoff/`; copy comes from the CMS, never from code.
+
+- **Company landing (`/`)** — `GET /api/public/site` (published merge, reviews, Calendly URL, public feature flags). Hero audit card or video (`hero_video`), the animated journey map (steps light 1→5 on screen, pause on hover, vertical below 900px) with the Authority Desk hand-off card only when the company has `authority_desk`, cost / guide / plan / process sections behind their Show-on-site toggles, the testimonial slider (6s, pauses on hover, honours reduced motion), and the six-field audit form → `POST /api/public/leads` (honeypot, rate-limited) whose success card carries a prefilled Calendly link. Owner names in the copy come from `brand.ownerName` / `brand.ownerFullName`.
+- **About (`/about`)** — the `about` CMS section (headline, portraits, ten weighted criteria as "Label | weight" lines, three questions, thresholds, how-I-work, closing CTA) with its own Show-on-site toggle; hidden pages return a not-found state and drop the nav link.
+- **Pricing (`/pricing`, `/commercial-pricing`)** — `noindex, nofollow, noarchive`; an amber bar links the two pages to each other. Offers, prices, bullets and credits live in `lib/shared/src/offers.ts` (one catalogue for both pages and the buying flow). Pay-in-full / payment-plan toggle; `?plan=split` preselects it and `?offer=<key>` highlights a tier. CTAs go to `/buy?offer=&plan=` when the company has `stripe_checkout`, otherwise to its Calendly. `/buy` is a holding page until the Phase 5 checkout replaces it.
+- **Profile Grade (`/grade/:publicId`)** — `GET /api/public/grade/:publicId` serves a `profile_assessments` row scored against the published rubric: a lead sees scores, quick wins and locked findings; an unlocked report shows every finding and the prioritised plan. `/grade/sample` scores the platform sample profile so the page can be previewed before the Grader (Phase 6) creates real assessments; staff may add `?view=full`.
+- **Advisor Platform landing** — rendered from `GET /api/platform-content`; the demo/trial form posts to `POST /api/public/platform-leads` (platform hosts only, honeypot, rate-limited) and lands in Platform Admin → Requests; the success state offers the founder's Calendly, prefilled.
+- **Drafts never leak**: `?preview=1` only returns a draft to signed-in staff of that company (or the super admin) and shows a "Draft preview" banner. Brand colours are injected as `--brand-*` CSS variables (`use-tenant.tsx`); the design's exact derived shades are used for the default blue, other brands derive theirs. Everything works at 360px with a collapsing menu.
 
 ## Deploying on Replit
 
@@ -120,7 +132,7 @@ One long page with anchored panels, all under `/api/companies/:companyId/*` (`re
 | 1 | Workspace, DB + migrations, seed, auth (all roles, invites, reset, magic link), tenant resolver | done |
 | 2 | Platform Admin (companies, plans, feature registry + overrides, templates, settings, platform landing CMS) | done |
 | 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, rubric editor, settings) | done |
-| 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing) | next |
-| 5 | Buying flow (Stripe Connect, Calendly, intake, SendGrid, portal) | |
+| 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing, platform requests pipeline) | done |
+| 5 | Buying flow (Stripe Connect, Calendly, intake, SendGrid, portal) | next |
 | 6 | Profile Grader (Bright Data, rubric versions, gated report) | |
 | 7 | Twilio, hardened webhooks, empty states, responsive QA, audit log | |

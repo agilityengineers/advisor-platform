@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./styles/company-site.css";
+@import "./styles/platform-site.css";
 
 /*
  * Design tokens from design_handoff/README.md.
@@ -58,6 +60,11 @@
   --brand-accent: #0a1626;
   --brand-tint: #eaf2fd;
   --brand-on-primary: #ffffff;
+  --brand-primary-deep: #0b4fd0;
+  --brand-primary-light: #7fb6ff;
+  --brand-tint-border: #d3e4fb;
+  --brand-primary-rgb: 22, 104, 240;
+  --brand-accent-rgb: 10, 22, 38;
 }
 
 html,

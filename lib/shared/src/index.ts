@@ -8,3 +8,4 @@ export * from "./schemas";
 export * from "./platformContent";
 export * from "./outreach";
 export * from "./integrations";
+export * from "./offers";

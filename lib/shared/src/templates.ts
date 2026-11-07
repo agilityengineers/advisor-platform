@@ -25,8 +25,8 @@ export const DEFAULT_TEMPLATES: readonly LandingTemplate[] = [
     audience: "Consultants, authors & writers",
     summary: "Grade → call → Brand Voice → rebuilt profile. Journey map, cost-of-invisibility, guide section, plan cards, audit form.",
     content: {
-      brand: { companyName: "{company}", legalLine: "{company} · {owner}", logoUrl: "", footerLogoUrl: "", ownerName: "{ownerFirst}", ownerPhoto: "" },
-      visibility: { journey: true, cost: true, guide: true, plan: true, process: true, testimonials: false },
+      brand: { companyName: "{company}", legalLine: "{company} · {owner}", logoUrl: "", footerLogoUrl: "", ownerName: "{ownerFirst}", ownerPhoto: "", iconUrl: "", ownerFullName: "{owner}", ownerTitle: "{company}", ownerEmail: "", ownerPhone: "", ownerLinkedin: "", authorityDeskUrl: "" },
+      visibility: { journey: true, cost: true, guide: true, plan: true, process: true, testimonials: false, about: true },
       hero: {
         eyebrow: "For consultants, authors & writers",
         headline: "Your expertise is real. Your profile makes it look optional.",
@@ -62,6 +62,13 @@ export const DEFAULT_TEMPLATES: readonly LandingTemplate[] = [
         eyebrow: "The call to action",
         headline: "Let's make your profile the reason they call you.",
         intro: "Tell me where you are and what you want to be known for. I'll come back with a 22-section read on your current profile and where the biggest gains are.",
+      },
+      about: {
+        eyebrow: "About {owner}",
+        headline: "Knowing how LinkedIn works isn't expertise. Making it work toward a business objective is.",
+        intro: "I've spent my career in B2B sales watching how buyers evaluate, hesitate, and decide. That lens — not copywriting flourish — is what I bring to every profile, every campaign, and every client conversation.",
+        heroPhoto: "",
+        workPhoto: "",
       },
     },
   },

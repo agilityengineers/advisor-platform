@@ -18,6 +18,16 @@ export interface SiteContent {
     footerLogoUrl: string;
     ownerName: string;
     ownerPhoto: string;
+    /** Square mark used inside the hero audit card and the journey hand-off card. */
+    iconUrl: string;
+    /** Full owner name and title line, used on About, pricing and the grade report. */
+    ownerFullName: string;
+    ownerTitle: string;
+    ownerEmail: string;
+    ownerPhone: string;
+    ownerLinkedin: string;
+    /** Sibling-brand handoff link (only rendered when the company has the authority_desk feature). */
+    authorityDeskUrl: string;
   };
   visibility: {
     journey: boolean;
@@ -26,6 +36,8 @@ export interface SiteContent {
     plan: boolean;
     process: boolean;
     testimonials: boolean;
+    /** The About page and its nav link. */
+    about: boolean;
   };
   hero: {
     eyebrow: string;
@@ -84,6 +96,48 @@ export interface SiteContent {
   };
   testimonials: { eyebrow: string; headline: string; intro: string };
   apply: { eyebrow: string; headline: string; intro: string };
+  /** The About page (design_handoff/About Brian.dc.html), editable per company. */
+  about: {
+    eyebrow: string;
+    headline: string;
+    intro: string;
+    heroPhoto: string;
+    standEyebrow: string;
+    standHeadline: string;
+    standP1: string;
+    standP2: string;
+    card1Kicker: string;
+    card1Title: string;
+    card1Body: string;
+    card2Kicker: string;
+    card2Title: string;
+    card2Body: string;
+    criteriaEyebrow: string;
+    criteriaHeadline: string;
+    criteriaIntro: string;
+    /** One criterion per line: "Label | weight" (weights are percentages). */
+    criteria: string;
+    holdEyebrow: string;
+    holdHeadline: string;
+    q1Title: string;
+    q1Body: string;
+    q2Title: string;
+    q2Body: string;
+    q3Title: string;
+    q3Body: string;
+    standardKicker: string;
+    standardTitle: string;
+    standardBody: string;
+    workEyebrow: string;
+    workHeadline: string;
+    workBody: string;
+    workBullet1: string;
+    workBullet2: string;
+    workBullet3: string;
+    workPhoto: string;
+    ctaHeadline: string;
+    ctaBody: string;
+  };
 }
 
 export type SiteContentSection = keyof SiteContent;
@@ -99,8 +153,15 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     footerLogoUrl: "/uploads/ptc-simple-flat.png",
     ownerName: "Brian",
     ownerPhoto: "/uploads/BTLIpic.jpg",
+    iconUrl: "/uploads/ptc-logo-only.png",
+    ownerFullName: "Brian Traichel",
+    ownerTitle: "LinkedIn Sales Strategist",
+    ownerEmail: "briantraichel@gmail.com",
+    ownerPhone: "(619) 887-0932",
+    ownerLinkedin: "linkedin.com/in/briantraichel",
+    authorityDeskUrl: "https://authority-desk.com/brian.traichel",
   },
-  visibility: { journey: true, cost: true, guide: true, plan: true, process: true, testimonials: true },
+  visibility: { journey: true, cost: true, guide: true, plan: true, process: true, testimonials: true, about: true },
   hero: {
     eyebrow: "For consultants, authors & writers",
     headline: "Your expertise is real. Your profile makes it look optional.",
@@ -176,6 +237,60 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     intro:
       "Tell me where you are and what you want to be known for. I'll come back with a 22-section read on your current profile and where the biggest gains are.",
   },
+  about: {
+    eyebrow: "About Brian Traichel",
+    headline: "Knowing how LinkedIn works isn't expertise. Making it work toward a business objective is.",
+    intro:
+      "I've spent 28+ years in B2B sales watching how buyers evaluate, hesitate, and decide. That lens — not copywriting flourish — is what I bring to every profile, every campaign, and every client conversation.",
+    heroPhoto: "/uploads/SectaAI_00116_.png",
+    standEyebrow: "Where I stand",
+    standHeadline: "A large following is not a credential. Results are.",
+    standP1:
+      "Plenty of people post often, have big audiences, and have been on LinkedIn for years. None of that proves they can produce measurable outcomes — leads, relationships, authority, booked meetings, business won.",
+    standP2: "I hold myself to the same standard I'd tell you to hold any LinkedIn consultant to: show the results, explain the strategy, and know the platform's rules.",
+    card1Kicker: "PLATFORM EXPERT",
+    card1Title: "Using LinkedIn strategically",
+    card1Body: "Marketing, prospecting, networking, and business development — engineered toward a defined objective, not vanity metrics.",
+    card2Kicker: "WHAT I'M NOT SELLING",
+    card2Title: "Follower counts or a badge",
+    card2Body: "Thought-leadership recognition is a fine thing. It is not proof that someone can generate leads or revenue — and that's the work we're here to do.",
+    criteriaEyebrow: "What a LinkedIn expert must be able to do",
+    criteriaHeadline: "The ten criteria I'd grade myself on — weighted the way a buyer should.",
+    criteriaIntro: "My recommended evaluation weights, not an official LinkedIn scoring system. Notice what sits at the top.",
+    criteria: [
+      "Proven business results and ROI | 20",
+      "Lead generation and prospecting expertise | 15",
+      "Understanding LinkedIn's algorithm, reach, and engagement | 12",
+      "Profile optimization and personal branding | 10",
+      "Content strategy and thought leadership | 10",
+      "Sales Navigator and targeting proficiency | 10",
+      "Campaign analytics and conversion optimization | 8",
+      "Network development and relationship building | 7",
+      "Knowledge of platform policies and best practices | 5",
+      "Documented experience, references, and credentials | 3",
+    ].join("\n"),
+    holdEyebrow: "Hold me to it",
+    holdHeadline: "Three questions to ask before you hire any LinkedIn expert — including me.",
+    q1Title: "Can you demonstrate measurable results?",
+    q1Body: "Ask for real campaign examples: the target audience, acceptance rates, response rates, qualified leads, meetings booked, and business generated.",
+    q2Title: "Can you explain your strategy?",
+    q2Body: "How an ideal client profile gets selected, how a profile gets optimized, how content and relationships get built, how messaging gets tested and conversion improved.",
+    q3Title: "Can you explain LinkedIn's rules?",
+    q3Body: "Invitation limits, platform policies, and the real risk of unauthorized automation. LinkedIn prohibits scraping and automated-engagement tools — a genuine expert works within that.",
+    standardKicker: "THE QUALIFICATION STANDARD",
+    standardTitle: "Scored on the 100-point card above",
+    standardBody: "Suggested thresholds, not LinkedIn-issued ratings. Certifications and a Top Voice badge are supporting evidence — never the proof.",
+    workEyebrow: "How I work",
+    workHeadline: "Built by hand, built with you.",
+    workBody:
+      "Every profile is worked against the 22-section framework — done-for-you if you'd rather hand it over, done-with-you if you want to learn the mechanics as we go. The Brand Voice Blueprint captures how you actually talk so nothing we write sounds borrowed.",
+    workBullet1: "Targeting accuracy and qualified meetings over connection counts",
+    workBullet2: "Algorithm-aware structure, written for humans first",
+    workBullet3: "No scraping, no unauthorized automation — ever",
+    workPhoto: "/uploads/SectaAI_00003_.png",
+    ctaHeadline: "Let's find out what your profile is costing you.",
+    ctaBody: "A 22-section read on where you stand, reviewed personally — or a 15-minute call if you'd rather talk it through.",
+  },
 };
 
 export type FieldKind = "text" | "textarea" | "image";
@@ -212,6 +327,13 @@ export const SECTION_META: readonly SectionMeta[] = [
       f("footerLogoUrl", "Footer logo URL", "image"),
       f("ownerName", "Owner first name (used in copy)"),
       f("ownerPhoto", "Owner headshot URL", "image"),
+      f("iconUrl", "Square icon URL (hero card)", "image"),
+      f("ownerFullName", "Owner full name"),
+      f("ownerTitle", "Owner title line"),
+      f("ownerEmail", "Owner contact email"),
+      f("ownerPhone", "Owner phone"),
+      f("ownerLinkedin", "Owner LinkedIn URL"),
+      f("authorityDeskUrl", "Authority Desk handoff URL"),
     ],
   },
   {
@@ -291,7 +413,71 @@ export const SECTION_META: readonly SectionMeta[] = [
   { key: "process", label: "How it runs", toggle: true, fields: [] },
   { key: "testimonials", label: "What clients say", toggle: true, fields: [f("eyebrow", "Eyebrow"), f("headline", "Headline"), f("intro", "Intro", "textarea")] },
   { key: "apply", label: "Call to action + form", toggle: false, fields: [f("eyebrow", "Eyebrow"), f("headline", "Headline", "textarea"), f("intro", "Intro", "textarea")] },
+  {
+    key: "about",
+    label: "About page",
+    toggle: true,
+    fields: [
+      f("eyebrow", "Eyebrow"),
+      f("headline", "Headline", "textarea"),
+      f("intro", "Intro", "textarea"),
+      f("heroPhoto", "Portrait URL (4:5)", "image"),
+      f("standEyebrow", "Section 2 eyebrow"),
+      f("standHeadline", "Section 2 headline", "textarea"),
+      f("standP1", "Section 2 paragraph 1", "textarea"),
+      f("standP2", "Section 2 paragraph 2", "textarea"),
+      f("card1Kicker", "Card 1 kicker"),
+      f("card1Title", "Card 1 title"),
+      f("card1Body", "Card 1 body", "textarea"),
+      f("card2Kicker", "Card 2 kicker (dark card)"),
+      f("card2Title", "Card 2 title"),
+      f("card2Body", "Card 2 body", "textarea"),
+      f("criteriaEyebrow", "Criteria eyebrow"),
+      f("criteriaHeadline", "Criteria headline", "textarea"),
+      f("criteriaIntro", "Criteria intro", "textarea"),
+      f("criteria", "Criteria — one per line: Label | weight", "textarea"),
+      f("holdEyebrow", "Questions eyebrow"),
+      f("holdHeadline", "Questions headline", "textarea"),
+      f("q1Title", "Question 1"),
+      f("q1Body", "Answer 1", "textarea"),
+      f("q2Title", "Question 2"),
+      f("q2Body", "Answer 2", "textarea"),
+      f("q3Title", "Question 3"),
+      f("q3Body", "Answer 3", "textarea"),
+      f("standardKicker", "Standard kicker"),
+      f("standardTitle", "Standard title"),
+      f("standardBody", "Standard body", "textarea"),
+      f("workEyebrow", "How I work eyebrow"),
+      f("workHeadline", "How I work headline"),
+      f("workBody", "How I work body", "textarea"),
+      f("workBullet1", "Bullet 1"),
+      f("workBullet2", "Bullet 2"),
+      f("workBullet3", "Bullet 3"),
+      f("workPhoto", "Second photo URL (5:4)", "image"),
+      f("ctaHeadline", "Closing headline", "textarea"),
+      f("ctaBody", "Closing body", "textarea"),
+    ],
+  },
 ];
+
+/** Parse the About page's criteria textarea ("Label | 20" per line) into ranked rows. */
+export function parseCriteria(text: string): { rank: string; label: string; weight: number }[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, i) => {
+      const [label, w] = line.split("|").map((x) => x.trim());
+      const weight = Number.parseFloat(w ?? "");
+      return { rank: String(i + 1).padStart(2, "0"), label: label ?? "", weight: Number.isFinite(weight) ? weight : 0 };
+    })
+    .filter((c) => c.label);
+}
+
+/** "Brian" from "Brian Traichel"; falls back to the first-name field. */
+export function ownerFirstName(brand: Pick<SiteContent["brand"], "ownerName" | "ownerFullName">): string {
+  return (brand.ownerName || brand.ownerFullName || "").trim().split(/\s+/)[0] ?? "";
+}
 
 /**
  * Section-wise merge: every key of `base` survives, overrides replace fields.

@@ -7,7 +7,10 @@ import { calendlyUrlFor } from "../lib/integrations";
 import { publishedContent, contentRows, baselineFor } from "./siteContent";
 import { reviewsFor, reviewView } from "./reviews";
 import { publicCompanyPayload } from "./tenant";
-import { SITE_CONTENT_DEFAULTS, mergeContent } from "@workspace/shared";
+import { publishedRubric } from "./rubric";
+import { SITE_CONTENT_DEFAULTS, GRADER_SAMPLE, mergeContent, scoreProfile, type GraderResult } from "@workspace/shared";
+import { eq, and } from "drizzle-orm";
+import { db, profileAssessmentsTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -78,6 +81,72 @@ router.post("/public/leads", publicFormLimiter, async (req, res) => {
   const prefill = calendlyUrl ? `${calendlyUrl}${calendlyUrl.includes("?") ? "&" : "?"}name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&utm_source=advisor_platform&utm_content=${encodeURIComponent(lead.publicId)}${lead.linkedin ? `&a1=${encodeURIComponent(lead.linkedin)}` : ""}` : null;
   logger.info({ companyId: tenant.company.id, leadId: lead.id, source: "landing_form" }, "Lead created from landing form");
   res.status(201).json({ ok: true, leadId: lead.publicId, firstName: lead.name.split(/\s+/)[0], calendlyUrl: prefill });
+});
+
+/** A lead never sees the findings: the summary carries scores and quick wins only. */
+export function summarizeResult(result: GraderResult): GraderResult {
+  return {
+    ...result,
+    categories: result.categories.map((c) => ({ ...c, findings: [], recs: [] })),
+    immediate: [],
+    shortTerm: [],
+    ongoing: [],
+    tips: [],
+  };
+}
+
+/**
+ * The Profile Grade report. `sample` renders the platform sample profile against
+ * the company's published rubric (so the page can be previewed before any
+ * assessment exists); a real public id serves that assessment, summarised unless
+ * it has been unlocked. The assessment pipeline itself arrives with the Grader phase.
+ */
+router.get("/public/grade/:publicId", optionalAuth, async (req, res) => {
+  const tenant = req.tenant;
+  if (!tenant || tenant.kind !== "company") {
+    res.status(404).json({ error: "No company at this address" });
+    return;
+  }
+  const company = tenant.company;
+  if (company.status === "suspended") {
+    res.status(410).json({ error: "This site is suspended" });
+    return;
+  }
+  const publicId = String(req.params.publicId);
+  const [publicCompany, calendlyUrl, published] = await Promise.all([publicCompanyPayload(company), calendlyUrlFor(company.id), publishedContent(company)]);
+  const brand = published.content.brand;
+  const base = { company: publicCompany, brand: { ownerName: brand.ownerName, ownerFullName: brand.ownerFullName, ownerPhoto: brand.ownerPhoto, logoUrl: brand.logoUrl }, calendlyUrl };
+
+  if (publicId === "sample") {
+    const { rubric, version } = await publishedRubric(company.id);
+    const result = scoreProfile(rubric, GRADER_SAMPLE);
+    const staff = Boolean(req.user && (req.user.role === "super_admin" || (req.user.companyId === company.id && req.user.role !== "client")));
+    const unlocked = req.query.view === "full" && staff;
+    res.json({ ...base, sample: true, profileName: GRADER_SAMPLE.name, linkedinUrl: GRADER_SAMPLE.linkedinUrl ?? "", unlocked, canToggle: staff, rubricVersion: version, categoryCount: rubric.categories.length, result: unlocked ? result : summarizeResult(result), status: "scored", createdAt: null });
+    return;
+  }
+
+  const [assessment] = await db.select().from(profileAssessmentsTable).where(and(eq(profileAssessmentsTable.companyId, company.id), eq(profileAssessmentsTable.publicId, publicId))).limit(1);
+  if (!assessment) {
+    res.status(404).json({ error: "We couldn't find that report" });
+    return;
+  }
+  res.setHeader("Cache-Control", "private, no-store");
+  const result = assessment.scores ?? null;
+  const rubric = await publishedRubric(company.id);
+  res.json({
+    ...base,
+    sample: false,
+    profileName: assessment.profile?.name ?? "",
+    linkedinUrl: assessment.linkedinUrl,
+    unlocked: assessment.unlocked,
+    canToggle: false,
+    rubricVersion: assessment.rubricVersion ?? rubric.version,
+    categoryCount: rubric.rubric.categories.length,
+    status: assessment.status,
+    result: result ? (assessment.unlocked ? result : summarizeResult(result)) : null,
+    createdAt: assessment.createdAt.toISOString(),
+  });
 });
 
 export default router;
