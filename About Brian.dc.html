@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin:0; padding:0; font-family:Manrope, system-ui, sans-serif; color:#0A1626; background:#FFFFFF; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#1668F0; text-decoration:none; }
+  a:hover { color:#0B4FD0; }
+</style>
+</helmet>
+
+<div style="width:100%; overflow-x:hidden">
+
+  <header style="position:sticky; top:0; z-index:50; background:rgba(255,255,255,0.92); backdrop-filter:blur(10px); borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px">
+      <a href="Landing Page.dc.html" style="display:flex; align-items:center"><img src="uploads/ptc-simple-flat2.png" alt="My Target Client" style="height:38px; width:auto; display:block" /></a>
+      <nav aria-label="Primary" style="display:flex; align-items:center; gap:28px">
+        <div style="display:flex; gap:26px; align-items:center; font-size:14px; font-weight:600; letter-spacing:0.01em">
+          <a href="Landing Page.dc.html#cost" style="color:#33455C" style-hover="color:#1668F0">The cost</a>
+          <a href="Landing Page.dc.html#plan" style="color:#33455C" style-hover="color:#1668F0">The plan</a>
+          <a href="Landing Page.dc.html#blueprint" style="color:#33455C" style-hover="color:#1668F0">Brand Voice</a>
+          <a href="About Brian.dc.html" style="color:#0B4FD0">About Brian</a>
+        </div>
+        <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="font-size:14px; font-weight:700; color:#33455C; white-space:nowrap" style-hover="color:#1668F0">Book a call</a>
+        <a href="Landing Page.dc.html#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:14px; padding:11px 20px; border-radius:999px; box-shadow:0 6px 18px rgba(22,104,240,0.28); white-space:nowrap" style-hover="background:#0B4FD0">Get my profile audit</a>
+      </nav>
+    </div>
+  </header>
+
+  <section style="background:linear-gradient(180deg,#FFFFFF 0%,#F4F8FE 100%); borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:80px 20px 88px; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:60px; align-items:center">
+      <div style="min-width:0">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">About Brian Traichel</div>
+        <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(36px,4.6vw,56px); line-height:1.06; letter-spacing:-0.03em; margin:18px 0 0; color:#0A1626; text-wrap:balance">Knowing how LinkedIn works isn't expertise. Making it work toward a business objective is.</h1>
+        <p style="font-size:clamp(17px,1.4vw,19px); line-height:1.65; color:#3D556F; margin:22px 0 0; max-width:56ch; text-wrap:pretty">I've spent 28+ years in B2B sales watching how buyers evaluate, hesitate, and decide. That lens — not copywriting flourish — is what I bring to every profile, every campaign, and every client conversation.</p>
+        <div style="display:flex; flex-wrap:wrap; gap:14px; margin-top:32px">
+          <a href="Landing Page.dc.html#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16px; padding:16px 28px; border-radius:999px; box-shadow:0 14px 30px rgba(22,104,240,0.32)" style-hover="background:#0B4FD0">Get my profile audit</a>
+          <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; color:#0A1626; font-weight:700; font-size:16px; padding:16px 28px; border-radius:999px; border:1px solid #D8E5F5" style-hover="border-color:#1668F0; color:#0B4FD0">Book a 15-min call</a>
+        </div>
+      </div>
+      <div style="min-width:0; display:flex; justify-content:center">
+        <div style="width:100%; max-width:440px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:22px; padding:20px; box-shadow:0 30px 70px rgba(10,22,38,0.12)">
+          <img src="uploads/SectaAI_00116_.png" alt="Brian Traichel" style="display:block; width:100%; aspect-ratio:4/5; object-fit:cover; object-position:50% 18%; border-radius:14px" />
+          <div style="display:flex; align-items:center; gap:12px; margin-top:16px">
+            <img src="uploads/BTLIpic.jpg" alt="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; display:block" />
+            <div style="min-width:0">
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:16px; color:#0A1626">Brian Traichel</div>
+              <div style="font-size:13px; font-weight:600; color:#6A809A">Founder, My Target Client LLC · Find a Business Pro</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#FFFFFF">
+    <div style="max-width:1180px; margin:0 auto; padding:92px 20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:56px; align-items:start">
+      <div style="min-width:0">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">Where I stand</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.2vw,40px); line-height:1.12; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626; text-wrap:balance">A large following is not a credential. Results are.</h2>
+        <p style="font-size:17px; line-height:1.68; color:#3D556F; margin:20px 0 0; max-width:58ch; text-wrap:pretty">Plenty of people post often, have big audiences, and have been on LinkedIn for years. None of that proves they can produce measurable outcomes — leads, relationships, authority, booked meetings, business won.</p>
+        <p style="font-size:17px; line-height:1.68; color:#3D556F; margin:16px 0 0; max-width:58ch; text-wrap:pretty">I hold myself to the same standard I'd tell you to hold any LinkedIn consultant to: show the results, explain the strategy, and know the platform's rules.</p>
+      </div>
+      <div style="min-width:0; display:grid; gap:14px">
+        <div style="background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:24px">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">PLATFORM EXPERT</div>
+          <div style="font-family:Sora,sans-serif; font-weight:600; font-size:18px; color:#0A1626; margin-top:10px">Using LinkedIn strategically</div>
+          <div style="font-size:15px; line-height:1.6; color:#425973; margin-top:8px">Marketing, prospecting, networking, and business development — engineered toward a defined objective, not vanity metrics.</div>
+        </div>
+        <div style="background:#0A1626; border-radius:18px; padding:24px; color:#FFFFFF">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">WHAT I'M NOT SELLING</div>
+          <div style="font-family:Sora,sans-serif; font-weight:600; font-size:18px; margin-top:10px">Follower counts or a badge</div>
+          <div style="font-size:15px; line-height:1.6; color:#B9CBE0; margin-top:8px">Thought-leadership recognition is a fine thing. It is not proof that someone can generate leads or revenue — and that's the work we're here to do.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#0A1626; color:#FFFFFF; position:relative; overflow:hidden">
+    <div style="position:absolute; inset:0; background:radial-gradient(900px 420px at 85% 0%, rgba(22,104,240,0.3), rgba(10,22,38,0) 70%)"></div>
+    <div style="max-width:1180px; margin:0 auto; padding:92px 20px; position:relative">
+      <div style="max-width:720px">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7FB6FF">What a LinkedIn expert must be able to do</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.4vw,42px); line-height:1.1; letter-spacing:-0.02em; margin:16px 0 0; text-wrap:balance">The ten criteria I'd grade myself on — weighted the way a buyer should.</h2>
+        <p style="font-size:17px; line-height:1.65; color:#B9CBE0; margin:18px 0 0; max-width:58ch; text-wrap:pretty">My recommended evaluation weights, not an official LinkedIn scoring system. Notice what sits at the top.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin-top:44px">
+        <sc-for list="{{ criteria }}" as="c" hint-placeholder-count="10">
+          <div style="display:flex; align-items:center; gap:16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:16px 18px; min-width:0">
+            <div style="font-family:Sora,sans-serif; font-weight:700; font-size:13px; color:#7FB6FF; width:26px; flex-shrink:0">{{ c.rank }}</div>
+            <div style="min-width:0; flex:1">
+              <div style="font-size:15px; font-weight:700; color:#FFFFFF">{{ c.label }}</div>
+              <div style="height:6px; border-radius:999px; background:rgba(255,255,255,0.1); margin-top:9px; overflow:hidden"><div style="height:100%; width:{{ c.barWidth }}; background:#1668F0; border-radius:999px"></div></div>
+            </div>
+            <div style="font-family:Sora,sans-serif; font-weight:700; font-size:16px; color:#FFFFFF; flex-shrink:0">{{ c.weight }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#F4F8FE; borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:92px 20px">
+      <div style="max-width:720px">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">Hold me to it</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.4vw,42px); line-height:1.1; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626; text-wrap:balance">Three questions to ask before you hire any LinkedIn expert — including me.</h2>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; margin-top:44px">
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; padding:28px; box-shadow:0 14px 40px rgba(10,22,38,0.06)">
+          <div style="width:44px; height:44px; border-radius:12px; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center">01</div>
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin:18px 0 0; color:#0A1626">Can you demonstrate measurable results?</h3>
+          <p style="font-size:15.5px; line-height:1.65; color:#425973; margin:12px 0 0">Ask for real campaign examples: the target audience, acceptance rates, response rates, qualified leads, meetings booked, and business generated.</p>
+        </div>
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; padding:28px; box-shadow:0 14px 40px rgba(10,22,38,0.06)">
+          <div style="width:44px; height:44px; border-radius:12px; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center">02</div>
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin:18px 0 0; color:#0A1626">Can you explain your strategy?</h3>
+          <p style="font-size:15.5px; line-height:1.65; color:#425973; margin:12px 0 0">How an ideal client profile gets selected, how a profile gets optimized, how content and relationships get built, how messaging gets tested and conversion improved.</p>
+        </div>
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; padding:28px; box-shadow:0 14px 40px rgba(10,22,38,0.06)">
+          <div style="width:44px; height:44px; border-radius:12px; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center">03</div>
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin:18px 0 0; color:#0A1626">Can you explain LinkedIn's rules?</h3>
+          <p style="font-size:15.5px; line-height:1.65; color:#425973; margin:12px 0 0">Invitation limits, platform policies, and the real risk of unauthorized automation. LinkedIn prohibits scraping and automated-engagement tools — a genuine expert works within that.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:48px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; padding:30px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:28px; align-items:center">
+        <div style="min-width:0">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">THE QUALIFICATION STANDARD</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; color:#0A1626; margin-top:10px; letter-spacing:-0.01em">Scored on the 100-point card above</div>
+          <p style="font-size:15px; line-height:1.6; color:#5A718C; margin:10px 0 0">Suggested thresholds, not LinkedIn-issued ratings. Certifications and a Top Voice badge are supporting evidence — never the proof.</p>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px">
+          <div style="background:#0A1626; border-radius:14px; padding:18px 14px; text-align:center; color:#FFFFFF"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px">85–100</div><div style="font-size:12.5px; font-weight:700; color:#7FB6FF; margin-top:4px; letter-spacing:0.06em">EXPERT</div></div>
+          <div style="background:#EAF2FD; border-radius:14px; padding:18px 14px; text-align:center"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; color:#0A1626">70–84</div><div style="font-size:12.5px; font-weight:700; color:#0B4FD0; margin-top:4px; letter-spacing:0.06em">PROFICIENT</div></div>
+          <div style="background:#F4F8FE; border:1px solid #DDE8F7; border-radius:14px; padding:18px 14px; text-align:center"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; color:#0A1626">&lt;70</div><div style="font-size:12.5px; font-weight:700; color:#6A809A; margin-top:4px; letter-spacing:0.06em">DEVELOPING</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#FFFFFF">
+    <div style="max-width:1180px; margin:0 auto; padding:92px 20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:56px; align-items:center">
+      <div style="min-width:0; order:2">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">How I work</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.2vw,40px); line-height:1.12; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626; text-wrap:balance">Built by hand, built with you.</h2>
+        <p style="font-size:17px; line-height:1.68; color:#3D556F; margin:20px 0 0; max-width:58ch; text-wrap:pretty">Every profile is worked against the 22-section framework — done-for-you if you'd rather hand it over, done-with-you if you want to learn the mechanics as we go. The Brand Voice Blueprint captures how you actually talk so nothing we write sounds borrowed.</p>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:26px">
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; font-weight:600; color:#16283D">Targeting accuracy and qualified meetings over connection counts</div></div>
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; font-weight:600; color:#16283D">Algorithm-aware structure, written for humans first</div></div>
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; font-weight:600; color:#16283D">No scraping, no unauthorized automation — ever</div></div>
+        </div>
+      </div>
+      <div style="min-width:0; order:1">
+        <img src="uploads/SectaAI_00003_.png" alt="Brian Traichel" style="display:block; width:100%; aspect-ratio:5/4; object-fit:cover; object-position:50% 25%; border-radius:22px; box-shadow:0 24px 60px rgba(10,22,38,0.14)" />
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#0A1626; color:#FFFFFF; position:relative; overflow:hidden">
+    <div style="position:absolute; inset:0; background:radial-gradient(800px 420px at 20% 100%, rgba(22,104,240,0.32), rgba(10,22,38,0) 70%)"></div>
+    <div style="max-width:1180px; margin:0 auto; padding:84px 20px; position:relative; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:28px">
+      <div style="min-width:0; flex:1 1 380px">
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.2vw,40px); line-height:1.1; letter-spacing:-0.02em; margin:0; text-wrap:balance">Let's find out what your profile is costing you.</h2>
+        <p style="font-size:17px; line-height:1.6; color:#B9CBE0; margin:14px 0 0; max-width:52ch">A 22-section read on where you stand, reviewed personally — or a 15-minute call if you'd rather talk it through.</p>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:14px">
+        <a href="Landing Page.dc.html#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16px; padding:16px 28px; border-radius:999px; box-shadow:0 14px 30px rgba(22,104,240,0.32)" style-hover="background:#0B4FD0">Get my profile audit</a>
+        <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; color:#0A1626; font-weight:700; font-size:16px; padding:16px 28px; border-radius:999px" style-hover="background:#EAF2FD">Book on Calendly →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="background:#FFFFFF; borderTop:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:44px 20px; display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between">
+      <a href="Landing Page.dc.html"><img src="uploads/ptc-simple-flat.png" alt="My Target Client" style="height:34px; width:auto; display:block" /></a>
+      <div style="font-size:13.5px; color:#6A809A; font-weight:600; line-height:1.6">My Target Client LLC · Find a Business Pro · Brian Traichel</div>
+      <a href="Landing Page.dc.html" style="font-size:14px; font-weight:700; color:#0B4FD0">← Back to home</a>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;calendlyUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://calendly.com/briantraichel/intro-call&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Integrations&quot;}}">
+const CALENDLY_URL = "https://calendly.com/briantraichel/intro-call";
+
+const CRITERIA = [
+  ["Proven business results and ROI", 20],
+  ["Lead generation and prospecting expertise", 15],
+  ["Understanding LinkedIn's algorithm, reach, and engagement", 12],
+  ["Profile optimization and personal branding", 10],
+  ["Content strategy and thought leadership", 10],
+  ["Sales Navigator and targeting proficiency", 10],
+  ["Campaign analytics and conversion optimization", 8],
+  ["Network development and relationship building", 7],
+  ["Knowledge of platform policies and best practices", 5],
+  ["Documented experience, references, and credentials", 3]
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      calendlyUrl: this.props.calendlyUrl || CALENDLY_URL,
+      criteria: CRITERIA.map(([label, w], i) => ({
+        rank: String(i + 1).padStart(2, "0"),
+        label,
+        weight: w + "%",
+        barWidth: (w / 20 * 100) + "%"
+      }))
+    };
+  }
+}
+
+</script>
+</body>
+</html>

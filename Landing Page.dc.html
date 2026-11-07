@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="platform.js"></script>
+<script src="site-content.js"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; padding: 0; font-family: Manrope, system-ui, sans-serif; color: #0A1626; background: #FFFFFF; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #1668F0; text-decoration: none; }
+  a:hover { color: #0B4FD0; }
+  input, select, textarea, button { font-family: inherit; }
+  ::placeholder { color: #9AAABF; }
+  @keyframes mtcQuoteIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 899px) { [data-journey-h] { display: none !important; } [data-journey-v] { display: flex !important; } }
+</style>
+</helmet>
+
+<div style="width:100%; overflow-x:hidden">
+
+  <header style="position:sticky; top:0; z-index:50; background:rgba(255,255,255,0.92); backdrop-filter:blur(10px); borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px">
+      <a href="#top" style="display:flex; align-items:center; min-height:38px"><sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="{{ brand.companyName }}" style="height:38px; width:190px; background-image:url({{ brand.logoUrl }}); background-size:contain; background-repeat:no-repeat; background-position:left center"></div></sc-if><sc-if value="{{ noLogo }}" hint-placeholder-val="{{ true }}"><span style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; letter-spacing:-0.02em; color:#0A1626">{{ brand.companyName }}</span></sc-if></a>
+      <nav aria-label="Primary" style="display:flex; align-items:center; gap:28px">
+        <div style="display:flex; gap:26px; align-items:center; font-size:14px; font-weight:600; letter-spacing:0.01em">
+          <sc-if value="{{ show.journey }}" hint-placeholder-val="{{ true }}"><a href="#journey" style="color:#33455C" style-hover="color:#1668F0">Your journey</a></sc-if>
+          <sc-if value="{{ show.cost }}" hint-placeholder-val="{{ true }}"><a href="#cost" style="color:#33455C" style-hover="color:#1668F0">The cost</a></sc-if>
+          <sc-if value="{{ show.plan }}" hint-placeholder-val="{{ true }}"><a href="#plan" style="color:#33455C" style-hover="color:#1668F0">The plan</a></sc-if>
+          <a href="#blueprint" style="color:#33455C" style-hover="color:#1668F0">Brand Voice</a>
+          <a href="About Brian.dc.html" style="color:#33455C" style-hover="color:#1668F0">About Brian</a>
+        </div>
+        <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="font-size:14px; font-weight:700; color:#33455C; white-space:nowrap" style-hover="color:#1668F0">Book a call</a>
+        <a href="#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:14px; padding:11px 20px; border-radius:999px; box-shadow:0 6px 18px rgba(22,104,240,0.28); white-space:nowrap" style-hover="background:#0B4FD0">{{ hero.primaryCta }}</a>
+      </nav>
+    </div>
+  </header>
+
+  <section id="top" style="position:relative; background:linear-gradient(180deg,#FFFFFF 0%,#F4F8FE 100%); borderBottom:1px solid #E4EDF9; overflow:hidden">
+    <div style="position:absolute; top:-160px; right:-140px; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle at 50% 50%, rgba(46,155,255,0.18), rgba(46,155,255,0) 70%)"></div>
+    <div style="max-width:1180px; margin:0 auto; padding:84px 20px 92px; display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:64px; align-items:center; position:relative">
+      <div data-reveal="1" style="min-width:0">
+        <div style="display:inline-flex; align-items:center; gap:10px; background:#EAF2FD; border:1px solid #D3E4FB; color:#0B4FD0; font-size:12.5px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; padding:8px 14px; border-radius:999px">{{ hero.eyebrow }}</div>
+        <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(38px,5.2vw,62px); line-height:1.04; letter-spacing:-0.03em; margin:22px 0 0; color:#0A1626; text-wrap:balance">{{ hero.headline }}</h1>
+        <p style="font-size:clamp(17px,1.5vw,20px); line-height:1.6; color:#3D556F; margin:22px 0 0; max-width:56ch; text-wrap:pretty">{{ hero.subhead }}</p>
+        <div style="display:flex; flex-wrap:wrap; gap:14px; margin-top:34px">
+          <a href="#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16px; padding:16px 28px; border-radius:999px; box-shadow:0 14px 30px rgba(22,104,240,0.32)" style-hover="background:#0B4FD0">{{ hero.primaryCta }}</a>
+          <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; color:#0A1626; font-weight:700; font-size:16px; padding:16px 28px; border-radius:999px; border:1px solid #D8E5F5" style-hover="border-color:#1668F0; color:#0B4FD0">{{ hero.secondaryCta }}</a>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:14px 34px; margin-top:36px; padding-top:26px; borderTop:1px solid #E1EBF8">
+          <div style="min-width:0"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; color:#0A1626">{{ hero.stat1Value }}</div><div style="font-size:13.5px; color:#5A718C; font-weight:600">{{ hero.stat1Label }}</div></div>
+          <div style="min-width:0"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; color:#0A1626">{{ hero.stat2Value }}</div><div style="font-size:13.5px; color:#5A718C; font-weight:600">{{ hero.stat2Label }}</div></div>
+          <div style="min-width:0"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; color:#0A1626">{{ hero.stat3Value }}</div><div style="font-size:13.5px; color:#5A718C; font-weight:600">{{ hero.stat3Label }}</div></div>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="min-width:0; display:flex; justify-content:center">
+        <sc-if value="{{ heroIsVideo }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%; max-width:560px; background:#0A1626; border-radius:24px; box-shadow:0 30px 70px rgba(10,22,38,0.22); overflow:hidden; position:relative">
+            <div style="aspect-ratio:16/9; width:100%; position:relative; background:#0A1626">
+              <sc-if value="{{ heroVideoEmbed }}" hint-placeholder-val="{{ false }}">
+                <iframe src="{{ heroVideoSrc }}" title="{{ heroVideoTitle }}" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen="{{ true }}" style="position:absolute; inset:0; width:100%; height:100%; border:0; display:block"></iframe>
+              </sc-if>
+              <sc-if value="{{ heroVideoFile }}" hint-placeholder-val="{{ false }}">
+                <video src="{{ heroVideoSrc }}" poster="{{ heroPoster }}" controls="{{ true }}" playsInline="{{ true }}" style="position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover"></video>
+              </sc-if>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; padding:14px 18px; borderTop:1px solid rgba(255,255,255,0.1)">
+              <img src="uploads/BTLIpic.jpg" alt="" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0" />
+              <div style="min-width:0"><div style="font-size:14px; font-weight:700; color:#FFFFFF">{{ heroVideoTitle }}</div><div style="font-size:12.5px; font-weight:600; color:#B9CBE0">{{ heroVideoCaption }}</div></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ heroIsCard }}" hint-placeholder-val="{{ true }}">
+          <div style="width:100%; max-width:430px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:24px; box-shadow:0 30px 70px rgba(10,22,38,0.12); padding:24px">
+            <div style="display:flex; align-items:center; gap:14px">
+              <img src="uploads/ptc-logo-only.png" alt="" style="width:58px; height:58px; object-fit:contain; display:block" />
+              <div style="min-width:0">
+                <div style="font-family:Sora,sans-serif; font-weight:700; font-size:16px; color:#0A1626">Profile audit</div>
+                <div style="font-size:13px; color:#6A809A; font-weight:600">22-section framework</div>
+              </div>
+              <div style="margin-left:auto; background:#EAF2FD; color:#0B4FD0; font-size:11.5px; font-weight:700; letter-spacing:0.08em; padding:6px 10px; border-radius:999px">LIVE</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:22px">
+              <div style="display:flex; align-items:center; gap:12px; background:#F5F9FE; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+                <div style="width:22px; height:22px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">✓</div>
+                <div style="font-size:14.5px; font-weight:600; color:#16283D; min-width:0">Headline positions the niche, not the job title</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; background:#F5F9FE; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+                <div style="width:22px; height:22px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">✓</div>
+                <div style="font-size:14.5px; font-weight:600; color:#16283D; min-width:0">About section written in your own voice</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; background:#FFF8F0; border:1px solid #F6E4CC; border-radius:12px; padding:13px 14px">
+                <div style="width:22px; height:22px; border-radius:50%; background:#E39A2B; color:#FFFFFF; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">!</div>
+                <div style="font-size:14.5px; font-weight:600; color:#16283D; min-width:0">Keywords the algorithm never sees</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; background:#FFF8F0; border:1px solid #F6E4CC; border-radius:12px; padding:13px 14px">
+                <div style="width:22px; height:22px; border-radius:50%; background:#E39A2B; color:#FFFFFF; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">!</div>
+                <div style="font-size:14.5px; font-weight:600; color:#16283D; min-width:0">No clear next step for an interested buyer</div>
+              </div>
+            </div>
+            <div style="margin-top:20px; padding-top:18px; borderTop:1px dashed #DDE8F7; display:flex; align-items:center; justify-content:space-between; gap:12px">
+              <div style="font-size:13px; font-weight:700; color:#5A718C; letter-spacing:0.02em">Sections reviewed</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:15px; color:#0B4FD0">22 of 22</div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <sc-if value="{{ show.journey }}" hint-placeholder-val="{{ true }}">
+  <section id="journey" style="background:#FFFFFF; borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:84px 20px 88px">
+      <div data-reveal="1" style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:20px 40px">
+        <div style="max-width:640px; min-width:0">
+          <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">{{ journey.eyebrow }}</div>
+          <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.4vw,42px); line-height:1.1; letter-spacing:-0.02em; margin:14px 0 0; color:#0A1626; text-wrap:balance">{{ journey.headline }}</h2>
+        </div>
+        <p style="font-size:16px; line-height:1.6; color:#5A718C; margin:0; max-width:34ch; text-wrap:pretty">{{ journey.intro }}</p>
+      </div>
+
+      <div data-reveal="1" data-js-journey="1" style="position:relative; margin-top:52px">
+        <div data-journey-h="1" style="display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px">
+          <div data-js-step="1" style="min-width:0; display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div data-js-dot="1" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:56px; height:56px; border-radius:50%; background:#1668F0; color:#FFFFFF; box-shadow:0 10px 24px rgba(22,104,240,0.3); font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0">01</div>
+              <div style="flex:1; height:2px; background:#DDE8F7; position:relative; overflow:hidden"><div data-js-line="1" style="position:absolute; left:0; top:0; height:100%; width:0%; background:#1668F0; transition:width .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div data-js-card="1" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">TODAY · 2 MIN</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Request your audit</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">Six fields and your LinkedIn URL. That's all we need to begin.</p>
+            </div>
+          </div>
+          <div data-js-step="2" style="min-width:0; display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div data-js-dot="2" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:56px; height:56px; border-radius:50%; background:#0A1626; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0">02</div>
+              <div style="flex:1; height:2px; background:#DDE8F7; position:relative; overflow:hidden"><div data-js-line="2" style="position:absolute; left:0; top:0; height:100%; width:0%; background:#1668F0; transition:width .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div data-js-card="2" style="transition:box-shadow .45s, transform .45s; background:#0A1626; border-radius:18px; padding:22px; flex:1; color:#FFFFFF; position:relative; overflow:hidden; min-width:0">
+              <div style="position:absolute; top:-40px; right:-40px; width:140px; height:140px; border-radius:50%; background:radial-gradient(circle, rgba(22,104,240,0.45), rgba(22,104,240,0) 70%)"></div>
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF; position:relative">WITHIN 2 BUSINESS DAYS</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; margin-top:8px; position:relative">Get your Profile Grade</div>
+              <div style="display:flex; align-items:baseline; gap:8px; margin-top:12px; position:relative">
+                <div style="font-family:Sora,sans-serif; font-weight:700; font-size:40px; line-height:1; letter-spacing:-0.03em">64</div>
+                <div style="font-size:13px; font-weight:700; color:#B9CBE0">/ 100 · Developing</div>
+              </div>
+              <div style="height:6px; border-radius:999px; background:rgba(255,255,255,0.14); margin-top:12px; overflow:hidden; position:relative"><div data-js-grade="1" style="height:100%; width:0%; background:#1668F0; border-radius:999px; transition:width 1.2s cubic-bezier(.2,.7,.2,1)"></div></div>
+              <p style="font-size:13.5px; line-height:1.55; color:#B9CBE0; margin:12px 0 0; position:relative">Scored across all 22 sections, with the biggest gaps named plainly.</p>
+            </div>
+          </div>
+          <div data-js-step="3" style="min-width:0; display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div data-js-dot="3" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:56px; height:56px; border-radius:50%; background:#FFFFFF; border:2px solid #1668F0; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0">03</div>
+              <div style="flex:1; height:2px; background:#DDE8F7; position:relative; overflow:hidden"><div data-js-line="3" style="position:absolute; left:0; top:0; height:100%; width:0%; background:#1668F0; transition:width .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div data-js-card="3" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">15-MIN CALL WITH BRIAN</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Walk through the grade</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">Where the points went, what they're costing you, and whether done-for-you or done-with-you fits.</p>
+            </div>
+          </div>
+          <div data-js-step="4" style="min-width:0; display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div data-js-dot="4" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:56px; height:56px; border-radius:50%; background:#FFFFFF; border:2px solid #1668F0; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0">04</div>
+              <div style="flex:1; height:2px; background:#DDE8F7; position:relative; overflow:hidden"><div data-js-line="4" style="position:absolute; left:0; top:0; height:100%; width:0%; background:#1668F0; transition:width .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div data-js-card="4" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">1-HOUR INTERVIEW</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Brand Voice Blueprint</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">We capture how you actually talk. Every word we write from here sounds like you.</p>
+            </div>
+          </div>
+          <div data-js-step="5" style="min-width:0; display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div data-js-dot="5" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:56px; height:56px; border-radius:50%; background:#FFFFFF; border:2px solid #1668F0; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0">05</div>
+              
+            </div>
+            <div data-js-card="5" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">2–3 WEEKS</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Profile rebuilt, re-graded</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">All 22 sections rewritten and published. You see the before-and-after score.</p>
+            </div>
+          </div>
+        </div>
+        <div data-journey-v="1" style="display:none; flex-direction:column">
+          <div data-js-step="1" style="display:flex; gap:18px; min-width:0">
+            <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0">
+              <div data-js-dot="1" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:48px; height:48px; border-radius:50%; background:#1668F0; color:#FFFFFF; box-shadow:0 10px 24px rgba(22,104,240,0.3); font-family:Sora,sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0">01</div>
+              <div style="flex:1; width:2px; background:#DDE8F7; margin:8px 0; position:relative; overflow:hidden"><div data-js-line="1" style="position:absolute; top:0; left:0; width:100%; height:0%; background:#1668F0; transition:height .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; padding-bottom:16px">
+            <div data-js-card="1" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">TODAY · 2 MIN</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Request your audit</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">Six fields and your LinkedIn URL. That's all we need to begin.</p>
+            </div></div>
+          </div>
+          <div data-js-step="2" style="display:flex; gap:18px; min-width:0">
+            <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0">
+              <div data-js-dot="2" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:48px; height:48px; border-radius:50%; background:#0A1626; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0">02</div>
+              <div style="flex:1; width:2px; background:#DDE8F7; margin:8px 0; position:relative; overflow:hidden"><div data-js-line="2" style="position:absolute; top:0; left:0; width:100%; height:0%; background:#1668F0; transition:height .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; padding-bottom:16px">
+            <div data-js-card="2" style="transition:box-shadow .45s, transform .45s; background:#0A1626; border-radius:18px; padding:22px; flex:1; color:#FFFFFF; position:relative; overflow:hidden; min-width:0">
+              <div style="position:absolute; top:-40px; right:-40px; width:140px; height:140px; border-radius:50%; background:radial-gradient(circle, rgba(22,104,240,0.45), rgba(22,104,240,0) 70%)"></div>
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF; position:relative">WITHIN 2 BUSINESS DAYS</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; margin-top:8px; position:relative">Get your Profile Grade</div>
+              <div style="display:flex; align-items:baseline; gap:8px; margin-top:12px; position:relative">
+                <div style="font-family:Sora,sans-serif; font-weight:700; font-size:40px; line-height:1; letter-spacing:-0.03em">64</div>
+                <div style="font-size:13px; font-weight:700; color:#B9CBE0">/ 100 · Developing</div>
+              </div>
+              <div style="height:6px; border-radius:999px; background:rgba(255,255,255,0.14); margin-top:12px; overflow:hidden; position:relative"><div data-js-grade="1" style="height:100%; width:0%; background:#1668F0; border-radius:999px; transition:width 1.2s cubic-bezier(.2,.7,.2,1)"></div></div>
+              <p style="font-size:13.5px; line-height:1.55; color:#B9CBE0; margin:12px 0 0; position:relative">Scored across all 22 sections, with the biggest gaps named plainly.</p>
+            </div></div>
+          </div>
+          <div data-js-step="3" style="display:flex; gap:18px; min-width:0">
+            <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0">
+              <div data-js-dot="3" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:48px; height:48px; border-radius:50%; background:#FFFFFF; border:2px solid #1668F0; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0">03</div>
+              <div style="flex:1; width:2px; background:#DDE8F7; margin:8px 0; position:relative; overflow:hidden"><div data-js-line="3" style="position:absolute; top:0; left:0; width:100%; height:0%; background:#1668F0; transition:height .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; padding-bottom:16px">
+            <div data-js-card="3" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">15-MIN CALL WITH BRIAN</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Walk through the grade</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">Where the points went, what they're costing you, and whether done-for-you or done-with-you fits.</p>
+            </div></div>
+          </div>
+          <div data-js-step="4" style="display:flex; gap:18px; min-width:0">
+            <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0">
+              <div data-js-dot="4" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:48px; height:48px; border-radius:50%; background:#FFFFFF; border:2px solid #1668F0; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0">04</div>
+              <div style="flex:1; width:2px; background:#DDE8F7; margin:8px 0; position:relative; overflow:hidden"><div data-js-line="4" style="position:absolute; top:0; left:0; width:100%; height:0%; background:#1668F0; transition:height .9s cubic-bezier(.2,.7,.2,1)"></div></div>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; padding-bottom:16px">
+            <div data-js-card="4" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">1-HOUR INTERVIEW</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Brand Voice Blueprint</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">We capture how you actually talk. Every word we write from here sounds like you.</p>
+            </div></div>
+          </div>
+          <div data-js-step="5" style="display:flex; gap:18px; min-width:0">
+            <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0">
+              <div data-js-dot="5" style="transition:background .45s, color .45s, border-color .45s, box-shadow .45s, transform .45s; width:48px; height:48px; border-radius:50%; background:#FFFFFF; border:2px solid #1668F0; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0">05</div>
+              
+            </div>
+            <div style="flex:1; min-width:0; display:flex; padding-bottom:0px">
+            <div data-js-card="5" style="transition:border-color .45s, box-shadow .45s, transform .45s; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:18px; padding:22px; flex:1; min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">2–3 WEEKS</div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px; color:#0A1626; margin-top:8px">Profile rebuilt, re-graded</div>
+              <p style="font-size:14.5px; line-height:1.6; color:#425973; margin:8px 0 0">All 22 sections rewritten and published. You see the before-and-after score.</p>
+            </div></div>
+          </div>
+        </div>
+
+        <div style="margin-top:22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; align-items:stretch">
+          <div style="display:flex; align-items:center; gap:16px; background:#FFFFFF; border:1px dashed #B9D2F4; border-radius:18px; padding:20px 22px">
+            <div style="width:44px; height:44px; border-radius:12px; background:#EAF2FD; display:flex; align-items:center; justify-content:center; flex-shrink:0"><img src="uploads/ptc-logo-only.png" alt="" style="width:30px; height:30px; object-fit:contain" /></div>
+            <div style="min-width:0">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">WHERE MOST CLIENTS STOP</div>
+              <div style="font-size:14.5px; line-height:1.55; color:#425973; margin-top:5px">An authority-grade profile, your voice on paper, and optional sales coaching when inbound needs converting.</div>
+            </div>
+          </div>
+          <sc-if value="{{ showAuthorityDesk }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; gap:16px; background:#F6F2EA; border:1px solid rgba(22,19,15,0.12); border-radius:18px; padding:20px 22px">
+            <div style="width:44px; height:44px; border-radius:12px; background:#FCFAF5; border:1px solid rgba(22,19,15,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0"><img src="public/authority-desk-icon-192.png" alt="The Authority Desk" style="width:32px; height:32px; object-fit:contain; display:block" /></div>
+            <div style="min-width:0; flex:1">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#B07C2E">OPTIONAL NEXT CHAPTER · THE AUTHORITY DESK</div>
+              <div style="font-size:14.5px; line-height:1.55; color:#5E564B; margin-top:5px">Want the profile to keep working? Your Blueprint carries straight into a done-for-you newsroom — published articles under your name, ~20 minutes a month.</div>
+            </div>
+            <a href="{{ authorityDeskUrl }}" target="_blank" rel="noopener" style="font-size:13.5px; font-weight:700; color:#16130F; white-space:nowrap; border-bottom:1.5px solid #B07C2E; padding-bottom:2px" style-hover="color:#B07C2E">Learn more →</a>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="margin-top:40px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:14px">
+        <a href="#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16px; padding:16px 30px; border-radius:999px; box-shadow:0 14px 30px rgba(22,104,240,0.3)" style-hover="background:#0B4FD0">Start at step 01 — get my grade</a>
+        <div style="font-size:14px; font-weight:600; color:#6A809A">Free · Reviewed personally · Reply in 2 business days</div>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ show.cost }}" hint-placeholder-val="{{ true }}">
+  <section id="cost" style="background:#0A1626; color:#FFFFFF; position:relative; overflow:hidden">
+    <div style="position:absolute; inset:0; background:radial-gradient(900px 400px at 15% 0%, rgba(22,104,240,0.28), rgba(10,22,38,0) 70%)"></div>
+    <div style="max-width:1180px; margin:0 auto; padding:96px 20px; position:relative">
+      <div data-reveal="1" style="max-width:760px">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7FB6FF">{{ cost.eyebrow }}</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(30px,3.6vw,46px); line-height:1.1; letter-spacing:-0.02em; margin:18px 0 0; text-wrap:balance">{{ cost.headline }}</h2>
+        <p style="font-size:18px; line-height:1.65; color:#B9CBE0; margin:20px 0 0; max-width:60ch; text-wrap:pretty">{{ cost.intro }}</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; margin-top:52px">
+        <div data-reveal="1" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:26px; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:600; font-size:19px; margin-bottom:10px">{{ cost.card1Title }}</div>
+          <div style="font-size:15px; line-height:1.6; color:#B9CBE0">{{ cost.card1Body }}</div>
+        </div>
+        <div data-reveal="1" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:26px; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:600; font-size:19px; margin-bottom:10px">{{ cost.card2Title }}</div>
+          <div style="font-size:15px; line-height:1.6; color:#B9CBE0">{{ cost.card2Body }}</div>
+        </div>
+        <div data-reveal="1" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:26px; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:600; font-size:19px; margin-bottom:10px">{{ cost.card3Title }}</div>
+          <div style="font-size:15px; line-height:1.6; color:#B9CBE0">{{ cost.card3Body }}</div>
+        </div>
+        <div data-reveal="1" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:26px; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:600; font-size:19px; margin-bottom:10px">{{ cost.card4Title }}</div>
+          <div style="font-size:15px; line-height:1.6; color:#B9CBE0">{{ cost.card4Body }}</div>
+        </div>
+      </div>
+      <div data-reveal="1" style="margin-top:44px; display:flex; flex-wrap:wrap; align-items:center; gap:18px; background:rgba(22,104,240,0.14); border:1px solid rgba(127,182,255,0.35); border-radius:18px; padding:24px 26px">
+        <div style="font-size:17px; font-weight:600; line-height:1.55; color:#E7F0FB; min-width:0; flex:1 1 320px">{{ cost.banner }}</div>
+        <a href="#apply" style="background:#FFFFFF; color:#0A1626; font-weight:700; font-size:15px; padding:14px 24px; border-radius:999px; white-space:nowrap" style-hover="background:#EAF2FD">Start with an audit</a>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ show.guide }}" hint-placeholder-val="{{ true }}">
+  <section id="guide" style="background:#FFFFFF">
+    <div style="max-width:1180px; margin:0 auto; padding:96px 20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:56px; align-items:center">
+      <div data-reveal="1" style="min-width:0">
+        <div style="background:#F4F8FE; border:1px solid #DDE8F7; border-radius:22px; padding:22px">
+          <sc-if value="{{ hasPortrait }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="{{ guide.name }}" style="width:100%; aspect-ratio:4/5; border-radius:14px; background-image:url({{ guide.photo }}); background-size:cover; background-position:50% 20%"></div></sc-if><sc-if value="{{ noPortrait }}" hint-placeholder-val="{{ true }}"><div style="width:100%; aspect-ratio:4/5; border-radius:14px; border:2px dashed #B9D2F4; background:#EAF2FD; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px"><div style="font-family:Sora,sans-serif; font-weight:600; font-size:15px; color:#4E6B8C; line-height:1.5">Add a portrait of {{ guide.name }}<br />in Company settings → Branding</div></div></sc-if>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:18px">
+            <sc-if value="{{ hasOwnerPhoto }}" hint-placeholder-val="{{ false }}"><div style="width:38px; height:38px; border-radius:50%; background-image:url({{ brand.ownerPhoto }}); background-size:cover; background-position:center; flex-shrink:0"></div></sc-if><sc-if value="{{ noOwnerPhoto }}" hint-placeholder-val="{{ true }}"><div style="width:38px; height:38px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ ownerInitials }}</div></sc-if>
+            <div style="min-width:0">
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:16px; color:#0A1626">{{ guide.name }}</div>
+              <div style="font-size:13px; font-weight:600; color:#6A809A">{{ guide.title }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-reveal="1" style="min-width:0">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">{{ guide.eyebrow }}</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(30px,3.4vw,44px); line-height:1.1; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626; text-wrap:balance">{{ guide.headline }}</h2>
+        <p style="font-size:17.5px; line-height:1.68; color:#3D556F; margin:20px 0 0; max-width:58ch; text-wrap:pretty">{{ guide.p1 }}</p>
+        <p style="font-size:17.5px; line-height:1.68; color:#3D556F; margin:16px 0 0; max-width:58ch; text-wrap:pretty">{{ guide.p2 }}</p>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:28px">
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; font-weight:600; color:#16283D; min-width:0">{{ guide.bullet1 }}</div></div>
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; font-weight:600; color:#16283D; min-width:0">{{ guide.bullet2 }}</div></div>
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; font-weight:600; color:#16283D; min-width:0">{{ guide.bullet3 }}</div></div>
+        </div>
+        <div style="margin-top:32px">
+          <a href="About Brian.dc.html" style="display:inline-block; background:#FFFFFF; color:#0A1626; font-weight:700; font-size:16px; padding:15px 28px; border-radius:999px; border:1px solid #D8E5F5" style-hover="border-color:#1668F0; color:#0B4FD0">Learn more about Brian →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ show.plan }}" hint-placeholder-val="{{ true }}">
+  <section id="plan" style="background:#F4F8FE; borderTop:1px solid #E4EDF9; borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:96px 20px">
+      <div data-reveal="1" style="max-width:720px">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">{{ plan.eyebrow }}</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(30px,3.6vw,46px); line-height:1.1; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626; text-wrap:balance">{{ plan.headline }}</h2>
+        <p style="font-size:18px; line-height:1.65; color:#3D556F; margin:18px 0 0; max-width:58ch; text-wrap:pretty">{{ plan.intro }}</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; margin-top:48px">
+        <div data-reveal="1" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; padding:30px; box-shadow:0 14px 40px rgba(10,22,38,0.06); min-width:0">
+          <div style="width:44px; height:44px; border-radius:12px; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center">01</div>
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; margin:20px 0 0; color:#0A1626">{{ plan.card1Title }}</h3>
+          <div style="font-size:13px; font-weight:700; color:#0B4FD0; letter-spacing:0.04em; margin-top:6px">{{ plan.card1Kicker }}</div>
+          <p style="font-size:15.5px; line-height:1.65; color:#425973; margin:14px 0 0">{{ plan.card1Body }}</p>
+        </div>
+        <div data-reveal="1" id="blueprint" style="background:#0A1626; border:1px solid #0A1626; border-radius:20px; padding:30px; box-shadow:0 20px 50px rgba(10,22,38,0.18); min-width:0; color:#FFFFFF">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(127,182,255,0.18); color:#7FB6FF; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center">02</div>
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; margin:20px 0 0">{{ plan.card2Title }}</h3>
+          <div style="font-size:13px; font-weight:700; color:#7FB6FF; letter-spacing:0.04em; margin-top:6px">{{ plan.card2Kicker }}</div>
+          <p style="font-size:15.5px; line-height:1.65; color:#C3D3E6; margin:14px 0 0">{{ plan.card2Body }}</p>
+        </div>
+        <div data-reveal="1" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; padding:30px; box-shadow:0 14px 40px rgba(10,22,38,0.06); min-width:0">
+          <div style="width:44px; height:44px; border-radius:12px; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center">03</div>
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; margin:20px 0 0; color:#0A1626">{{ plan.card3Title }}</h3>
+          <div style="font-size:13px; font-weight:700; color:#0B4FD0; letter-spacing:0.04em; margin-top:6px">{{ plan.card3Kicker }}</div>
+          <p style="font-size:15.5px; line-height:1.65; color:#425973; margin:14px 0 0">{{ plan.card3Body }}</p>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="margin-top:60px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:20px; overflow:hidden">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+          <div style="padding:30px; borderRight:1px solid #E4EDF9">
+            <div style="font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#8B9BAF">Templates &amp; DIY guesswork</div>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:18px">
+              <div style="font-size:15.5px; color:#6A809A; line-height:1.55">Same headline formula as ten thousand others</div>
+              <div style="font-size:15.5px; color:#6A809A; line-height:1.55">Written to fill fields, not to position a specialist</div>
+              <div style="font-size:15.5px; color:#6A809A; line-height:1.55">Voice borrowed from whatever the tool defaults to</div>
+              <div style="font-size:15.5px; color:#6A809A; line-height:1.55">No plan for what a warm buyer does next</div>
+            </div>
+          </div>
+          <div style="padding:30px; background:#F7FBFF">
+            <div style="font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#0B4FD0">Expert-managed with Brian</div>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:18px">
+              <div style="font-size:15.5px; color:#16283D; font-weight:600; line-height:1.55">Positioning built from your niche and your buyer</div>
+              <div style="font-size:15.5px; color:#16283D; font-weight:600; line-height:1.55">22 sections worked in a deliberate order</div>
+              <div style="font-size:15.5px; color:#16283D; font-weight:600; line-height:1.55">Your documented voice, reusable across everything</div>
+              <div style="font-size:15.5px; color:#16283D; font-weight:600; line-height:1.55">A clear, deliberate call to action on the profile</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="margin-top:44px; display:flex; justify-content:center">
+        <a href="#apply" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16px; padding:16px 30px; border-radius:999px; box-shadow:0 14px 30px rgba(22,104,240,0.3)" style-hover="background:#0B4FD0">Get my profile audit</a>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ show.process }}" hint-placeholder-val="{{ true }}">
+  <section style="background:#FFFFFF">
+    <div style="max-width:1180px; margin:0 auto; padding:96px 20px">
+      <div data-reveal="1" style="max-width:680px">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">How it runs</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.2vw,42px); line-height:1.12; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626">From first call to a profile that works for you.</h2>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0; margin-top:48px; border:1px solid #DDE8F7; border-radius:20px; overflow:hidden">
+        <div data-reveal="1" style="padding:32px 28px; borderRight:1px solid #E4EDF9; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; color:#0B4FD0">STEP 1</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin-top:12px; color:#0A1626">Audit</div>
+          <p style="font-size:15.5px; line-height:1.6; color:#425973; margin:10px 0 0">Your current profile reviewed against all 22 sections, with the gaps named plainly.</p>
+        </div>
+        <div data-reveal="1" style="padding:32px 28px; borderRight:1px solid #E4EDF9; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; color:#0B4FD0">STEP 2</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin-top:12px; color:#0A1626">Blueprint interview</div>
+          <p style="font-size:15.5px; line-height:1.6; color:#425973; margin:10px 0 0">One hour to capture your voice, USP, and ideal audience into a reference document.</p>
+        </div>
+        <div data-reveal="1" style="padding:32px 28px; borderRight:1px solid #E4EDF9; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; color:#0B4FD0">STEP 3</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin-top:12px; color:#0A1626">Rebuild</div>
+          <p style="font-size:15.5px; line-height:1.6; color:#425973; margin:10px 0 0">Each section written and published — done for you, or alongside you, your call.</p>
+        </div>
+        <div data-reveal="1" style="padding:32px 28px; min-width:0; background:#F7FBFF">
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; color:#0B4FD0">STEP 4</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin-top:12px; color:#0A1626">Convert</div>
+          <p style="font-size:15.5px; line-height:1.6; color:#425973; margin:10px 0 0">Content and outreach in your documented voice, with sales coaching if you want it.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ show.testimonials }}" hint-placeholder-val="{{ true }}">
+  <section style="background:#F4F8FE; borderTop:1px solid #E4EDF9; borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:88px 20px">
+      <div data-reveal="1" style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:20px 40px">
+        <div style="max-width:620px; min-width:0">
+          <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">{{ testimonials.eyebrow }}</div>
+          <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.2vw,42px); line-height:1.12; letter-spacing:-0.02em; margin:16px 0 0; color:#0A1626">{{ testimonials.headline }}</h2>
+          <p style="font-size:16px; line-height:1.6; color:#5A718C; margin:14px 0 0">{{ testimonials.intro }}</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px">
+          <button type="button" onClick="{{ prevReview }}" aria-label="Previous review" style="width:44px; height:44px; border-radius:50%; background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:18px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center" style-hover="border-color:#1668F0; color:#0B4FD0">←</button>
+          <button type="button" onClick="{{ nextReview }}" aria-label="Next review" style="width:44px; height:44px; border-radius:50%; background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:18px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center" style-hover="border-color:#1668F0; color:#0B4FD0">→</button>
+        </div>
+      </div>
+
+      <div data-reveal="1" onMouseEnter="{{ pauseReviews }}" onMouseLeave="{{ resumeReviews }}" style="margin-top:36px; background:#0A1626; border-radius:22px; padding:clamp(28px,4vw,44px); color:#FFFFFF; position:relative; overflow:hidden; min-height:300px; display:flex; flex-direction:column; justify-content:space-between; gap:28px" aria-live="polite">
+        <div style="position:absolute; inset:0; background:radial-gradient(700px 320px at 90% 0%, rgba(22,104,240,0.3), rgba(10,22,38,0) 70%)"></div>
+        <div style="position:relative; min-width:0">
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:48px; line-height:0.6; color:#7FB6FF">“</div>
+          <div style="margin-top:16px; min-height:120px">{{ activeQuote }}</div>
+        </div>
+        <div style="position:relative; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px">
+          <div style="display:flex; align-items:center; gap:14px; min-width:0">
+            <div style="width:52px; height:52px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ active.initials }}</div>
+            <div style="min-width:0">
+              <a href="{{ active.linkedinHref }}" target="_blank" rel="noopener" style="font-size:15.5px; font-weight:700; color:#FFFFFF" style-hover="color:#7FB6FF">{{ active.name }}</a>
+              <div style="font-size:13px; color:#B9CBE0; font-weight:600; margin-top:2px">{{ active.role }}</div>
+              <div style="font-size:11.5px; color:#7FB6FF; font-weight:700; margin-top:4px; letter-spacing:0.06em">LINKEDIN RECOMMENDATION · {{ active.category }}</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <sc-for list="{{ reviewDots }}" as="d" hint-placeholder-count="6">
+              <button type="button" onClick="{{ d.go }}" aria-label="{{ d.label }}" style="width:{{ d.w }}; height:8px; border-radius:999px; background:{{ d.bg }}; border:none; padding:0; cursor:pointer; transition:width .3s, background .3s"></button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:16px">
+        <sc-for list="{{ upcoming }}" as="r" hint-placeholder-count="3">
+          <button type="button" onClick="{{ r.go }}" style="text-align:left; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:16px; padding:22px; min-width:0; display:flex; flex-direction:column; gap:14px; cursor:pointer; font-family:inherit" style-hover="border-color:#1668F0">
+            <div style="font-size:14px; line-height:1.6; color:#2B3F57; text-wrap:pretty">“{{ r.excerpt }}”</div>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:auto">
+              <div style="width:34px; height:34px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ r.initials }}</div>
+              <div style="min-width:0"><div style="font-size:13.5px; font-weight:700; color:#0A1626">{{ r.name }}</div><div style="font-size:12px; color:#6A809A; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ r.role }}</div></div>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <section id="apply" style="background:#0A1626; color:#FFFFFF; position:relative; overflow:hidden">
+    <div style="position:absolute; inset:0; background:radial-gradient(800px 420px at 80% 10%, rgba(22,104,240,0.35), rgba(10,22,38,0) 70%)"></div>
+    <div style="max-width:1180px; margin:0 auto; padding:96px 20px; position:relative; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:56px; align-items:start">
+      <div data-reveal="1" style="min-width:0">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7FB6FF">{{ apply.eyebrow }}</div>
+        <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(30px,3.6vw,46px); line-height:1.08; letter-spacing:-0.02em; margin:16px 0 0; text-wrap:balance">{{ apply.headline }}</h2>
+        <p style="font-size:17.5px; line-height:1.65; color:#B9CBE0; margin:20px 0 0; max-width:52ch; text-wrap:pretty">{{ apply.intro }}</p>
+        <div style="display:flex; flex-direction:column; gap:14px; margin-top:30px">
+          <div style="display:flex; gap:12px; align-items:center"><sc-if value="{{ hasOwnerPhoto }}" hint-placeholder-val="{{ false }}"><div style="width:34px; height:34px; border-radius:50%; background-image:url({{ brand.ownerPhoto }}); background-size:cover; background-position:center; flex-shrink:0; border:2px solid rgba(127,182,255,0.5)"></div></sc-if><div style="font-size:16px; color:#DCE7F4; font-weight:600">Reviewed personally by {{ brand.ownerName }}</div></div>
+          <div style="display:flex; gap:12px; align-items:flex-start"><div style="width:20px; height:20px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px">✓</div><div style="font-size:16px; color:#DCE7F4; font-weight:600">No obligation, no template dump</div></div>
+        </div>
+        <div style="margin-top:30px; padding:20px 22px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:16px; display:flex; flex-wrap:wrap; align-items:center; gap:16px">
+          <div style="min-width:0; flex:1 1 200px; font-size:15.5px; font-weight:600; color:#DCE7F4; line-height:1.55">Rather just talk it through? Pick a time that works.</div>
+          <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; color:#0A1626; font-weight:700; font-size:14.5px; padding:13px 22px; border-radius:999px; white-space:nowrap" style-hover="background:#EAF2FD">Book on Calendly →</a>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="min-width:0">
+        <sc-if value="{{ showSuccess }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background:#FFFFFF; border-radius:22px; padding:44px 32px; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.28)">
+            <div style="width:60px; height:60px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:28px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto">✓</div>
+            <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:24px; color:#0A1626; margin:22px 0 0">Request received.</h3>
+            <p style="font-size:16px; line-height:1.6; color:#425973; margin:12px 0 0">Brian will review your profile against the 22-section framework and reply personally within two business days.</p>
+            <a href="{{ calendlyPrefillUrl }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:22px; background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16px; padding:15px 26px; border-radius:999px; box-shadow:0 12px 26px rgba(22,104,240,0.3)" style-hover="background:#0B4FD0">Grab a time on Brian's calendar →</a>
+            <div style="font-size:13px; font-weight:600; color:#7C93AD; margin-top:12px">Opens Calendly, already prefilled with your details.</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ showForm }}" hint-placeholder-val="{{ true }}">
+          <form novalidate="" onSubmit="{{ onSubmit }}" style="background:#FFFFFF; border-radius:22px; padding:32px; box-shadow:0 30px 70px rgba(0,0,0,0.28); display:flex; flex-direction:column; gap:18px">
+            <div>
+              <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:21px; color:#0A1626; margin:0">Request your profile audit</h3>
+              <p style="font-size:14.5px; color:#5A718C; margin:6px 0 0; font-weight:600">Six fields. Two business days.</p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <label for="mtc-name" style="font-size:13.5px; font-weight:700; color:#16283D; letter-spacing:0.01em">Full name</label>
+              <input id="mtc-name" name="name" type="text" autocomplete="name" placeholder="Jane Whitfield" value="{{ form.name }}" onChange="{{ onName }}" style="width:100%; padding:13px 14px; font-size:15.5px; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" />
+              <sc-if value="{{ errName }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px; font-weight:700; color:#C2361F">{{ errNameText }}</div></sc-if>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <label for="mtc-email" style="font-size:13.5px; font-weight:700; color:#16283D">Email</label>
+              <input id="mtc-email" name="email" type="email" autocomplete="email" placeholder="jane@consultancy.com" value="{{ form.email }}" onChange="{{ onEmail }}" style="width:100%; padding:13px 14px; font-size:15.5px; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" />
+              <sc-if value="{{ errEmail }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px; font-weight:700; color:#C2361F">{{ errEmailText }}</div></sc-if>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <label for="mtc-phone" style="font-size:13.5px; font-weight:700; color:#16283D">Phone</label>
+              <input id="mtc-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 214-8890" value="{{ form.phone }}" onChange="{{ onPhone }}" style="width:100%; padding:13px 14px; font-size:15.5px; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" />
+              <sc-if value="{{ errPhone }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px; font-weight:700; color:#C2361F">{{ errPhoneText }}</div></sc-if>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <label for="mtc-category" style="font-size:13.5px; font-weight:700; color:#16283D">I am a…</label>
+              <select id="mtc-category" name="category" value="{{ form.category }}" onChange="{{ onCategory }}" style="width:100%; padding:13px 14px; font-size:15.5px; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF">
+                <option value="">Select one</option>
+                <option value="consultant">Consultant</option>
+                <option value="author">Author</option>
+                <option value="writer">Professional writer</option>
+                <option value="other">Other</option>
+              </select>
+              <sc-if value="{{ errCategory }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px; font-weight:700; color:#C2361F">{{ errCategoryText }}</div></sc-if>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <label for="mtc-linkedin" style="font-size:13.5px; font-weight:700; color:#16283D">Current LinkedIn URL</label>
+              <input id="mtc-linkedin" name="linkedin" type="url" inputmode="url" placeholder="linkedin.com/in/yourname" value="{{ form.linkedin }}" onChange="{{ onLinkedin }}" style="width:100%; padding:13px 14px; font-size:15.5px; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" />
+              <sc-if value="{{ errLinkedin }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px; font-weight:700; color:#C2361F">{{ errLinkedinText }}</div></sc-if>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <label for="mtc-goal" style="font-size:13.5px; font-weight:700; color:#16283D">Primary goal</label>
+              <textarea id="mtc-goal" name="goal" rows="3" placeholder="What do you want to be known for — and what should the profile bring in?" value="{{ form.goal }}" onChange="{{ onGoal }}" style="width:100%; padding:13px 14px; font-size:15.5px; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none; resize:vertical; min-height:88px" style-focus="border-color:#1668F0; background:#FFFFFF"></textarea>
+              <sc-if value="{{ errGoal }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px; font-weight:700; color:#C2361F">{{ errGoalText }}</div></sc-if>
+            </div>
+
+            <button type="submit" disabled="{{ submitting }}" style="width:100%; background:#1668F0; color:#FFFFFF; font-weight:700; font-size:16.5px; padding:16px 20px; border:none; border-radius:999px; cursor:pointer; box-shadow:0 12px 26px rgba(22,104,240,0.3)" style-hover="background:#0B4FD0">{{ submitLabel }}</button>
+            <div style="font-size:12.5px; color:#7C93AD; font-weight:600; text-align:center">Your details go to Brian only. No lists, no forwarding.</div>
+          </form>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <footer style="background:#FFFFFF; borderTop:1px solid #E4EDF9">
+    <div style="max-width:1180px; margin:0 auto; padding:44px 20px; display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between">
+      <sc-if value="{{ hasFooterLogo }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="{{ brand.companyName }}" style="height:34px; width:170px; background-image:url({{ brand.footerLogoUrl }}); background-size:contain; background-repeat:no-repeat; background-position:left center"></div></sc-if><sc-if value="{{ noFooterLogo }}" hint-placeholder-val="{{ true }}"><span style="font-family:Sora,sans-serif; font-weight:700; font-size:16px; color:#0A1626">{{ brand.companyName }}</span></sc-if>
+      <div style="font-size:13.5px; color:#6A809A; font-weight:600; line-height:1.6">{{ brand.legalLine }}</div>
+      <a href="#apply" style="font-size:14px; font-weight:700; color:#0B4FD0">{{ hero.primaryCta }} →</a>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;calendlyUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://calendly.com/briantraichel/intro-call&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Integrations&quot;},&quot;ctaLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Request my profile audit&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reveals&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+// Point this at HubSpot / Zapier and nothing else changes.
+const SUBMIT_ENDPOINT = "";
+
+// Brian's Calendly — change this one line to repoint every booking link on the page.
+const CALENDLY_URL = "https://calendly.com/briantraichel/intro-call";
+// Sibling brand — Blueprint hands off here for clients who continue.
+const AUTHORITY_DESK_URL = "https://authority-desk.com/brian.traichel";
+
+class Component extends DCLogic {
+  state = {
+    content: null, account: "mtc",
+    hero: null, // admin-managed: { mode: "card"|"video", videoUrl, poster, title, caption }
+    reviews: [], reviewIdx: 0, reviewsPaused: false,
+    form: { name: "", email: "", phone: "", category: "", linkedin: "", goal: "" },
+    errors: {},
+    status: "idle" // idle | submitting | success | error
+  };
+
+  componentDidMount() {
+    // Per-account content: ?account=<id> picks the white-label site; ?preview=1 reads the unpublished draft.
+    const q = new URLSearchParams(location.search);
+    const account = q.get("account") || "mtc";
+    const rd = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+    const content = (q.get("preview") === "1" && rd("mtc-content-draft:" + account)) || rd("mtc-content:" + account);
+    this.setState({ account, content });
+    const h = rd("mtc-hero:" + account) || (account === "mtc" ? rd("mtc-hero") : null); if (h) this.setState({ hero: h });
+    import("./reviews.js").then(m => {
+      this._initials = m.initials;
+      // Admin may have edited the list in the CRM this session
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem("mtc-reviews:" + account) || "null") || (account === "mtc" ? JSON.parse(localStorage.getItem("mtc-reviews") || "null") : null); } catch (e) {}
+      this.setState({ reviews: saved || m.REVIEWS });
+    });
+    this._timer = setInterval(() => {
+      if (this.state.reviewsPaused || this.props.autoplay === false) return;
+      this.stepReview(1);
+    }, 6000);
+    const jRoot = document.querySelector("[data-js-journey]");
+    if (jRoot && typeof IntersectionObserver !== "undefined") {
+      this._jIO = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? this.startJourney() : this.stopJourney()), { threshold: 0.3 });
+      this._jIO.observe(jRoot);
+    } else { this.startJourney(); }
+    if (this.props.reveals === false || typeof IntersectionObserver === "undefined") return;
+    const vh = window.innerHeight || 800;
+    const nodes = Array.from(document.querySelectorAll("[data-reveal]")).filter(n => {
+      // Anything already on screen at mount stays visible; only below-the-fold blocks animate in.
+      const r = n.getBoundingClientRect();
+      return r.top > vh * 0.9;
+    });
+    nodes.forEach(n => {
+      n.style.opacity = "0";
+      n.style.transform = "translateY(20px)";
+      n.style.transition = "opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)";
+    });
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        e.target.style.opacity = "1";
+        e.target.style.transform = "none";
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    nodes.forEach(n => io.observe(n));
+    this._io = io;
+  }
+
+  componentWillUnmount() { if (this._io) this._io.disconnect(); clearInterval(this._timer); this.stopJourney(); }
+
+  // Journey map: lights steps 1→5 in sequence while the section is on screen
+  startJourney() {
+    const root = document.querySelector("[data-js-journey]");
+    if (!root || this._jTimer || this.props.animateJourney === false) return;
+    const q = (sel) => Array.from(root.querySelectorAll(sel));
+    const paint = (active) => {
+      for (let n = 1; n <= 5; n++) {
+        const done = n < active, on = n === active;
+        q('[data-js-dot="' + n + '"]').forEach(d => {
+          d.style.background = on ? "#1668F0" : done ? "#0A1626" : "#FFFFFF";
+          d.style.color = (on || done) ? "#FFFFFF" : "#0B4FD0";
+          d.style.border = (on || done) ? "2px solid transparent" : "2px solid #1668F0";
+          d.style.boxShadow = on ? "0 0 0 8px rgba(22,104,240,0.18), 0 10px 24px rgba(22,104,240,0.3)" : "none";
+          d.style.transform = on ? "scale(1.08)" : "scale(1)";
+        });
+        q('[data-js-line="' + n + '"]').forEach(l => { const horiz = l.style.height === "100%"; l.style[horiz ? "width" : "height"] = done ? "100%" : "0%"; });
+        q('[data-js-card="' + n + '"]').forEach(c => {
+          const dark = n === 2;
+          c.style.transform = on ? "translateY(-6px)" : "none";
+          c.style.boxShadow = on ? (dark ? "0 24px 50px rgba(22,104,240,0.35)" : "0 18px 40px rgba(22,104,240,0.18)") : "none";
+          if (!dark) c.style.borderColor = on ? "#1668F0" : "#DDE8F7";
+        });
+      }
+      q("[data-js-grade]").forEach(g => { g.style.width = active >= 2 ? "64%" : "0%"; });
+    };
+    let step = 0;
+    const tick = () => { step = step % 5 + 1; paint(step); };
+    paint(1); step = 1;
+    this._jTimer = setInterval(() => { if (!this._jPaused) tick(); }, 2200);
+    root.addEventListener("mouseenter", this._jEnter = () => { this._jPaused = true; });
+    root.addEventListener("mouseleave", this._jLeave = () => { this._jPaused = false; });
+  }
+  stopJourney() {
+    if (this._jTimer) clearInterval(this._jTimer); this._jTimer = null;
+    const root = document.querySelector("[data-js-journey]");
+    if (root && this._jEnter) { root.removeEventListener("mouseenter", this._jEnter); root.removeEventListener("mouseleave", this._jLeave); }
+  }
+
+  visibleReviews() { return this.state.reviews.filter(r => r.visible !== false); }
+  stepReview(d) {
+    const n = this.visibleReviews().length; if (!n) return;
+    this.setState(s => ({ reviewIdx: (s.reviewIdx + d + n) % n }));
+  }
+
+  set(field, value) {
+    this.setState(s => {
+      const errors = Object.assign({}, s.errors);
+      delete errors[field];
+      return { form: Object.assign({}, s.form, { [field]: value }), errors };
+    });
+  }
+
+  validate(f) {
+    const e = {};
+    if (!f.name.trim()) e.name = "Please tell me your name.";
+    if (!f.email.trim()) e.email = "An email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(f.email.trim())) e.email = "That email doesn't look right.";
+    if (!f.phone.trim()) e.phone = "A phone number is required for follow-up.";
+    else if (f.phone.replace(/[^0-9]/g, "").length < 10) e.phone = "Please include the full number with area code.";
+    if (!f.category) e.category = "Pick the closest category.";
+    if (!f.linkedin.trim()) e.linkedin = "Your LinkedIn URL is required.";
+    else if (!/linkedin\.com\/(in|pub)\//i.test(f.linkedin.trim())) e.linkedin = "Use a linkedin.com/in/… profile URL.";
+    if (f.goal.trim().length < 10) e.goal = "A sentence or two is plenty.";
+    return e;
+  }
+
+  submit = async (ev) => {
+    ev.preventDefault();
+    const f = this.state.form;
+    const errors = this.validate(f);
+    if (Object.keys(errors).length) {
+      this.setState({ errors });
+      const first = document.getElementById("mtc-" + Object.keys(errors)[0]);
+      if (first) first.focus();
+      return;
+    }
+    this.setState({ errors: {}, status: "submitting" });
+    try {
+      if (SUBMIT_ENDPOINT) {
+        await fetch(SUBMIT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({}, f, { source: "mtc-landing", submittedAt: new Date().toISOString() }))
+        });
+      } else {
+        await new Promise(r => setTimeout(r, 700));
+      }
+      this.setState({ status: "success" });
+    } catch (err) {
+      this.setState({ status: "idle", errors: { goal: "Something went wrong sending that. Please try again." } });
+    }
+  };
+
+  renderVals() {
+    const { form, errors, status, reviewIdx } = this.state;
+    const vis = this.visibleReviews();
+    const n = vis.length;
+    const idx = n ? reviewIdx % n : 0;
+    const ini = this._initials || (nm => nm.split(/\s+/).map(w => w[0]).slice(0, 2).join(""));
+    const a = vis[idx];
+    const active = a ? { initials: ini(a.name), name: a.name, role: a.role, category: (a.category || "").toUpperCase(), linkedinHref: "https://" + (a.linkedin || "").replace(/^https?:\/\//, "") } : {};
+    const upcoming = n > 1 ? [1, 2, 3].filter(k => k < n).map(k => { const r = vis[(idx + k) % n]; return {
+      initials: ini(r.name), name: r.name, role: r.role,
+      excerpt: r.quote.length > 120 ? r.quote.slice(0, 120).trim() + "…" : r.quote,
+      go: () => this.setState({ reviewIdx: (idx + k) % n })
+    }; }) : [];
+    const defaults = window.MTC_DEFAULTS || {};
+    const c = window.MTC_mergeContent ? window.MTC_mergeContent(defaults, this.state.content || {}) : defaults;
+    const hero = this.state.hero || {};
+    const heroMode = this.props.heroMode || hero.mode || "card";
+    const vUrl = (hero.videoUrl || "").trim();
+    const isFile = /\.(mp4|webm|mov)(\?|$)/i.test(vUrl);
+    const embedSrc = (() => {
+      const yt = vUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/);
+      if (yt) return "https://www.youtube.com/embed/" + yt[1] + "?rel=0&modestbranding=1";
+      const vm = vUrl.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vm) return "https://player.vimeo.com/video/" + vm[1];
+      const lm = vUrl.match(/loom\.com\/(?:share|embed)\/([\w]+)/);
+      if (lm) return "https://www.loom.com/embed/" + lm[1];
+      return vUrl;
+    })();
+    const heroIsVideo = heroMode === "video" && !!vUrl;
+    const brandC = c.brand || {}; const guideC = c.guide || {};
+    const acct = (window.PLATFORM_loadAccounts ? window.PLATFORM_loadAccounts() : []).find(a => a.id === this.state.account);
+    const feats = acct && window.PLATFORM_features ? window.PLATFORM_features(acct) : { authority_desk: true };
+    return {
+      hasLogo: !!brandC.logoUrl, noLogo: !brandC.logoUrl, hasFooterLogo: !!brandC.footerLogoUrl, noFooterLogo: !brandC.footerLogoUrl,
+      hasPortrait: !!guideC.photo, noPortrait: !guideC.photo, hasOwnerPhoto: !!brandC.ownerPhoto, noOwnerPhoto: !brandC.ownerPhoto,
+      ownerInitials: (guideC.name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase(),
+      showAuthorityDesk: feats.authority_desk !== false,
+      brand: c.brand || {}, hero: c.hero || {}, journey: c.journey || {}, cost: c.cost || {}, guide: c.guide || {}, plan: c.plan || {}, testimonials: c.testimonials || {}, apply: c.apply || {},
+      show: Object.assign({ journey: true, cost: true, guide: true, plan: true, process: true, testimonials: true }, c.visibility || {}),
+      heroIsVideo, heroIsCard: !heroIsVideo,
+      heroVideoFile: heroIsVideo && isFile, heroVideoEmbed: heroIsVideo && !isFile,
+      heroVideoSrc: isFile ? vUrl : embedSrc,
+      heroPoster: hero.poster || "",
+      heroVideoTitle: hero.title || "A 90-second walkthrough with Brian",
+      heroVideoCaption: hero.caption || "What a 22-section audit actually looks at",
+      active, upcoming,
+      activeQuote: a ? React.createElement("p", { key: a.id, style: { fontFamily: "Sora, sans-serif", fontWeight: 500, fontSize: "clamp(18px,1.7vw,24px)", lineHeight: 1.5, margin: 0, textWrap: "pretty", animation: "mtcQuoteIn .55s cubic-bezier(.2,.7,.2,1) both" } }, a.quote) : null,
+      reviewDots: vis.map((r, i) => ({ go: () => this.setState({ reviewIdx: i }), label: "Review " + (i + 1), w: i === idx ? "28px" : "8px", bg: i === idx ? "#1668F0" : "rgba(255,255,255,0.28)" })),
+      prevReview: () => this.stepReview(-1),
+      nextReview: () => this.stepReview(1),
+      pauseReviews: () => this.setState({ reviewsPaused: true }),
+      resumeReviews: () => this.setState({ reviewsPaused: false }),
+      form,
+      calendlyUrl: this.props.calendlyUrl || CALENDLY_URL,
+      authorityDeskUrl: this.props.authorityDeskUrl || AUTHORITY_DESK_URL,
+      onSubmit: this.submit,
+      onName: e => this.set("name", e.target.value),
+      onEmail: e => this.set("email", e.target.value),
+      onPhone: e => this.set("phone", e.target.value),
+      onCategory: e => this.set("category", e.target.value),
+      onLinkedin: e => this.set("linkedin", e.target.value),
+      onGoal: e => this.set("goal", e.target.value),
+      errName: !!errors.name, errNameText: errors.name || "",
+      errEmail: !!errors.email, errEmailText: errors.email || "",
+      errPhone: !!errors.phone, errPhoneText: errors.phone || "",
+      errCategory: !!errors.category, errCategoryText: errors.category || "",
+      errLinkedin: !!errors.linkedin, errLinkedinText: errors.linkedin || "",
+      errGoal: !!errors.goal, errGoalText: errors.goal || "",
+      submitting: status === "submitting",
+      submitLabel: status === "submitting" ? "Sending…" : (this.props.ctaLabel || "Request my profile audit"),
+      // Calendly prefill so the booking screen already knows who they are
+      calendlyPrefillUrl: (this.props.calendlyUrl || CALENDLY_URL) +
+        "?name=" + encodeURIComponent(form.name) +
+        "&email=" + encodeURIComponent(form.email) +
+        "&a1=" + encodeURIComponent(form.linkedin),
+      showSuccess: status === "success",
+      showForm: status !== "success"
+    };
+  }
+}
+
+</script>
+</body>
+</html>

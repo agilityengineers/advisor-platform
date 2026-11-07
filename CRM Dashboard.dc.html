@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="platform.js"></script>
+<script src="site-content.js"></script>
+<script src="grader.js"></script>
+<style>
+  body { margin:0; padding:0; font-family:Manrope, system-ui, sans-serif; color:#0A1626; background:#F4F8FE; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#1668F0; text-decoration:none; }
+  a:hover { color:#0B4FD0; }
+  input, select, textarea, button { font-family:inherit; }
+  ::placeholder { color:#9AAABF; }
+  @media (max-width: 1180px) { [data-rail-grid] { grid-template-columns: minmax(0,1fr) !important; } [data-rail] { border-right: none !important; border-bottom: 1px solid #E4EDF9; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; align-items:stretch; background:#F4F8FE">
+
+  <aside style="width:246px; flex-shrink:0; background:#0A1626; color:#FFFFFF; padding:22px 18px; display:flex; flex-direction:column; gap:26px; position:sticky; top:0; height:100vh">
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <sc-if value="{{ showMark }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="{{ accountName }}" style="height:48px; width:100%; background-color:#FFFFFF; background-image:url({{ markUrl }}); background-size:contain; background-repeat:no-repeat; background-position:center; border-radius:10px; padding:6px"></div></sc-if>
+      <sc-if value="{{ showNameOnly }}" hint-placeholder-val="{{ true }}"><div style="display:flex; align-items:center; gap:11px"><div style="width:34px; height:34px; border-radius:9px; background:#1668F0; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ accountInitials }}</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:14.5px; letter-spacing:-0.01em; min-width:0">{{ accountName }}</div></div></sc-if>
+      <sc-if value="{{ isSuper }}" hint-placeholder-val="{{ false }}"><div style="display:flex; align-items:center; gap:11px"><div style="width:34px; height:34px; border-radius:9px; background:#E39A2B; color:#0A1626; font-family:Sora,sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0">AP</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:14.5px; letter-spacing:-0.01em; min-width:0">Advisor Platform</div></div></sc-if>
+      <div style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">{{ accountPlan }}</div>
+    </div>
+    <sc-if value="{{ canSwitchAccounts }}" hint-placeholder-val="{{ false }}">
+      <a href="Platform Admin.dc.html" style="display:flex; align-items:center; gap:10px; background:rgba(227,154,43,0.16); border:1px solid rgba(227,154,43,0.45); border-radius:11px; padding:10px 12px; color:#FFFFFF" style-hover="background:rgba(227,154,43,0.26)"><span style="width:8px; height:8px; border-radius:50%; background:#E39A2B; flex-shrink:0"></span><div style="min-width:0"><div style="font-size:12.5px; font-weight:700">Viewing company: {{ accountName }}</div><div style="font-size:11px; color:#F3D9A8; font-weight:600">← Back to Platform Admin</div></div></a>
+    </sc-if>
+
+    <nav aria-label="Sections" style="display:flex; flex-direction:column; gap:4px">
+      <a href="#leads" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; border-radius:11px; background:#1668F0; color:#FFFFFF; font-size:14.5px; font-weight:700">Leads<span style="background:rgba(255,255,255,0.22); font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:999px">{{ totalLeads }}</span></a>
+      <a href="#leads" onClick="{{ viewBoard }}" style="padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Pipeline</a>
+      <a href="#outreach" style="padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Outreach templates</a>
+      <sc-if value="{{ canSeeSite }}" hint-placeholder-val="{{ true }}"><a href="#website" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Website (CMS)<sc-if value="{{ hasDraft }}" hint-placeholder-val="{{ false }}"><span style="background:#E39A2B; color:#0A1626; font-size:10.5px; font-weight:700; padding:3px 7px; border-radius:999px">DRAFT</span></sc-if></a></sc-if>
+      <a href="#reviews" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Reviews<span style="background:rgba(255,255,255,0.12); font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:999px">{{ reviewLiveCount }}</span></a>
+      <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><a href="#grader" style="padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Profile Grader</a></sc-if>
+      <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><a href="#settings" style="padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Company settings</a></sc-if>
+      <a href="Landing Page.dc.html" style="padding:11px 13px; border-radius:11px; color:#AFC4DB; font-size:14.5px; font-weight:600" style-hover="background:rgba(255,255,255,0.07); color:#FFFFFF">Landing page ↗</a>
+    </nav>
+
+    <div style="margin-top:auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:15px">
+      <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">INTEGRATIONS</div>
+      <div style="display:flex; flex-direction:column; gap:9px; margin-top:11px">
+        <sc-for list="{{ sideInts }}" as="si" hint-placeholder-count="4"><div style="display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600; color:#DCE7F4"><span style="width:8px; height:8px; border-radius:50%; background:{{ si.dot }}; flex-shrink:0"></span>{{ si.name }}<span style="margin-left:auto; font-size:10.5px; font-weight:700; color:#8FA6BF">{{ si.state }}</span></div></sc-for>
+      </div>
+    </div>
+
+    <div style="borderTop:1px solid rgba(255,255,255,0.12); padding-top:14px; display:flex; flex-direction:column; gap:10px">
+      <div style="display:flex; align-items:center; gap:11px">
+        <sc-if value="{{ isSuper }}" hint-placeholder-val="{{ false }}"><div style="width:34px; height:34px; border-radius:50%; background:#E39A2B; color:#0A1626; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0">CW</div></sc-if>
+        <sc-if value="{{ notSuper }}" hint-placeholder-val="{{ true }}"><div style="width:34px; height:34px; border-radius:50%; background:#1668F0; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0">{{ userInitials }}</div></sc-if>
+        <div style="min-width:0">
+          <div style="font-size:13.5px; font-weight:700">{{ userName }}</div>
+          <div style="font-size:11.5px; color:#8FA6BF; font-weight:600">{{ roleName }}</div>
+        </div>
+      </div>
+      <label for="crm-role" style="font-size:10.5px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">VIEW AS · PROTOTYPE</label>
+      <select id="crm-role" value="{{ roleId }}" onChange="{{ onRole }}" style="width:100%; padding:8px 10px; font-size:12.5px; font-weight:700; color:#0A1626; background:#FFFFFF; border:1px solid rgba(255,255,255,0.18); border-radius:9px; outline:none">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="5"><option value="{{ r.id }}">{{ r.name }}</option></sc-for>
+      </select>
+      <div style="font-size:11.5px; line-height:1.5; color:#8FA6BF">{{ roleDesc }}</div>
+    </div>
+  </aside>
+
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column">
+
+    <div style="background:#FFFFFF; borderBottom:1px solid #E4EDF9; padding:18px 28px; display:flex; flex-wrap:wrap; align-items:center; gap:16px; position:sticky; top:0; z-index:20">
+      <div style="min-width:0; flex:1 1 260px">
+        <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; letter-spacing:-0.02em; margin:0; color:#0A1626">Leads</h1>
+        <div style="font-size:13.5px; color:#6A809A; font-weight:600; margin-top:3px">Profile audit requests from the landing page form</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px">
+        <label for="crm-search" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)">Search leads</label>
+        <input id="crm-search" type="search" placeholder="Search name, email, phone…" value="{{ query }}" onChange="{{ onQuery }}" style="width:270px; max-width:46vw; padding:11px 14px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none; color:#0A1626" style-focus="border-color:#1668F0; background:#FFFFFF" />
+        <div style="background:#FFF8F0; border:1px solid #F6E4CC; color:#8A6320; font-size:11.5px; font-weight:700; letter-spacing:0.06em; padding:8px 11px; border-radius:999px; white-space:nowrap">SAMPLE DATA</div>
+      </div>
+    </div>
+
+    <div style="padding:26px 28px 44px; display:flex; flex-direction:column; gap:26px">
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px">
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:16px; padding:20px">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">NEW THIS WEEK</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:30px; color:#0A1626; margin-top:9px">{{ kpiNew }}</div>
+          <div style="font-size:13px; font-weight:600; color:#6A809A; margin-top:4px">Awaiting first contact</div>
+        </div>
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:16px; padding:20px">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">IN CONVERSATION</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:30px; color:#0A1626; margin-top:9px">{{ kpiTalking }}</div>
+          <div style="font-size:13px; font-weight:600; color:#6A809A; margin-top:4px">Open stages past New</div>
+        </div>
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:16px; padding:20px">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">CLIENTS</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:30px; color:#0A1626; margin-top:9px">{{ kpiClients }}</div>
+          <div style="font-size:13px; font-weight:600; color:#6A809A; margin-top:4px">Engagement signed</div>
+        </div>
+        <div style="background:#0A1626; border:1px solid #0A1626; border-radius:16px; padding:20px; color:#FFFFFF">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">FORM → CRM</div>
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:30px; margin-top:9px">Live</div>
+          <div style="font-size:13px; font-weight:600; color:#B9CBE0; margin-top:4px">Zapier catch hook, last run {{ lastRun }}</div>
+        </div>
+      </div>
+
+      <div id="leads" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden">
+        <div style="padding:16px 20px; borderBottom:1px solid #E4EDF9; display:flex; flex-wrap:wrap; align-items:center; gap:10px">
+          <div style="display:inline-flex; background:#F4F8FE; border:1px solid #D8E5F5; border-radius:999px; padding:3px">
+            <button type="button" onClick="{{ viewList }}" style="background:{{ listBg }}; color:{{ listFg }}; border:none; font-size:13px; font-weight:700; padding:7px 14px; border-radius:999px; cursor:pointer">List</button>
+            <sc-if value="{{ featBoard }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ viewBoard }}" style="background:{{ boardBg }}; color:{{ boardFg }}; border:none; font-size:13px; font-weight:700; padding:7px 14px; border-radius:999px; cursor:pointer">Pipeline</button></sc-if>
+          </div>
+          <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-wrap:wrap; gap:8px">
+              <sc-for list="{{ stageChips }}" as="c" hint-placeholder-count="5">
+                <button type="button" onClick="{{ c.go }}" style="background:{{ c.bg }}; color:{{ c.fg }}; border:1px solid #D8E5F5; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer">{{ c.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ toggleManage }}" style="background:{{ manageBg }}; color:{{ manageFg }}; border:1px solid #D8E5F5; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer">{{ manageLabel }}</button>
+          </sc-if>
+          <div style="margin-left:auto; font-size:13px; font-weight:700; color:#6A809A">{{ shownCount }}</div>
+        </div>
+
+        <sc-if value="{{ manageOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px 20px; background:#F7FBFF; borderBottom:1px solid #E4EDF9">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px">
+              <div><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">PIPELINE COLUMNS</div><div style="font-size:13px; color:#6A809A; font-weight:600; margin-top:3px">Rename, reorder, add or remove stages. Mark one Won and one Lost so the funnel knows where deals end.</div></div>
+              <form onSubmit="{{ addStage }}" style="display:flex; gap:8px"><input type="text" placeholder="New column name" value="{{ newStageName }}" onChange="{{ onNewStageName }}" style="padding:9px 12px; font-size:13.5px; border:1px solid #D8E5F5; border-radius:9px; outline:none; background:#FFFFFF; width:190px" style-focus="border-color:#1668F0" /><button type="submit" style="background:#1668F0; color:#FFFFFF; border:none; border-radius:9px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer">+ Add</button></form>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px">
+              <sc-for list="{{ stageRows }}" as="st" hint-placeholder-count="6">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:#FFFFFF; border:1px solid #E4EDF9; border-radius:10px; padding:8px 10px">
+                  <div style="display:flex; gap:4px"><button type="button" onClick="{{ st.up }}" aria-label="Move left" style="width:26px; height:26px; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:6px; color:#425973; font-size:11px; cursor:pointer">◀</button><button type="button" onClick="{{ st.down }}" aria-label="Move right" style="width:26px; height:26px; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:6px; color:#425973; font-size:11px; cursor:pointer">▶</button></div>
+                  <span style="width:10px; height:10px; border-radius:50%; background:{{ st.dot }}; flex-shrink:0"></span>
+                  <input type="text" value="{{ st.name }}" onChange="{{ st.rename }}" aria-label="Column name" style="flex:1 1 160px; min-width:0; padding:7px 10px; font-size:13.5px; font-weight:700; color:#0A1626; border:1px solid transparent; border-radius:7px; background:transparent; outline:none" style-focus="border-color:#1668F0; background:#F7FBFF" />
+                  <select value="{{ st.kind }}" onChange="{{ st.setKind }}" aria-label="Column type" style="padding:7px 10px; font-size:12.5px; font-weight:600; border:1px solid #D8E5F5; border-radius:7px; background:#FFFFFF; color:#425973"><option value="open">Open stage</option><option value="won">Won · closed deal</option><option value="lost">Lost · not a fit</option></select>
+                  <span style="font-size:12px; font-weight:700; color:#7C93AD; white-space:nowrap">{{ st.count }} leads</span>
+                  <button type="button" onClick="{{ st.remove }}" disabled="{{ st.locked }}" style="background:#FFFFFF; border:1px solid #F0D6D0; color:#C2361F; font-size:12px; font-weight:700; padding:6px 10px; border-radius:999px; cursor:pointer; opacity:{{ st.removeOpacity }}">Remove</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto; padding:18px 20px 22px; background:#F7FBFF">
+            <div style="display:flex; gap:14px; align-items:flex-start; min-width:max-content">
+              <sc-for list="{{ columns }}" as="col" hint-placeholder-count="5">
+                <div onDragOver="{{ col.over }}" onDrop="{{ col.drop }}" onDragLeave="{{ col.leave }}" style="width:264px; flex-shrink:0; background:{{ col.bg }}; border:1px solid {{ col.border }}; border-radius:16px; display:flex; flex-direction:column; min-height:240px; transition:background .15s, border-color .15s">
+                  <div style="padding:14px 14px 10px; display:flex; align-items:center; gap:8px; borderBottom:1px solid #E4EDF9">
+                    <span style="width:9px; height:9px; border-radius:50%; background:{{ col.dot }}; flex-shrink:0"></span>
+                    <div style="font-size:13.5px; font-weight:700; color:#0A1626; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1">{{ col.name }}</div>
+                    <span style="background:#F1F4F8; color:#425973; font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:999px">{{ col.count }}</span>
+                  </div>
+                  <div style="padding:10px; display:flex; flex-direction:column; gap:8px; flex:1">
+                    <sc-for list="{{ col.cards }}" as="k" hint-placeholder-count="2">
+                      <div draggable="{{ true }}" onDragStart="{{ k.dragStart }}" onDragEnd="{{ k.dragEnd }}" onClick="{{ k.open }}" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:12px; padding:12px; cursor:grab; opacity:{{ k.opacity }}; box-shadow:0 4px 12px rgba(10,22,38,0.04)" style-hover="border-color:#1668F0">
+                        <div style="display:flex; align-items:center; gap:9px"><div style="width:28px; height:28px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ k.initials }}</div><div style="min-width:0"><div style="font-size:13.5px; font-weight:700; color:#0A1626; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ k.name }}</div><div style="font-size:11.5px; color:#6A809A; font-weight:600">{{ k.category }} · {{ k.received }}</div></div></div>
+                        <div style="font-size:12.5px; color:#5A718C; line-height:1.5; margin-top:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">{{ k.goal }}</div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px"><span style="font-size:11.5px; font-weight:700; color:#0B4FD0">{{ k.phone }}</span><sc-if value="{{ k.hasBooking }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; font-weight:700; color:#8A6320; background:#FFF8F0; padding:3px 7px; border-radius:999px">CALL BOOKED</span></sc-if></div>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ col.empty }}" hint-placeholder-val="{{ false }}"><div style="border:1px dashed #D8E5F5; border-radius:12px; padding:18px; text-align:center; font-size:12.5px; font-weight:600; color:#9AAABF">Drop a lead here</div></sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+
+        <div style="overflow-x:auto">
+          <table style="width:100%; border-collapse:collapse; min-width:920px">
+            <thead>
+              <tr style="background:#F7FBFF">
+                <th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:13px 20px; borderBottom:1px solid #E4EDF9">LEAD</th>
+                <th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:13px 16px; borderBottom:1px solid #E4EDF9">CATEGORY</th>
+                <th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:13px 16px; borderBottom:1px solid #E4EDF9">PHONE</th>
+                <th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:13px 16px; borderBottom:1px solid #E4EDF9">GOAL</th>
+                <th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:13px 16px; borderBottom:1px solid #E4EDF9">STATUS</th>
+                <th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:13px 20px; borderBottom:1px solid #E4EDF9">RECEIVED</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="row" hint-placeholder-count="5">
+                <tr onClick="{{ row.open }}" style="cursor:pointer; borderBottom:1px solid #EEF4FC" style-hover="background:#F7FBFF">
+                  <td style="padding:15px 20px">
+                    <div style="display:flex; align-items:center; gap:12px">
+                      <div style="width:36px; height:36px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ row.initials }}</div>
+                      <div style="min-width:0">
+                        <div style="font-size:14.5px; font-weight:700; color:#0A1626">{{ row.name }}</div>
+                        <div style="font-size:12.5px; color:#6A809A; font-weight:600">{{ row.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding:15px 16px; font-size:13.5px; font-weight:600; color:#3D556F; white-space:nowrap">{{ row.category }}</td>
+                  <td style="padding:15px 16px; font-size:13.5px; font-weight:600; color:#3D556F; white-space:nowrap">{{ row.phone }}</td>
+                  <td style="padding:15px 16px; font-size:13.5px; color:#5A718C; max-width:280px">{{ row.goalShort }}</td>
+                  <td style="padding:15px 16px"><span style="display:inline-block; background:{{ row.pillBg }}; color:{{ row.pillFg }}; font-size:12px; font-weight:700; padding:6px 11px; border-radius:999px; white-space:nowrap">{{ row.status }}</span></td>
+                  <td style="padding:15px 20px; font-size:13px; font-weight:600; color:#6A809A; white-space:nowrap">{{ row.received }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:44px 20px; text-align:center; font-size:14.5px; font-weight:600; color:#6A809A">No leads match that filter.</div>
+        </sc-if>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ canSeeSiteFeature }}" hint-placeholder-val="{{ true }}">
+      <div id="website" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden">
+        <div style="padding:20px 24px; borderBottom:1px solid #E4EDF9; display:flex; flex-wrap:wrap; align-items:center; gap:14px">
+          <div style="min-width:0; flex:1 1 260px">
+            <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">WEBSITE · {{ accountNameUpper }}</div>
+            <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; margin:8px 0 0; color:#0A1626">Landing page content</h2>
+            <div style="font-size:13px; color:#6A809A; font-weight:600; margin-top:4px">{{ cmsStatus }}</div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center">
+            <a href="{{ previewUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:13px; font-weight:700; padding:10px 14px; border-radius:999px" style-hover="border-color:#1668F0; color:#0B4FD0">Preview draft ↗</a>
+            <a href="{{ liveUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:13px; font-weight:700; padding:10px 14px; border-radius:999px" style-hover="border-color:#1668F0; color:#0B4FD0">View live ↗</a>
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{ discardDraft }}" disabled="{{ noDraft }}" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#425973; font-size:13px; font-weight:700; padding:10px 14px; border-radius:999px; cursor:pointer; opacity:{{ draftOpacity }}">Discard</button>
+              <button type="button" onClick="{{ publish }}" disabled="{{ noDraft }}" style="background:#1668F0; color:#FFFFFF; border:none; font-size:13px; font-weight:700; padding:10px 18px; border-radius:999px; cursor:pointer; box-shadow:0 8px 20px rgba(22,104,240,0.28); opacity:{{ draftOpacity }}" style-hover="background:#0B4FD0">Publish</button>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:12px 24px; background:#FFF8F0; borderBottom:1px solid #F6E4CC; font-size:13px; font-weight:700; color:#8A6320; display:flex; align-items:center; gap:10px"><span style="font-size:15px">🔒</span>Read-only — only the account Admin or a Super admin can change website content.</div>
+        </sc-if>
+        <div data-rail-grid="1" style="display:grid; grid-template-columns:220px minmax(0,1fr); gap:0">
+          <div data-rail="1" style="borderRight:1px solid #E4EDF9; background:#F7FBFF; padding:12px; display:flex; flex-direction:column; gap:4px">
+            <sc-for list="{{ cmsSections }}" as="sec" hint-placeholder-count="9">
+              <button type="button" onClick="{{ sec.go }}" style="display:flex; align-items:center; justify-content:space-between; gap:8px; text-align:left; background:{{ sec.bg }}; color:{{ sec.fg }}; border:none; border-radius:10px; padding:10px 12px; font-size:13.5px; font-weight:700; cursor:pointer"><span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ sec.label }}</span><span style="display:flex; align-items:center; gap:6px"><sc-if value="{{ sec.hidden }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px; font-weight:700; color:#9AAABF; letter-spacing:0.06em">HIDDEN</span></sc-if><sc-if value="{{ sec.changed }}" hint-placeholder-val="{{ false }}"><span style="width:7px; height:7px; border-radius:50%; background:#E39A2B"></span></sc-if></span></button>
+            </sc-for>
+          </div>
+          <div style="padding:22px 24px; min-width:0">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px">
+              <div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:17px; color:#0A1626">{{ activeSection.label }}</div><div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:2px">{{ activeSection.hint }}</div></div>
+              <div style="display:flex; align-items:center; gap:10px">
+                <sc-if value="{{ activeSection.toggle }}" hint-placeholder-val="{{ false }}">
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#16283D; cursor:pointer"><input type="checkbox" checked="{{ activeSection.visible }}" onChange="{{ toggleSection }}" disabled="{{ readOnly }}" style="width:17px; height:17px; accent-color:#1668F0" />Show on site</label>
+                </sc-if>
+                <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ resetSection }}" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#425973; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; cursor:pointer">Reset to default</button></sc-if>
+              </div>
+            </div>
+
+            <sc-if value="{{ isHeroSection }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:18px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:14px; padding:16px">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px">
+                  <div><div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">BESIDE THE HEADLINE</div><div style="font-size:13px; font-weight:700; color:{{ heroStatusColor }}; margin-top:4px">{{ heroStatus }}</div></div>
+                  <div style="display:inline-flex; background:#FFFFFF; border:1px solid #D8E5F5; border-radius:999px; padding:3px">
+                    <button type="button" onClick="{{ heroModeCard }}" disabled="{{ readOnly }}" style="background:{{ heroCardBg }}; color:{{ heroCardFg }}; border:none; font-size:12.5px; font-weight:700; padding:7px 13px; border-radius:999px; cursor:pointer; white-space:nowrap">Audit card</button>
+                    <button type="button" onClick="{{ heroModeVideo }}" disabled="{{ readOnly }}" style="background:{{ heroVideoBg }}; color:{{ heroVideoFg }}; border:none; font-size:12.5px; font-weight:700; padding:7px 13px; border-radius:999px; cursor:pointer; white-space:nowrap">Video</button>
+                  </div>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px">
+                  <div style="display:flex; flex-direction:column; gap:5px; grid-column:1 / -1"><label for="hero-url" style="font-size:12px; font-weight:700; color:#16283D">Video URL <span style="color:#7C93AD; font-weight:600">(YouTube, Vimeo, Loom, or .mp4)</span></label><input id="hero-url" type="url" value="{{ hero.videoUrl }}" onChange="{{ onHeroUrl }}" disabled="{{ heroFieldsOff }}" style="padding:10px 12px; font-size:14px; background:#FFFFFF; border:1px solid #D8E5F5; border-radius:9px; outline:none; color:#0A1626; opacity:{{ heroFieldOpacity }}" style-focus="border-color:#1668F0" /></div>
+                  <div style="display:flex; flex-direction:column; gap:5px"><label for="hero-title" style="font-size:12px; font-weight:700; color:#16283D">Title under video</label><input id="hero-title" type="text" value="{{ hero.title }}" onChange="{{ onHeroTitle }}" disabled="{{ heroFieldsOff }}" style="padding:10px 12px; font-size:14px; background:#FFFFFF; border:1px solid #D8E5F5; border-radius:9px; outline:none; color:#0A1626; opacity:{{ heroFieldOpacity }}" style-focus="border-color:#1668F0" /></div>
+                  <div style="display:flex; flex-direction:column; gap:5px"><label for="hero-caption" style="font-size:12px; font-weight:700; color:#16283D">Caption</label><input id="hero-caption" type="text" value="{{ hero.caption }}" onChange="{{ onHeroCaption }}" disabled="{{ heroFieldsOff }}" style="padding:10px 12px; font-size:14px; background:#FFFFFF; border:1px solid #D8E5F5; border-radius:9px; outline:none; color:#0A1626; opacity:{{ heroFieldOpacity }}" style-focus="border-color:#1668F0" /></div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ activeHasFields }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:18px">
+                <sc-for list="{{ activeFields }}" as="f" hint-placeholder-count="6">
+                  <div style="display:flex; flex-direction:column; gap:6px; grid-column:{{ f.span }}">
+                    <label for="{{ f.id }}" style="font-size:12.5px; font-weight:700; color:#16283D; display:flex; justify-content:space-between; gap:8px"><span>{{ f.label }}</span><sc-if value="{{ f.changed }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; color:#8A6320; letter-spacing:0.06em">EDITED</span></sc-if></label>
+                    <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ true }}"><input id="{{ f.id }}" type="text" value="{{ f.value }}" onChange="{{ f.set }}" disabled="{{ readOnly }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626" style-focus="border-color:#1668F0; background:#FFFFFF" /></sc-if>
+                    <sc-if value="{{ f.isArea }}" hint-placeholder-val="{{ false }}"><textarea id="{{ f.id }}" rows="3" value="{{ f.value }}" onChange="{{ f.set }}" disabled="{{ readOnly }}" style="padding:11px 13px; font-size:14.5px; line-height:1.55; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626; resize:vertical" style-focus="border-color:#1668F0; background:#FFFFFF"></textarea></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ activeNoFields }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:18px; padding:22px; border:1px dashed #D8E5F5; border-radius:14px; font-size:13.5px; color:#6A809A; font-weight:600">This section is fixed layout — only visibility is controlled here. Reviews are managed in the Reviews panel below.</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ featReviews }}" hint-placeholder-val="{{ true }}">
+      <div id="reviews" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden">
+        <div style="padding:20px 24px; borderBottom:1px solid #E4EDF9; display:flex; flex-wrap:wrap; align-items:center; gap:14px">
+          <div style="min-width:0; flex:1 1 240px">
+            <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">WHAT CLIENTS SAY</div>
+            <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; margin:8px 0 0; color:#0A1626">Reviews on the landing page</h2>
+            <div style="font-size:13px; color:#6A809A; font-weight:600; margin-top:4px">{{ reviewSummary }} · drag handle order = slider order</div>
+          </div>
+          <button type="button" onClick="{{ openNewReview }}" style="background:#1668F0; color:#FFFFFF; font-size:14px; font-weight:700; padding:11px 18px; border:none; border-radius:999px; cursor:pointer; box-shadow:0 8px 20px rgba(22,104,240,0.28)" style-hover="background:#0B4FD0">+ Add review</button>
+        </div>
+        <div style="display:flex; flex-direction:column">
+          <sc-for list="{{ reviewRows }}" as="r" hint-placeholder-count="4">
+            <div style="display:flex; align-items:flex-start; gap:16px; padding:18px 24px; borderBottom:1px solid #EEF4FC; opacity:{{ r.opacity }}">
+              <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0; padding-top:4px">
+                <button type="button" onClick="{{ r.up }}" aria-label="Move up" style="width:26px; height:22px; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:6px; color:#425973; font-size:11px; cursor:pointer" style-hover="background:#EAF2FD">▲</button>
+                <button type="button" onClick="{{ r.down }}" aria-label="Move down" style="width:26px; height:22px; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:6px; color:#425973; font-size:11px; cursor:pointer" style-hover="background:#EAF2FD">▼</button>
+              </div>
+              <div style="width:40px; height:40px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ r.initials }}</div>
+              <div style="min-width:0; flex:1">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px">
+                  <div style="font-size:14.5px; font-weight:700; color:#0A1626">{{ r.name }}</div>
+                  <span style="background:#F1F4F8; color:#425973; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; letter-spacing:0.04em">{{ r.category }}</span>
+                  <span style="background:{{ r.pillBg }}; color:{{ r.pillFg }}; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; letter-spacing:0.04em">{{ r.stateLabel }}</span>
+                </div>
+                <div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:3px">{{ r.role }} · <a href="{{ r.linkedinHref }}" target="_blank" rel="noopener" style="color:#0B4FD0">{{ r.linkedin }}</a></div>
+                <div style="font-size:13.5px; line-height:1.55; color:#3D556F; margin-top:8px">“{{ r.excerpt }}”</div>
+              </div>
+              <div style="display:flex; gap:8px; flex-shrink:0">
+                <button type="button" onClick="{{ r.toggle }}" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; cursor:pointer" style-hover="border-color:#1668F0; color:#0B4FD0">{{ r.toggleLabel }}</button>
+                <button type="button" onClick="{{ r.edit }}" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; cursor:pointer" style-hover="border-color:#1668F0; color:#0B4FD0">Edit</button>
+                <button type="button" onClick="{{ r.remove }}" aria-label="Remove review" style="background:#FFFFFF; border:1px solid #F0D6D0; color:#C2361F; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; cursor:pointer" style-hover="background:#FFF3F0">Remove</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      </sc-if>
+
+      <sc-if value="{{ lockedFeatures }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF; border:1px dashed #D8E5F5; border-radius:18px; padding:18px 22px; display:flex; flex-wrap:wrap; align-items:center; gap:12px">
+          <span style="font-size:16px">🔒</span>
+          <div style="min-width:0; flex:1 1 300px"><div style="font-size:13.5px; font-weight:700; color:#0A1626">Not in your plan: {{ lockedList }}</div><div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:2px">Your plan is {{ planName }}. Ask the platform team to upgrade or enable a feature.</div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+      <div id="grader" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden">
+        <div style="padding:20px 24px; borderBottom:1px solid #E4EDF9; display:flex; flex-direction:column; gap:14px">
+          <div style="min-width:0"><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">PROFILE GRADER · RUBRIC v{{ rubricVersion }}</div><h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; margin:8px 0 0; color:#0A1626">How this company grades a profile</h2><div style="font-size:13px; color:#6A809A; font-weight:600; margin-top:4px">{{ rubricStatus }} Weights total <strong style="color:{{ weightColor }}">{{ weightTotal }}</strong> / 100.</div></div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px">
+            <a href="Profile Grade.dc.html?account={{ accountId }}&view=full" target="_blank" rel="noopener" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:13px; font-weight:700; padding:10px 14px; border-radius:999px" style-hover="border-color:#1668F0; color:#0B4FD0">Preview sample report ↗</a>
+            <button type="button" onClick="{{ resetRubric }}" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#425973; font-size:13px; font-weight:700; padding:10px 14px; border-radius:999px; cursor:pointer">Reset to platform default</button>
+            <button type="button" onClick="{{ bumpRubric }}" style="background:#1668F0; color:#FFFFFF; border:none; font-size:13px; font-weight:700; padding:10px 18px; border-radius:999px; cursor:pointer; box-shadow:0 8px 20px rgba(22,104,240,0.28); white-space:nowrap" style-hover="background:#0B4FD0">Publish as v{{ rubricNext }}</button>
+          </div>
+        </div>
+        <div data-rail-grid="1" style="display:grid; grid-template-columns:280px minmax(0,1fr)">
+          <div data-rail="1" style="borderRight:1px solid #E4EDF9; background:#F7FBFF; padding:12px; display:flex; flex-direction:column; gap:4px">
+            <sc-for list="{{ rubricCats }}" as="rc" hint-placeholder-count="9">
+              <div style="display:flex; align-items:center; gap:8px; background:{{ rc.bg }}; border-radius:10px; padding:8px 10px">
+                <button type="button" onClick="{{ rc.go }}" style="flex:1; min-width:0; text-align:left; background:transparent; border:none; color:{{ rc.fg }}; font-size:13.5px; font-weight:700; cursor:pointer; padding:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ rc.name }}</button>
+                <input type="number" min="0" max="100" value="{{ rc.weight }}" onChange="{{ rc.setWeight }}" aria-label="Weight" style="width:54px; padding:5px 7px; font-size:12.5px; font-weight:700; text-align:right; border:1px solid #D8E5F5; border-radius:7px; background:#FFFFFF; color:#0A1626" />
+                <span style="font-size:10.5px; font-weight:700; color:{{ rc.ptsColor }}">pts</span>
+              </div>
+            </sc-for>
+            <div style="margin-top:8px; borderTop:1px solid #E4EDF9; padding-top:10px">
+              <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C93AD; padding:0 10px">GRADE THRESHOLDS</div>
+              <sc-for list="{{ gradeRows }}" as="g" hint-placeholder-count="5"><div style="display:flex; align-items:center; gap:8px; padding:6px 10px"><div style="width:22px; font-family:Sora,sans-serif; font-weight:700; font-size:14px">{{ g.grade }}</div><input type="text" value="{{ g.label }}" onChange="{{ g.setLabel }}" aria-label="Grade label" style="flex:1; min-width:0; padding:5px 8px; font-size:12.5px; font-weight:600; border:1px solid #D8E5F5; border-radius:7px; background:#FFFFFF" /><input type="number" min="0" max="100" value="{{ g.min }}" onChange="{{ g.setMin }}" aria-label="Minimum percent" style="width:52px; padding:5px 7px; font-size:12.5px; font-weight:700; text-align:right; border:1px solid #D8E5F5; border-radius:7px; background:#FFFFFF" /><span style="font-size:10.5px; font-weight:700; color:#7C93AD">%+</span></div></sc-for>
+            </div>
+          </div>
+          <div style="padding:22px 24px; min-width:0">
+            <div style="display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:12px">
+              <div style="min-width:0; flex:1"><input type="text" value="{{ activeCat.name }}" onChange="{{ renameCat }}" aria-label="Category name" style="font-family:Sora,sans-serif; font-weight:700; font-size:17px; color:#0A1626; border:1px solid transparent; border-radius:8px; padding:6px 8px; margin-left:-8px; background:transparent; width:100%; outline:none" style-focus="border-color:#1668F0; background:#F7FBFF" /><div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:2px">{{ activeCat.group }} section · {{ activeCat.weight }} points · each check is a share of the weight; tiers read top-down and the first match wins.</div></div>
+              <select value="{{ activeCat.group }}" onChange="{{ setCatGroup }}" aria-label="Section group" style="padding:8px 10px; font-size:12.5px; font-weight:700; border:1px solid #D8E5F5; border-radius:8px; background:#FFFFFF"><option value="Core">Core</option><option value="Additional">Additional</option></select>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; margin-top:18px">
+              <sc-for list="{{ activeChecks }}" as="ch" hint-placeholder-count="2">
+                <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:14px; padding:14px 16px">
+                  <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px"><input type="text" value="{{ ch.label }}" onChange="{{ ch.setLabel }}" aria-label="Check label" style="flex:1; min-width:160px; font-size:14px; font-weight:700; color:#0A1626; border:1px solid transparent; border-radius:7px; padding:5px 8px; margin-left:-8px; background:transparent; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" /><span style="font-family:ui-monospace,monospace; font-size:11.5px; color:#7C93AD; background:#EEF4FC; padding:3px 7px; border-radius:6px">{{ ch.key }}</span><div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#425973">share<input type="number" min="0" max="1" step="0.05" value="{{ ch.share }}" onChange="{{ ch.setShare }}" aria-label="Share of weight" style="width:62px; padding:5px 7px; font-size:12.5px; font-weight:700; text-align:right; border:1px solid #D8E5F5; border-radius:7px; background:#FFFFFF" /><span style="color:#7C93AD">= {{ ch.points }} pts</span></div></div>
+                  <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px">
+                    <sc-for list="{{ ch.tiers }}" as="t" hint-placeholder-count="3">
+                      <div style="background:#FFFFFF; border:1px solid #E4EDF9; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px">
+                        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; font-size:12px; font-weight:700; color:#425973">
+                          <label style="display:flex; align-items:center; gap:6px; white-space:nowrap">At least<input type="number" value="{{ t.min }}" onChange="{{ t.setMin }}" aria-label="Minimum value" style="width:76px; padding:6px 8px; font-size:12.5px; font-weight:700; border:1px solid #D8E5F5; border-radius:7px; background:#F7FBFF" /></label>
+                          <label style="display:flex; align-items:center; gap:6px; white-space:nowrap">earns<input type="number" min="0" max="100" value="{{ t.pctInt }}" onChange="{{ t.setPct }}" aria-label="Percent earned" style="width:62px; padding:6px 8px; font-size:12.5px; font-weight:700; border:1px solid #D8E5F5; border-radius:7px; background:#F7FBFF" /><span style="color:#7C93AD">% of {{ ch.points }} pts</span></label>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px">
+                          <div style="display:flex; flex-direction:column; gap:4px"><span style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; color:#7C93AD">FINDING SHOWN</span><textarea rows="2" value="{{ t.finding }}" onChange="{{ t.setFinding }}" aria-label="Finding" style="width:100%; padding:7px 9px; font-size:12.5px; line-height:1.45; border:1px solid #D8E5F5; border-radius:7px; background:#F7FBFF; resize:vertical; font-family:inherit"></textarea></div>
+                          <div style="display:flex; flex-direction:column; gap:4px"><span style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; color:#7C93AD">RECOMMENDATION · BLANK = NONE</span><textarea rows="2" value="{{ t.rec }}" onChange="{{ t.setRec }}" aria-label="Recommendation" style="width:100%; padding:7px 9px; font-size:12.5px; line-height:1.45; border:1px solid #D8E5F5; border-radius:7px; background:#F7FBFF; resize:vertical; font-family:inherit"></textarea></div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:11.5px; color:#7C93AD; font-weight:600; margin-top:8px">Use <span style="font-family:ui-monospace,monospace">{v}</span> in text to insert the measured value.</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:16px; background:#FFF8F0; border:1px solid #F6E4CC; border-radius:12px; padding:12px 14px; font-size:12.5px; line-height:1.55; color:#8A6320"><strong>Feedback loop:</strong> after each professional's walkthrough, adjust the tier text or weights here, then Publish a new version. Reports show which rubric version graded them, so you can compare before/after scores fairly.</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+      <div id="settings" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden">
+        <div style="padding:20px 24px; borderBottom:1px solid #E4EDF9; display:flex; flex-wrap:wrap; align-items:center; gap:14px">
+          <div style="min-width:0; flex:1 1 240px"><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">COMPANY SETTINGS</div><h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; margin:8px 0 0; color:#0A1626">{{ co.name }}</h2><div style="font-size:13px; color:#6A809A; font-weight:600; margin-top:4px">Plan: {{ planName }} · Admin: {{ co.owner }}</div></div>
+          <div style="display:inline-flex; flex-wrap:wrap; background:#F4F8FE; border:1px solid #D8E5F5; border-radius:999px; padding:3px">
+            <sc-for list="{{ settingsTabs }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.go }}" style="background:{{ t.bg }}; color:{{ t.fg }}; border:none; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer; white-space:nowrap">{{ t.label }}</button></sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ tabBranding }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:22px 24px; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px; align-items:start">
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <sc-if value="{{ noWhiteLabel }}" hint-placeholder-val="{{ false }}"><div style="background:#FFF8F0; border:1px solid #F6E4CC; border-radius:12px; padding:12px 14px; font-size:13px; font-weight:700; color:#8A6320">🔒 White label isn't in your plan — logo and colors fall back to the platform defaults on your site.</div></sc-if>
+              <div style="display:flex; flex-direction:column; gap:6px"><label for="br-name" style="font-size:12.5px; font-weight:700">Company name</label><input id="br-name" type="text" value="{{ co.branding.companyName }}" onChange="{{ onBrand.companyName }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+              <div style="display:flex; flex-direction:column; gap:6px"><label for="br-tag" style="font-size:12.5px; font-weight:700">Tagline</label><input id="br-tag" type="text" value="{{ co.branding.tagline }}" onChange="{{ onBrand.tagline }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+              <div style="display:flex; flex-direction:column; gap:6px"><label for="br-logo" style="font-size:12.5px; font-weight:700">Logo URL <span style="color:#7C93AD; font-weight:600">(SVG or PNG, transparent)</span></label><input id="br-logo" type="text" value="{{ co.branding.logoUrl }}" onChange="{{ onBrand.logoUrl }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+                <div style="display:flex; flex-direction:column; gap:6px"><label for="br-primary" style="font-size:12.5px; font-weight:700">Primary color</label><div style="display:flex; gap:8px; align-items:center"><input id="br-primary" type="color" value="{{ co.branding.primaryColor }}" onChange="{{ onBrand.primaryColor }}" style="width:42px; height:40px; border:1px solid #D8E5F5; border-radius:8px; padding:2px; background:#FFFFFF" /><span style="font-family:ui-monospace,monospace; font-size:13px; color:#425973">{{ co.branding.primaryColor }}</span></div></div>
+                <div style="display:flex; flex-direction:column; gap:6px"><label for="br-accent" style="font-size:12.5px; font-weight:700">Accent / dark</label><div style="display:flex; gap:8px; align-items:center"><input id="br-accent" type="color" value="{{ co.branding.accentColor }}" onChange="{{ onBrand.accentColor }}" style="width:42px; height:40px; border:1px solid #D8E5F5; border-radius:8px; padding:2px; background:#FFFFFF" /><span style="font-family:ui-monospace,monospace; font-size:13px; color:#425973">{{ co.branding.accentColor }}</span></div></div>
+              </div>
+            </div>
+            <div style="background:#F4F8FE; border:1px solid #DDE8F7; border-radius:14px; padding:16px">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">PREVIEW</div>
+              <div style="margin-top:12px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:12px; overflow:hidden">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; borderBottom:1px solid #EEF4FC"><sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="Logo preview" style="height:22px; width:110px; background-image:url({{ markUrl }}); background-size:contain; background-repeat:no-repeat; background-position:left center"></div></sc-if><sc-if value="{{ noLogo }}" hint-placeholder-val="{{ true }}"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:14px">{{ co.branding.companyName }}</div></sc-if><div style="background:{{ co.branding.primaryColor }}; color:#FFFFFF; font-size:11px; font-weight:700; padding:6px 10px; border-radius:999px">Get my audit</div></div>
+                <div style="padding:14px"><div style="height:10px; width:70%; border-radius:5px; background:{{ co.branding.accentColor }}"></div><div style="height:6px; width:90%; border-radius:3px; background:#E4EDF9; margin-top:8px"></div><div style="height:6px; width:60%; border-radius:3px; background:#E4EDF9; margin-top:6px"></div></div>
+              </div>
+              <div style="font-size:12px; color:#6A809A; font-weight:600; margin-top:10px">Colors are injected as CSS variables on your site; your white-label branding wins over platform defaults.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabDomain }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:22px 24px; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px; align-items:start">
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:14px"><div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">PLATFORM SUBDOMAIN · ALWAYS ON</div><div style="font-size:14.5px; font-weight:700; margin-top:6px; word-break:break-all">{{ subdomainHost }}</div><div style="font-size:12.5px; color:#1E7A4C; font-weight:700; margin-top:4px">● Live · SSL active</div></div>
+              <sc-if value="{{ noWhiteLabel }}" hint-placeholder-val="{{ false }}"><div style="background:#FFF8F0; border:1px solid #F6E4CC; border-radius:12px; padding:12px 14px; font-size:13px; font-weight:700; color:#8A6320">🔒 Custom domains require the White Label feature.</div></sc-if>
+              <div style="display:flex; flex-direction:column; gap:6px"><label for="dm-custom" style="font-size:12.5px; font-weight:700">Custom domain</label><div style="display:flex; gap:8px"><input id="dm-custom" type="text" placeholder="www.yourcompany.com" value="{{ co.domain.custom }}" onChange="{{ onDomainCustom }}" disabled="{{ noWhiteLabel }}" style="flex:1; min-width:0; padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF" /><button type="button" onClick="{{ verifyDomain }}" disabled="{{ noWhiteLabel }}" style="background:#1668F0; color:#FFFFFF; border:none; border-radius:10px; padding:11px 14px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap">{{ verifyLabel }}</button></div></div>
+              <div style="display:flex; flex-direction:column; gap:6px"><label for="dm-provider" style="font-size:12.5px; font-weight:700">Where is your DNS?</label><select id="dm-provider" value="{{ co.domain.provider }}" onChange="{{ onDomainProvider }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none"><option value="">Choose a provider for step-by-step help</option><option value="GoDaddy">GoDaddy</option><option value="Cloudflare">Cloudflare</option><option value="Namecheap">Namecheap</option><option value="Google Domains / Squarespace">Google Domains / Squarespace</option><option value="Other">Other</option></select></div>
+              <div style="display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:700; color:{{ domainStatusColor }}"><span style="width:9px; height:9px; border-radius:50%; background:{{ domainStatusColor }}"></span>{{ domainStatus }}</div>
+            </div>
+            <div style="background:#F4F8FE; border:1px solid #DDE8F7; border-radius:14px; padding:16px">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">DNS RECORDS TO ADD {{ providerHint }}</div>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px">
+                <sc-for list="{{ dnsRecords }}" as="r" hint-placeholder-count="3"><div style="background:#FFFFFF; border:1px solid #E4EDF9; border-radius:10px; padding:11px 12px; display:grid; grid-template-columns:52px minmax(0,1fr); gap:6px 12px; font-size:12.5px"><div style="font-weight:700; color:#0B4FD0">{{ r.type }}</div><div style="font-family:ui-monospace,monospace; word-break:break-all; color:#0A1626">{{ r.host }}</div><div style="font-weight:700; color:#7C93AD">value</div><div style="font-family:ui-monospace,monospace; word-break:break-all; color:#425973">{{ r.value }}</div></div></sc-for>
+              </div>
+              <div style="font-size:12px; color:#6A809A; font-weight:600; margin-top:10px; line-height:1.55">{{ providerSteps }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabIntegrations }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:22px 24px; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; align-items:start">
+            <sc-for list="{{ integrationCards }}" as="ic" hint-placeholder-count="4">
+              <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px; opacity:{{ ic.opacity }}">
+                <div style="display:flex; align-items:center; gap:12px"><span style="width:36px; height:36px; border-radius:10px; background:{{ ic.bg }}; color:{{ ic.fg }}; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ ic.abbr }}</span><div style="min-width:0; flex:1"><div style="font-size:15px; font-weight:700">{{ ic.name }}</div><div style="font-size:12.5px; color:#6A809A; font-weight:600">{{ ic.purpose }}</div></div><span style="background:{{ ic.bg }}; color:{{ ic.fg }}; font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; white-space:nowrap">{{ ic.statusLabel }}</span></div>
+                <sc-if value="{{ ic.locked }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; font-weight:700; color:#8A6320">🔒 Not included in your plan.</div></sc-if>
+                <sc-if value="{{ ic.unlocked }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex; flex-direction:column; gap:8px">
+                    <sc-for list="{{ ic.fields }}" as="f" hint-placeholder-count="2"><div style="display:flex; flex-direction:column; gap:4px"><label for="{{ f.id }}" style="font-size:12px; font-weight:700; color:#16283D">{{ f.label }}</label><input id="{{ f.id }}" type="{{ f.type }}" placeholder="{{ f.placeholder }}" value="{{ f.value }}" onChange="{{ f.set }}" style="padding:10px 12px; font-size:13.5px; background:#FFFFFF; border:1px solid #D8E5F5; border-radius:9px; outline:none" style-focus="border-color:#1668F0" /></div></sc-for>
+                    <sc-for list="{{ ic.toggles }}" as="tg" hint-placeholder-count="0"><label style="display:flex; align-items:center; gap:9px; font-size:13px; font-weight:600; color:#16283D; cursor:pointer"><input type="checkbox" checked="{{ tg.value }}" onChange="{{ tg.set }}" style="width:16px; height:16px; accent-color:#1668F0" />{{ tg.label }}</label></sc-for>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center"><button type="button" onClick="{{ ic.action }}" style="background:{{ ic.actionBg }}; color:{{ ic.actionFg }}; border:1px solid {{ ic.actionBorder }}; border-radius:999px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer">{{ ic.actionLabel }}</button><sc-if value="{{ ic.hasSecondary }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ ic.secondary }}" style="background:#FFFFFF; color:#425973; border:1px solid #D8E5F5; border-radius:999px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer">{{ ic.secondaryLabel }}</button></sc-if><div style="font-size:12px; color:#6A809A; font-weight:600">{{ ic.note }}</div></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabTeam }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:22px 24px">
+            <sc-if value="{{ noTeamFeature }}" hint-placeholder-val="{{ false }}"><div style="background:#FFF8F0; border:1px solid #F6E4CC; border-radius:12px; padding:12px 14px; font-size:13px; font-weight:700; color:#8A6320; margin-bottom:14px">🔒 Team management isn't in your plan. You can still see your own seat.</div></sc-if>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px">
+              <div style="font-size:13px; color:#6A809A; font-weight:600">Managers and client advisors get read / write per area. Admins have everything.</div>
+              <form onSubmit="{{ inviteMember }}" style="display:flex; flex-wrap:wrap; gap:8px"><input type="text" placeholder="Name" value="{{ invite.name }}" onChange="{{ onInviteName }}" disabled="{{ noTeamFeature }}" style="padding:9px 12px; font-size:13.5px; border:1px solid #D8E5F5; border-radius:9px; outline:none; background:#F7FBFF; width:150px" /><input type="email" placeholder="Email" value="{{ invite.email }}" onChange="{{ onInviteEmail }}" disabled="{{ noTeamFeature }}" style="padding:9px 12px; font-size:13.5px; border:1px solid #D8E5F5; border-radius:9px; outline:none; background:#F7FBFF; width:200px" /><select value="{{ invite.role }}" onChange="{{ onInviteRole }}" disabled="{{ noTeamFeature }}" style="padding:9px 12px; font-size:13.5px; border:1px solid #D8E5F5; border-radius:9px; background:#F7FBFF"><option value="manager">Manager</option><option value="advisor">Client advisor</option></select><button type="submit" disabled="{{ noTeamFeature }}" style="background:#1668F0; color:#FFFFFF; border:none; border-radius:9px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer">Invite</button></form>
+            </div>
+            <div style="overflow-x:auto; margin-top:16px"><table style="width:100%; border-collapse:collapse; min-width:760px">
+              <thead><tr style="background:#F7FBFF"><th scope="col" style="text-align:left; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:11px 14px; borderBottom:1px solid #E4EDF9">MEMBER</th><sc-for list="{{ permHeads }}" as="ph" hint-placeholder-count="6"><th scope="col" style="text-align:center; font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7C93AD; padding:11px 8px; borderBottom:1px solid #E4EDF9; white-space:nowrap">{{ ph }}</th></sc-for><th scope="col" style="borderBottom:1px solid #E4EDF9"></th></tr></thead>
+              <tbody><sc-for list="{{ teamRows }}" as="m" hint-placeholder-count="3">
+                <tr style="borderBottom:1px solid #EEF4FC">
+                  <td style="padding:12px 14px"><div style="display:flex; align-items:center; gap:10px"><div style="width:32px; height:32px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:11.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ m.initials }}</div><div><div style="font-size:14px; font-weight:700">{{ m.name }}</div><div style="font-size:12px; color:#6A809A; font-weight:600">{{ m.email }} · <span style="text-transform:capitalize">{{ m.roleLabel }}</span></div></div></div></td>
+                  <sc-for list="{{ m.cells }}" as="c" hint-placeholder-count="6"><td style="text-align:center; padding:12px 8px"><sc-if value="{{ c.isAdmin }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px; font-weight:700; color:#1E7A4C">All</span></sc-if><sc-if value="{{ c.editable }}" hint-placeholder-val="{{ true }}"><select value="{{ c.value }}" onChange="{{ c.set }}" style="padding:6px 8px; font-size:12px; font-weight:700; border:1px solid #D8E5F5; border-radius:7px; background:{{ c.bg }}; color:{{ c.fg }}"><option value="none">None</option><option value="read">Read</option><option value="write">Write</option></select></sc-if></td></sc-for>
+                  <td style="padding:12px 14px; text-align:right"><sc-if value="{{ m.removable }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ m.remove }}" style="background:#FFFFFF; border:1px solid #F0D6D0; color:#C2361F; font-size:12px; font-weight:700; padding:6px 10px; border-radius:999px; cursor:pointer">Remove</button></sc-if></td>
+                </tr>
+              </sc-for></tbody>
+            </table></div>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <div id="pipeline" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px">
+        <div id="outreach" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:24px">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">SENDGRID TEMPLATES</div>
+          <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; margin:12px 0 0; color:#0A1626">Follow-up sequence</h2>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px">
+            <div style="display:flex; align-items:center; gap:12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+              <div style="font-size:14px; font-weight:700; color:#16283D; min-width:0; flex:1">Audit request received</div>
+              <div style="font-size:11.5px; font-weight:700; color:#0B4FD0; background:#EAF2FD; padding:5px 9px; border-radius:999px">AUTO · 0h</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+              <div style="font-size:14px; font-weight:700; color:#16283D; min-width:0; flex:1">Your 22-section read is ready</div>
+              <div style="font-size:11.5px; font-weight:700; color:#0B4FD0; background:#EAF2FD; padding:5px 9px; border-radius:999px">MANUAL</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+              <div style="font-size:14px; font-weight:700; color:#16283D; min-width:0; flex:1">Book the Brand Voice interview</div>
+              <div style="font-size:11.5px; font-weight:700; color:#8A6320; background:#FFF8F0; padding:5px 9px; border-radius:999px">DRAFT</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="integrations" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:24px">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">INTEGRATIONS</div>
+          <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; margin:12px 0 0; color:#0A1626">Where the data goes</h2>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px">
+            <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:14px">
+              <div style="display:flex; align-items:center; gap:10px"><span style="width:8px; height:8px; border-radius:50%; background:#2FBF71"></span><div style="font-size:14px; font-weight:700; color:#16283D">Zapier — catch hook</div></div>
+              <div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:7px; word-break:break-all">POST hooks.zapier.com/hooks/catch/•••••/mtc-lead</div>
+            </div>
+            <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:14px">
+              <div style="display:flex; align-items:center; gap:10px"><span style="width:8px; height:8px; border-radius:50%; background:#2FBF71"></span><div style="font-size:14px; font-weight:700; color:#16283D">SendGrid — transactional</div></div>
+              <div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:7px">Sender: brian@mytargetclient.com · dynamic templates</div>
+            </div>
+            <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:14px">
+              <div style="display:flex; align-items:center; gap:10px"><span style="width:8px; height:8px; border-radius:50%; background:#2FBF71"></span><div style="font-size:14px; font-weight:700; color:#16283D">Calendly — intro call</div></div>
+              <div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:7px; word-break:break-all">{{ calendlyUrl }}</div>
+              <div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:5px">invitee.created → Zapier → status “Call booked”</div>
+            </div>
+            <div style="font-size:12.5px; color:#7C93AD; font-weight:600; line-height:1.55">Payload fields: name, email, phone, category, linkedin, goal, source, submittedAt.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ reviewEditorOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:20px">
+      <div onClick="{{ closeReviewEditor }}" style="position:absolute; inset:0; background:rgba(10,22,38,0.5)"></div>
+      <form onSubmit="{{ saveReview }}" role="dialog" aria-label="Review editor" style="position:relative; width:560px; max-width:100%; background:#FFFFFF; border-radius:20px; box-shadow:0 30px 80px rgba(10,22,38,0.3); padding:28px; display:flex; flex-direction:column; gap:16px; max-height:92vh; overflow-y:auto">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
+          <h3 style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; color:#0A1626; margin:0">{{ reviewEditorTitle }}</h3>
+          <button type="button" onClick="{{ closeReviewEditor }}" aria-label="Close" style="background:#F4F8FE; border:1px solid #DDE8F7; color:#425973; font-size:15px; font-weight:700; width:34px; height:34px; border-radius:10px; cursor:pointer">×</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px">
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="rv-name" style="font-size:12.5px; font-weight:700; color:#16283D">Client name</label><input id="rv-name" type="text" value="{{ draft.name }}" onChange="{{ onDraftName }}" required="" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="rv-cat" style="font-size:12.5px; font-weight:700; color:#16283D">Category</label><select id="rv-cat" value="{{ draft.category }}" onChange="{{ onDraftCategory }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626"><option value="Consultant">Consultant</option><option value="Author">Author</option><option value="Professional writer">Professional writer</option><option value="Executive">Executive</option></select></div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px"><label for="rv-role" style="font-size:12.5px; font-weight:700; color:#16283D">Title / role</label><input id="rv-role" type="text" value="{{ draft.role }}" onChange="{{ onDraftRole }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+        <div style="display:flex; flex-direction:column; gap:6px"><label for="rv-li" style="font-size:12.5px; font-weight:700; color:#16283D">LinkedIn profile link</label><input id="rv-li" type="text" placeholder="linkedin.com/in/…" value="{{ draft.linkedin }}" onChange="{{ onDraftLinkedin }}" style="padding:11px 13px; font-size:14.5px; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+        <div style="display:flex; flex-direction:column; gap:6px"><label for="rv-quote" style="font-size:12.5px; font-weight:700; color:#16283D">Quote</label><textarea id="rv-quote" rows="5" value="{{ draft.quote }}" onChange="{{ onDraftQuote }}" required="" style="padding:11px 13px; font-size:14.5px; line-height:1.55; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:10px; outline:none; color:#0A1626; resize:vertical" style-focus="border-color:#1668F0; background:#FFFFFF"></textarea><div style="font-size:12px; color:#7C93AD; font-weight:600">{{ draftLength }} characters · ~40 words reads best in the slider</div></div>
+        <label style="display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:#16283D; cursor:pointer"><input type="checkbox" checked="{{ draft.visible }}" onChange="{{ onDraftVisible }}" style="width:18px; height:18px; accent-color:#1668F0" />Show on landing page</label>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px">
+          <button type="button" onClick="{{ closeReviewEditor }}" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; font-size:14px; font-weight:700; padding:11px 18px; border-radius:999px; cursor:pointer">Cancel</button>
+          <button type="submit" style="background:#1668F0; color:#FFFFFF; font-size:14px; font-weight:700; padding:11px 20px; border:none; border-radius:999px; cursor:pointer" style-hover="background:#0B4FD0">Save review</button>
+        </div>
+      </form>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:60; display:flex; justify-content:flex-end">
+      <div onClick="{{ closeDrawer }}" style="position:absolute; inset:0; background:rgba(10,22,38,0.45)"></div>
+      <div role="dialog" aria-label="Lead detail" style="position:relative; width:460px; max-width:94vw; height:100%; background:#FFFFFF; box-shadow:-24px 0 60px rgba(10,22,38,0.25); overflow-y:auto">
+        <div style="padding:22px 24px; borderBottom:1px solid #E4EDF9; display:flex; align-items:flex-start; gap:14px; position:sticky; top:0; background:#FFFFFF">
+          <div style="width:46px; height:46px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ sel.initials }}</div>
+          <div style="min-width:0; flex:1">
+            <div style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; color:#0A1626">{{ sel.name }}</div>
+            <div style="font-size:13px; font-weight:600; color:#6A809A">{{ sel.category }} · received {{ sel.received }}</div>
+          </div>
+          <button type="button" onClick="{{ closeDrawer }}" aria-label="Close" style="background:#F4F8FE; border:1px solid #DDE8F7; color:#425973; font-size:15px; font-weight:700; width:34px; height:34px; border-radius:10px; cursor:pointer" style-hover="background:#EAF2FD">×</button>
+        </div>
+
+        <div style="padding:24px; display:flex; flex-direction:column; gap:22px">
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+              <div style="min-width:0"><div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">EMAIL</div><div style="font-size:14.5px; font-weight:700; color:#16283D; word-break:break-all">{{ sel.email }}</div></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+              <div style="min-width:0"><div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">PHONE</div><div style="font-size:14.5px; font-weight:700; color:#16283D">{{ sel.phone }}</div></div>
+              <a href="{{ sel.telHref }}" style="font-size:13px; font-weight:700; color:#0B4FD0; white-space:nowrap">Call →</a>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:13px 14px">
+              <div style="min-width:0"><div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">LINKEDIN</div><div style="font-size:14.5px; font-weight:700; color:#16283D; word-break:break-all">{{ sel.linkedin }}</div></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">PRIMARY GOAL</div>
+            <p style="font-size:15px; line-height:1.62; color:#3D556F; margin:9px 0 0">{{ sel.goal }}</p>
+          </div>
+
+          <div style="background:#0A1626; color:#FFFFFF; border-radius:12px; padding:15px; display:flex; align-items:center; justify-content:space-between; gap:12px">
+            <div><div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7FB6FF">PROFILE GRADE</div><div style="font-size:14.5px; font-weight:700; margin-top:5px">Run the audit on {{ sel.linkedin }}</div><div style="font-size:12px; color:#B9CBE0; font-weight:600; margin-top:2px">Fetches the profile, scores it on rubric v{{ rubricVersion }}, and emails the summary.</div></div>
+            <a href="Profile Grade.dc.html?account={{ accountId }}" target="_blank" rel="noopener" style="background:#1668F0; color:#FFFFFF; font-size:13px; font-weight:700; padding:10px 14px; border-radius:999px; white-space:nowrap" style-hover="background:#0B4FD0">Open grade →</a>
+          </div>
+          <div style="background:#F7FBFF; border:1px solid #E4EDF9; border-radius:12px; padding:15px">
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">CALENDLY</div>
+            <div style="font-size:14.5px; font-weight:700; color:#16283D; margin-top:6px">{{ sel.bookingLabel }}</div>
+            <a href="{{ sel.calendlyPrefill }}" target="_blank" rel="noopener" style="display:inline-block; margin-top:12px; background:#FFFFFF; border:1px solid #D8E5F5; color:#0B4FD0; font-size:13.5px; font-weight:700; padding:11px 18px; border-radius:999px" style-hover="border-color:#1668F0; background:#EAF2FD">Send booking link →</a>
+          </div>
+
+          <div>
+            <label for="crm-status" style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">STATUS</label>
+            <select id="crm-status" value="{{ sel.status }}" onChange="{{ onStatus }}" style="width:100%; margin-top:9px; padding:12px 14px; font-size:14.5px; font-weight:600; color:#0A1626; background:#F7FBFF; border:1px solid #D8E5F5; border-radius:11px; outline:none" style-focus="border-color:#1668F0; background:#FFFFFF">
+              <sc-for list="{{ stageOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.name }}">{{ o.name }}</option></sc-for>
+            </select>
+          </div>
+
+          <div>
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">ACTIVITY</div>
+            <div style="display:flex; flex-direction:column; gap:0; margin-top:12px">
+              <sc-for list="{{ sel.activity }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex; gap:13px; align-items:flex-start; padding-bottom:16px">
+                  <div style="width:9px; height:9px; border-radius:50%; background:#1668F0; margin-top:6px; flex-shrink:0"></div>
+                  <div style="min-width:0"><div style="font-size:14px; font-weight:700; color:#16283D">{{ a.label }}</div><div style="font-size:12.5px; font-weight:600; color:#7C93AD">{{ a.when }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#0A1626; border-radius:16px; padding:20px; color:#FFFFFF">
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.09em; color:#7FB6FF">SEND VIA SENDGRID</div>
+            <label for="crm-template" style="display:block; font-size:13px; font-weight:700; color:#DCE7F4; margin-top:14px">Template</label>
+            <select id="crm-template" value="{{ template }}" onChange="{{ onTemplate }}" style="width:100%; margin-top:8px; padding:12px 14px; font-size:14px; font-weight:600; color:#0A1626; background:#FFFFFF; border:1px solid #FFFFFF; border-radius:11px; outline:none">
+              <option value="received">Audit request received</option>
+              <option value="ready">Your 22-section read is ready</option>
+              <option value="blueprint">Book the Brand Voice interview</option>
+            </select>
+            <label for="crm-note" style="display:block; font-size:13px; font-weight:700; color:#DCE7F4; margin-top:14px">Personal note</label>
+            <textarea id="crm-note" rows="3" placeholder="One line that shows you read their profile…" value="{{ note }}" onChange="{{ onNote }}" style="width:100%; margin-top:8px; padding:12px 14px; font-size:14px; color:#0A1626; background:#FFFFFF; border:1px solid #FFFFFF; border-radius:11px; outline:none; resize:vertical; min-height:78px"></textarea>
+            <button type="button" onClick="{{ send }}" style="width:100%; margin-top:14px; background:#1668F0; color:#FFFFFF; font-size:15px; font-weight:700; padding:14px 18px; border:none; border-radius:999px; cursor:pointer" style-hover="background:#0B4FD0">{{ sendLabel }}</button>
+            <div style="font-size:12px; font-weight:600; color:#8FA6BF; margin-top:10px; line-height:1.5">Mockup — wire to the SendGrid dynamic-template endpoint at build time.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:980}}">
+// Pipeline stages — admin-editable (production: pipeline_stages table). kind: open | won | lost
+const DEFAULT_STAGES = [
+  { id: "new", name: "New", kind: "open", color: "blue" },
+  { id: "contacted", name: "Contacted", kind: "open", color: "green" },
+  { id: "audit", name: "Audit sent", kind: "open", color: "amber" },
+  { id: "call", name: "Call booked", kind: "open", color: "violet" },
+  { id: "pricing", name: "Pricing shared", kind: "open", color: "teal" },
+  { id: "client", name: "Client", kind: "won", color: "navy" },
+  { id: "lost", name: "Not a fit", kind: "lost", color: "grey" }
+];
+const COLOR = {
+  blue:   { dot: "#1668F0", bg: "#EAF2FD", fg: "#0B4FD0" },
+  green:  { dot: "#2FBF71", bg: "#EDF7F1", fg: "#1E7A4C" },
+  amber:  { dot: "#E39A2B", bg: "#FFF8F0", fg: "#8A6320" },
+  violet: { dot: "#7C5CFF", bg: "#F1EDFF", fg: "#4F2FD6" },
+  teal:   { dot: "#14A3A3", bg: "#E8F7F7", fg: "#0D7272" },
+  navy:   { dot: "#0A1626", bg: "#0A1626", fg: "#FFFFFF" },
+  grey:   { dot: "#9AAABF", bg: "#F1F4F8", fg: "#6A809A" }
+};
+const PALETTE = ["blue", "green", "amber", "violet", "teal"];
+
+const CALENDLY_URL = "https://calendly.com/briantraichel/intro-call";
+
+const SEED = [
+  { id: 1, name: "Dana Whitfield", email: "dana@whitfieldadvisory.com", phone: "(415) 220-8841", category: "Consultant", linkedin: "linkedin.com/in/danawhitfield", status: "New", received: "Sep 4, 9:12 AM",
+    goal: "I want to be known for post-merger operations work in mid-market manufacturing. My profile reads like a résumé and I get almost no inbound.",
+    activity: [{ label: "Form submitted via landing page", when: "Sep 4, 9:12 AM" }, { label: "Zapier → CRM record created", when: "Sep 4, 9:12 AM" }] },
+  { id: 2, name: "Marcus Elden", email: "m.elden@eldenbooks.com", phone: "(312) 774-1096", category: "Author", linkedin: "linkedin.com/in/marcuselden", status: "Contacted", received: "Sep 3, 4:48 PM", booked: "Sep 8, 10:30 AM",
+    goal: "Second book launches in the spring. I need my profile to make me credible to event programmers, not just readers.",
+    activity: [{ label: "Follow-up call — 14 min", when: "Sep 4, 11:30 AM" }, { label: "Email sent: Audit request received", when: "Sep 3, 5:02 PM" }, { label: "Form submitted via landing page", when: "Sep 3, 4:48 PM" }] },
+  { id: 3, name: "Priya Raghavan", email: "priya@raghavanwrites.co", phone: "(646) 903-2277", category: "Professional writer", linkedin: "linkedin.com/in/priyaraghavan", status: "Audit sent", received: "Sep 2, 8:05 AM",
+    goal: "Most of my work comes from two agencies. I want direct B2B SaaS clients finding me instead.",
+    activity: [{ label: "Email sent: Your 22-section read is ready", when: "Sep 3, 9:40 AM" }, { label: "Audit completed — 9 gaps flagged", when: "Sep 2, 3:15 PM" }, { label: "Form submitted via landing page", when: "Sep 2, 8:05 AM" }] },
+  { id: 4, name: "Grant Sobek", email: "grant@sobekgroup.io", phone: "(720) 458-6612", category: "Consultant", linkedin: "linkedin.com/in/grantsobek", status: "Client", received: "Aug 28, 1:19 PM",
+    goal: "Revenue operations for PE-backed services firms. Want to stop competing on price against generalists.",
+    activity: [{ label: "Brand Voice Blueprint interview booked", when: "Sep 1, 10:00 AM" }, { label: "Engagement signed — done-with-you", when: "Aug 30, 2:22 PM" }, { label: "Form submitted via landing page", when: "Aug 28, 1:19 PM" }] },
+  { id: 5, name: "Helen Ostrowski", email: "helen.o@clearsignal.consulting", phone: "(206) 331-0574", category: "Consultant", linkedin: "linkedin.com/in/helenostrowski", status: "New", received: "Sep 4, 7:41 AM",
+    goal: "Change management for hospital systems. Referrals are drying up and nobody finds me on search.",
+    activity: [{ label: "Form submitted via landing page", when: "Sep 4, 7:41 AM" }, { label: "Zapier → CRM record created", when: "Sep 4, 7:41 AM" }] },
+  { id: 6, name: "Tobias Kern", email: "tobias@kernnarrative.com", phone: "(503) 887-4420", category: "Other", linkedin: "linkedin.com/in/tobiaskern", status: "Not a fit", received: "Aug 26, 6:33 PM",
+    goal: "Exploring a career pivot into consulting; not ready to invest yet.",
+    activity: [{ label: "Marked not a fit — revisit Q1", when: "Aug 27, 9:10 AM" }, { label: "Form submitted via landing page", when: "Aug 26, 6:33 PM" }] }
+];
+
+class Component extends DCLogic {
+  state = { leads: SEED, query: "", filter: "All", selectedId: null, template: "ready", note: "", sent: false,
+    roleId: "admin", accountId: "mtc", cmsSection: "hero", draft: null, live: null,
+    platformAccounts: [], settingsTab: "branding", invite: { name: "", email: "", role: "advisor" }, verifying: false,
+    rubric: null, rubricCat: 0, rubricDirty: false,
+    stages: DEFAULT_STAGES, view: "list", manageOpen: false, newStageName: "", dragId: null, overStage: null,
+    reviews: [], editing: null, draft: null,
+    hero: { mode: "card", videoUrl: "", poster: "", title: "A 90-second walkthrough with Brian", caption: "What a 22-section audit actually looks at" } };
+
+  key(name) { return name + ":" + this.state.accountId; }
+  rd(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  wr(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  role() { return (window.MTC_ROLES || []).find(r => r.id === this.state.roleId) || { canEdit: false }; }
+
+  // Persist hero media settings per account (production: PUT /api/accounts/:id/settings/hero)
+  setHero(patch) {
+    if (!this.role().canEdit) return;
+    this.setState(s => {
+      const hero = Object.assign({}, s.hero, patch);
+      this.wr("mtc-hero:" + s.accountId, hero);
+      return { hero };
+    });
+  }
+
+  // CMS: draft is edited, publish copies it to live (production: site_content rows with status draft|published)
+  loadAccount(accountId) {
+    const defaults = window.MTC_DEFAULTS || {};
+    const heroDefault = { mode: "card", videoUrl: "", poster: "", title: "A 90-second walkthrough with Brian", caption: "What a 22-section audit actually looks at" };
+    this.setState({
+      accountId,
+      live: this.rd("mtc-content:" + accountId),
+      draft: this.rd("mtc-content-draft:" + accountId),
+      hero: Object.assign({}, heroDefault, this.rd("mtc-hero:" + accountId) || (accountId === "mtc" ? this.rd("mtc-hero") : null) || {}),
+      stages: (this.rd("mtc-stages:" + accountId) || (accountId === "mtc" ? this.rd("mtc-stages") : null) || DEFAULT_STAGES),
+      rubric: window.GRADER_load ? window.GRADER_load(accountId) : null, rubricCat: 0, rubricDirty: false,
+      cmsSection: "hero"
+    });
+    import("./reviews.js").then(m => {
+      const saved = this.rd("mtc-reviews:" + accountId) || (accountId === "mtc" ? this.rd("mtc-reviews") : null);
+      this.setState({ reviews: saved || (accountId === "mtc" ? m.REVIEWS : []) });
+    });
+  }
+  company() { return this.state.platformAccounts.find(a => a.id === this.state.accountId) || this.state.platformAccounts[0] || { name: "", owner: "", plan: "starter", branding: {}, domain: {}, integrations: {}, team: [] }; }
+  patchCompany(fn) {
+    if (!this.role().canEdit) return;
+    this.setState(s => {
+      const platformAccounts = s.platformAccounts.map(a => a.id === s.accountId ? fn(JSON.parse(JSON.stringify(a))) : a);
+      window.PLATFORM_saveAccounts && window.PLATFORM_saveAccounts(platformAccounts);
+      return { platformAccounts };
+    });
+  }
+  patchRubric(fn) {
+    if (!this.role().canEdit) return;
+    this.setState(s => { const rubric = fn(JSON.parse(JSON.stringify(s.rubric || window.GRADER_DEFAULT))); window.GRADER_save && window.GRADER_save(s.accountId, rubric); return { rubric, rubricDirty: true }; });
+  }
+  feats() { const co = this.company(); return window.PLATFORM_features ? window.PLATFORM_features(co) : {}; }
+  setDraftField(section, field, value) {
+    if (!this.role().canEdit) return;
+    this.setState(s => {
+      const base = s.draft || s.live || {};
+      const draft = Object.assign({}, base, { [section]: Object.assign({}, base[section] || {}, { [field]: value }) });
+      this.wr("mtc-content-draft:" + s.accountId, draft);
+      return { draft };
+    });
+  }
+
+  setStages(fn) {
+    this.setState(s => {
+      const stages = fn(s.stages);
+      this.wr("mtc-stages:" + s.accountId, stages);
+      return { stages };
+    });
+  }
+  stageFor(name) { return this.state.stages.find(x => x.name === name) || this.state.stages[0]; }
+  moveLead(id, status) { this.setState(s => ({ leads: s.leads.map(l => l.id === id ? Object.assign({}, l, { status }) : l), dragId: null, overStage: null })); }
+
+  componentDidMount() {
+    const q = new URLSearchParams(location.search);
+    const asRole = q.get("as"); const acct = q.get("account") || "mtc";
+    const platformAccounts = window.PLATFORM_loadAccounts ? window.PLATFORM_loadAccounts() : [];
+    this.setState({ platformAccounts, roleId: asRole === "super_admin" ? "super_admin" : "admin" });
+    this.loadAccount(platformAccounts.some(a => a.id === acct) ? acct : "mtc");
+  }
+
+  // Persist so the landing page picks up admin edits (production: PUT /api/reviews)
+  setReviews(fn) {
+    this.setState(s => {
+      const reviews = fn(s.reviews);
+      this.wr("mtc-reviews:" + s.accountId, reviews);
+      return { reviews };
+    });
+  }
+
+  blankReview() { return { id: Date.now(), visible: true, category: "Consultant", name: "", role: "", linkedin: "", quote: "", date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }; }
+
+  setFilter(f) { this.setState({ filter: f }); }
+
+  decorate(l) {
+    const c = COLOR[this.stageFor(l.status).color] || COLOR.blue;
+    const s = [c.bg, c.fg];
+    return Object.assign({}, l, {
+      initials: l.name.split(/\s+/).map(w => w[0]).slice(0, 2).join(""),
+      goalShort: l.goal.length > 96 ? l.goal.slice(0, 96).trim() + "…" : l.goal,
+      pillBg: s[0], pillFg: s[1],
+      telHref: "tel:" + l.phone.replace(/[^0-9]/g, ""),
+      bookingLabel: l.booked ? "Intro call booked — " + l.booked : "No call booked yet",
+      calendlyPrefill: CALENDLY_URL + "?name=" + encodeURIComponent(l.name) + "&email=" + encodeURIComponent(l.email)
+    });
+  }
+
+  renderVals() {
+    const { leads, query, filter, selectedId, template, note, sent, reviews, editing, draft } = this.state;
+    const ini = nm => (nm || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    const live = reviews.filter(r => r.visible !== false).length;
+    const reviewRows = reviews.map((r, i) => ({
+      initials: ini(r.name), name: r.name, role: r.role, category: r.category,
+      linkedin: r.linkedin, linkedinHref: "https://" + (r.linkedin || "").replace(/^https?:\/\//, ""),
+      excerpt: r.quote.length > 150 ? r.quote.slice(0, 150).trim() + "…" : r.quote,
+      opacity: r.visible === false ? 0.55 : 1,
+      stateLabel: r.visible === false ? "Hidden" : "Live",
+      pillBg: r.visible === false ? "#F1F4F8" : "#EDF7F1", pillFg: r.visible === false ? "#6A809A" : "#1E7A4C",
+      toggleLabel: r.visible === false ? "Show" : "Hide",
+      toggle: () => this.setReviews(rs => rs.map(x => x.id === r.id ? Object.assign({}, x, { visible: x.visible === false }) : x)),
+      edit: () => this.setState({ editing: r.id, draft: Object.assign({}, r) }),
+      remove: () => { if (confirm("Remove " + r.name + "'s review from the landing page?")) this.setReviews(rs => rs.filter(x => x.id !== r.id)); },
+      up: () => i > 0 && this.setReviews(rs => { const a = rs.slice(); [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; }),
+      down: () => i < reviews.length - 1 && this.setReviews(rs => { const a = rs.slice(); [a[i + 1], a[i]] = [a[i], a[i + 1]]; return a; })
+    }));
+    const role = this.role();
+    const accounts = window.MTC_ACCOUNTS || [];
+    const account = accounts.find(a => a.id === this.state.accountId) || accounts[0] || { name: "Account", plan: "" };
+    const defaults = window.MTC_DEFAULTS || {};
+    const merge = window.MTC_mergeContent || ((a, b) => Object.assign({}, a, b));
+    const liveC = merge(defaults, this.state.live || {});
+    const working = merge(defaults, this.state.draft || this.state.live || {});
+    const meta = window.MTC_SECTION_META || [];
+    const activeMeta = meta.find(m => m.key === this.state.cmsSection) || meta[0] || { key: "hero", label: "", fields: [] };
+    const sectionChanged = (k) => !!this.state.draft && JSON.stringify(working[k]) !== JSON.stringify(liveC[k]) || (!!this.state.draft && k !== "brand" && (working.visibility || {})[k] !== (liveC.visibility || {})[k]);
+    const cmsVals = {
+      roles: window.MTC_ROLES || [], roleId: this.state.roleId, roleName: role.name || "", roleDesc: role.desc || "",
+      onRole: e => this.setState({ roleId: e.target.value, accountId: (window.MTC_ROLES || []).find(r => r.id === e.target.value)?.allAccounts ? this.state.accountId : (this.state.accountId) }),
+      accounts, accountId: this.state.accountId, accountName: account.name, accountNameUpper: account.name.toUpperCase(), accountPlan: role.id === "super_admin" ? "SUPER ADMIN · CLARENCE WILLIAMS" : ((((window.PLANS || []).find(p => p.key === (this.company() || {}).plan) || {}).name) || "").toUpperCase() + " · LEAD CONSOLE",
+      canSwitchAccounts: !!role.allAccounts, onAccount: e => this.loadAccount(e.target.value),
+      canSeeSite: role.id !== "client" && role.id !== "advisor", canEdit: !!role.canEdit, readOnly: !role.canEdit,
+      hasDraft: !!this.state.draft, noDraft: !this.state.draft, draftOpacity: this.state.draft ? 1 : 0.5,
+      cmsStatus: this.state.draft ? "Unpublished changes — visitors still see the live version." : this.state.live ? "Published · live content for this account." : "Using platform defaults — nothing customized yet.",
+      previewUrl: "Landing Page.dc.html?account=" + this.state.accountId + "&preview=1", liveUrl: "Landing Page.dc.html?account=" + this.state.accountId,
+      publish: () => { if (!role.canEdit || !this.state.draft) return; const live = this.state.draft; this.wr("mtc-content:" + this.state.accountId, live); this.wr("mtc-content-draft:" + this.state.accountId, null); this.setState({ live, draft: null }); },
+      discardDraft: () => { if (!this.state.draft) return; if (!confirm("Discard all unpublished changes?")) return; this.wr("mtc-content-draft:" + this.state.accountId, null); this.setState({ draft: null }); },
+      cmsSections: meta.map(m => ({ label: m.label, go: () => this.setState({ cmsSection: m.key }), bg: m.key === activeMeta.key ? "#0A1626" : "transparent", fg: m.key === activeMeta.key ? "#FFFFFF" : "#425973", hidden: m.toggle && (working.visibility || {})[m.key] === false, changed: sectionChanged(m.key) })),
+      activeSection: { label: activeMeta.label, toggle: !!activeMeta.toggle, visible: (working.visibility || {})[activeMeta.key] !== false, hint: activeMeta.toggle ? "Copy for this section. Untick “Show on site” to hide the whole block." : "Copy for this section." },
+      isHeroSection: activeMeta.key === "hero",
+      activeHasFields: (activeMeta.fields || []).length > 0, activeNoFields: (activeMeta.fields || []).length === 0,
+      activeFields: (activeMeta.fields || []).map(([f, label, type]) => ({ id: "cms-" + activeMeta.key + "-" + f, label, isText: type === "text", isArea: type === "textarea", span: type === "textarea" ? "1 / -1" : "auto", value: (working[activeMeta.key] || {})[f] || "", changed: !!this.state.draft && (working[activeMeta.key] || {})[f] !== (liveC[activeMeta.key] || {})[f], set: e => this.setDraftField(activeMeta.key, f, e.target.value) })),
+      toggleSection: e => this.setDraftField("visibility", activeMeta.key, e.target.checked),
+      resetSection: () => { if (!role.canEdit) return; this.setState(s => { const base = Object.assign({}, s.draft || s.live || {}); delete base[activeMeta.key]; if (base.visibility) { base.visibility = Object.assign({}, base.visibility); delete base.visibility[activeMeta.key]; } this.wr("mtc-content-draft:" + s.accountId, base); return { draft: base }; }); }
+    };
+    const co = this.company();
+    const feats = this.feats();
+    const P = window.PLATFORM || { primaryDomain: "advisor-platform.findabusinesspro.com" };
+    const planName = ((window.PLANS || []).find(p => p.key === co.plan) || {}).name || co.plan;
+    const REG = window.FEATURE_REGISTRY || [];
+    const lockedKeys = REG.filter(f => !feats[f.key]).map(f => f.label);
+    const tab = this.state.settingsTab;
+    const brandSet = k => e => this.patchCompany(a => { a.branding = Object.assign({}, a.branding, { [k]: e.target.value }); return a; });
+    const intSet = (key, k) => e => this.patchCompany(a => { a.integrations[key] = Object.assign({}, a.integrations[key] || {}, { [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }); return a; });
+    const intStatus = (key, status) => () => this.patchCompany(a => { a.integrations[key] = Object.assign({}, a.integrations[key] || {}, { status }); return a; });
+    const STY = { connected: ["#EDF7F1", "#1E7A4C", "Connected"], pending: ["#FFF8F0", "#8A6320", "Pending"], not_connected: ["#F1F4F8", "#6A809A", "Not connected"] };
+    const ic = (key, abbr, name, purpose, featKey, fields, toggles, connectLabel, note) => {
+      const i = (co.integrations || {})[key] || {}; const st = STY[i.status || "not_connected"]; const locked = featKey && !feats[featKey]; const connected = i.status === "connected";
+      return { key, abbr, name, purpose, bg: st[0], fg: st[1], statusLabel: st[2], locked, unlocked: !locked, opacity: locked ? 0.6 : 1,
+        fields: fields.map(([k, label, type, placeholder]) => ({ id: "int-" + key + "-" + k, label, type: type || "text", placeholder: placeholder || "", value: i[k] || "", set: intSet(key, k) })),
+        toggles: toggles.map(([k, label]) => ({ label, value: !!i[k], set: intSet(key, k) })),
+        action: connected ? intStatus(key, "not_connected") : intStatus(key, key === "sendgrid" ? "pending" : "connected"),
+        actionLabel: connected ? "Disconnect" : connectLabel, actionBg: connected ? "#FFFFFF" : "#1668F0", actionFg: connected ? "#C2361F" : "#FFFFFF", actionBorder: connected ? "#F0D6D0" : "#1668F0",
+        hasSecondary: i.status === "pending", secondary: intStatus(key, "connected"), secondaryLabel: "Verify DNS now", note };
+    };
+    const dom = co.domain || {}; const custom = (dom.custom || "").trim();
+    const dnsRecords = custom ? [
+      { type: "CNAME", host: custom.replace(/^www\./, "www."), value: (dom.subdomain || co.slug) + "." + P.primaryDomain },
+      { type: "TXT", host: "_advisor-verify." + custom.replace(/^www\./, ""), value: "advisor-verify=" + (co.id || "x") + "-7f3a9c" },
+      { type: "A", host: custom.replace(/^www\./, "") + " (apex, optional)", value: "76.76.21.21" }
+    ] : [{ type: "—", host: "Enter a custom domain to generate records", value: "" }];
+    const providerSteps = { "GoDaddy": "GoDaddy → My Products → DNS → Add record. Paste each row above. Propagation 5–30 min.", "Cloudflare": "Cloudflare → DNS → Records → Add. Set the CNAME to DNS only (grey cloud) so our SSL can issue; you can turn the proxy on after verification.", "Namecheap": "Namecheap → Domain List → Manage → Advanced DNS → Add new record.", "Google Domains / Squarespace": "Squarespace Domains → DNS settings → Custom records → Add record.", "Other": "Add the records at your DNS host, then click Verify. We check every 10 minutes for 48 hours." }[dom.provider] || "Pick your DNS provider for exact steps. GoDaddy and Cloudflare are the most common.";
+    const sideInts = [["sendgrid", "SendGrid"], ["twilio", "Twilio"], ["stripe", "Stripe"], ["calendly", "Calendly"]].map(([k, name]) => { const st = ((co.integrations || {})[k] || {}).status || "not_connected"; return { name, dot: st === "connected" ? "#2FBF71" : st === "pending" ? "#E39A2B" : "rgba(255,255,255,0.25)", state: st === "connected" ? "ON" : st === "pending" ? "PENDING" : "OFF" }; });
+    const markUrl = ((co.branding || {}).logoUrl || "").trim();
+    const companyVals = {
+      co, planName, sideInts, markUrl, hasMark: !!markUrl, noMark: !markUrl,
+      isSuper: role.id === "super_admin", notSuper: role.id !== "super_admin",
+      userName: role.id === "super_admin" ? "Clarence Williams" : (co.owner || "Admin"), userInitials: (co.owner || "A").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase(), showMark: !!markUrl && role.id !== "super_admin", showNameOnly: !markUrl && role.id !== "super_admin", accountInitials: (co.name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase(), canSeeSiteFeature: role.id !== "client" && role.id !== "advisor" && feats.website_cms !== false,
+      featReviews: feats.reviews !== false, featBoard: feats.pipeline_board !== false,
+      lockedFeatures: lockedKeys.length > 0 && role.canEdit, lockedList: lockedKeys.join(", "),
+      settingsTabs: [["branding", "Branding"], ["domain", "Domain"], ["integrations", "Integrations"], ["team", "Team"]].map(([k, label]) => ({ label, go: () => this.setState({ settingsTab: k }), bg: tab === k ? "#0A1626" : "transparent", fg: tab === k ? "#FFFFFF" : "#425973" })),
+      tabBranding: tab === "branding", tabDomain: tab === "domain", tabIntegrations: tab === "integrations", tabTeam: tab === "team",
+      noWhiteLabel: !feats.white_label, noTeamFeature: !feats.team_management,
+      onBrand: { companyName: brandSet("companyName"), tagline: brandSet("tagline"), logoUrl: brandSet("logoUrl"), primaryColor: brandSet("primaryColor"), accentColor: brandSet("accentColor") },
+      hasLogo: !!(co.branding || {}).logoUrl, noLogo: !(co.branding || {}).logoUrl,
+      subdomainHost: (dom.subdomain || co.slug) + "." + P.primaryDomain,
+      onDomainCustom: e => this.patchCompany(a => { a.domain = Object.assign({}, a.domain, { custom: e.target.value, verified: false, ssl: "none" }); return a; }),
+      onDomainProvider: e => this.patchCompany(a => { a.domain = Object.assign({}, a.domain, { provider: e.target.value }); return a; }),
+      verifyDomain: () => { if (!custom) return; this.setState({ verifying: true }); setTimeout(() => { this.patchCompany(a => { a.domain = Object.assign({}, a.domain, { verified: true, ssl: "active" }); return a; }); this.setState({ verifying: false }); }, 1200); },
+      verifyLabel: this.state.verifying ? "Checking DNS…" : dom.verified ? "Re-verify" : "Verify",
+      domainStatus: !custom ? "No custom domain — your subdomain is live." : dom.verified ? "Verified · SSL active · serving " + custom : "Waiting for DNS records · we re-check every 10 minutes",
+      domainStatusColor: !custom ? "#6A809A" : dom.verified ? "#1E7A4C" : "#8A6320",
+      dnsRecords, providerHint: dom.provider ? "· " + dom.provider.toUpperCase() : "", providerSteps,
+      integrationCards: [
+        ic("sendgrid", "SG", "SendGrid", "Receipts, welcome emails, reminders — from your domain", "sendgrid", [["apiKey", "API key", "password", "SG.xxxxxxxx"], ["fromName", "From name"], ["fromAddress", "From address", "email", "you@yourcompany.com"], ["sendingDomain", "Sending domain", "text", "mail.yourcompany.com"]], [], "Save & verify domain", "Required — every company sends from its own SendGrid."),
+        ic("twilio", "TW", "Twilio", "SMS reminders to clients and new-lead alerts to you", "twilio_sms", [["accountSid", "Account SID", "text", "ACxxxxxxxx"], ["authToken", "Auth token", "password"], ["number", "Company number", "tel", "+1 (555) 000-0000 — or provision one"], ["alertTo", "Send lead alerts to", "tel"]], [["reminders", "Text clients interview and intake reminders"], ["leadAlerts", "Text me when a new lead arrives"]], "Connect Twilio", "A dedicated number is provisioned per company."),
+        ic("stripe", "ST", "Stripe", "Checkout, payment plans, and receipts", "stripe_checkout", [["accountId", "Connected account", "text", "acct_…"], ["mode", "Mode (test / live)", "text", "test"]], [], "Connect with Stripe", "OAuth — Stripe Connect; payouts go to your account."),
+        ic("calendly", "CA", "Calendly", "Interview and discovery-call booking", "calendly", [["url", "Event type URL", "url", "https://calendly.com/you/intro-call"], ["token", "Personal access token (webhooks)", "password"]], [], "Connect Calendly", "invitee.created updates the pipeline and portal.")
+      ],
+      invite: this.state.invite, onInviteName: e => this.setState(s => ({ invite: Object.assign({}, s.invite, { name: e.target.value }) })), onInviteEmail: e => this.setState(s => ({ invite: Object.assign({}, s.invite, { email: e.target.value }) })), onInviteRole: e => this.setState(s => ({ invite: Object.assign({}, s.invite, { role: e.target.value }) })),
+      inviteMember: ev => { ev.preventDefault(); const inv = this.state.invite; if (!inv.name.trim() || !inv.email.trim()) return; const perms = {}; (window.PERMISSIONS || []).forEach(p => { perms[p.key] = inv.role === "manager" ? "write" : (p.key === "clients" || p.key === "pipeline") ? "write" : "none"; }); this.patchCompany(a => { a.team = (a.team || []).concat([{ id: Date.now(), name: inv.name.trim(), email: inv.email.trim(), role: inv.role, perms, invited: true }]); return a; }); this.setState({ invite: { name: "", email: "", role: "advisor" } }); },
+      permHeads: (window.PERMISSIONS || []).map(p => p.label.toUpperCase()),
+      teamRows: (co.team || []).map(m => ({ initials: (m.name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase(), name: m.name, email: m.email, roleLabel: (m.role === "advisor" ? "Client advisor" : m.role) + (m.invited ? " · invited" : ""), removable: m.role !== "admin",
+        remove: () => { if (confirm("Remove " + m.name + " from the team?")) this.patchCompany(a => { a.team = a.team.filter(x => x.id !== m.id); return a; }); },
+        cells: (window.PERMISSIONS || []).map(p => { const v = (m.perms || {})[p.key] || "none"; return { isAdmin: m.role === "admin", editable: m.role !== "admin", value: v, bg: v === "write" ? "#EDF7F1" : v === "read" ? "#EAF2FD" : "#FFFFFF", fg: v === "write" ? "#1E7A4C" : v === "read" ? "#0B4FD0" : "#6A809A", set: e => this.patchCompany(a => { a.team = a.team.map(x => x.id === m.id ? Object.assign({}, x, { perms: Object.assign({}, x.perms, { [p.key]: e.target.value }) }) : x); return a; }) }; }) }))
+    };
+    const rub = this.state.rubric || window.GRADER_DEFAULT || { categories: [], grades: [] };
+    const ci = Math.min(this.state.rubricCat, Math.max(0, rub.categories.length - 1));
+    const ac = rub.categories[ci] || { name: "", group: "Core", weight: 0, checks: [] };
+    const weightTotal = rub.categories.reduce((s, c) => s + Number(c.weight || 0), 0);
+    const numE = e => { const n = Number(e.target.value); return isNaN(n) ? 0 : n; };
+    const rubricVals = {
+      rubricVersion: rub.version || 1, rubricNext: (rub.version || 1) + 1, weightTotal, weightColor: weightTotal === 100 ? "#1E7A4C" : "#C2361F",
+      rubricStatus: this.state.rubricDirty ? "Unpublished edits — new reports use them immediately; publishing stamps a version." : "Published.",
+      rubricCats: rub.categories.map((c, i) => ({ name: c.name, weight: c.weight, bg: i === ci ? "#0A1626" : "transparent", fg: i === ci ? "#FFFFFF" : "#425973", ptsColor: i === ci ? "#7FB6FF" : "#7C93AD", go: () => this.setState({ rubricCat: i }), setWeight: e => this.patchRubric(r => { r.categories[i].weight = numE(e); return r; }) })),
+      gradeRows: rub.grades.map((g, i) => ({ grade: g.grade, label: g.label, min: g.min, setLabel: e => this.patchRubric(r => { r.grades[i].label = e.target.value; return r; }), setMin: e => this.patchRubric(r => { r.grades[i].min = numE(e); return r; }) })),
+      activeCat: { name: ac.name, group: ac.group, weight: ac.weight },
+      renameCat: e => this.patchRubric(r => { r.categories[ci].name = e.target.value; return r; }),
+      setCatGroup: e => this.patchRubric(r => { r.categories[ci].group = e.target.value; return r; }),
+      activeChecks: (ac.checks || []).map((ch, k) => ({ key: ch.key, label: ch.label, share: ch.share, points: Math.round(ac.weight * ch.share * 10) / 10,
+        setLabel: e => this.patchRubric(r => { r.categories[ci].checks[k].label = e.target.value; return r; }),
+        setShare: e => this.patchRubric(r => { r.categories[ci].checks[k].share = numE(e); return r; }),
+        tiers: ch.tiers.map((t, j) => ({ min: t.min, pctInt: Math.round(t.pct * 100), finding: t.finding || "", rec: t.rec || "",
+          setMin: e => this.patchRubric(r => { r.categories[ci].checks[k].tiers[j].min = numE(e); return r; }),
+          setPct: e => this.patchRubric(r => { r.categories[ci].checks[k].tiers[j].pct = Math.max(0, Math.min(100, numE(e))) / 100; return r; }),
+          setFinding: e => this.patchRubric(r => { r.categories[ci].checks[k].tiers[j].finding = e.target.value; return r; }),
+          setRec: e => this.patchRubric(r => { const v = e.target.value; if (v.trim()) r.categories[ci].checks[k].tiers[j].rec = v; else delete r.categories[ci].checks[k].tiers[j].rec; return r; }) })) })),
+      resetRubric: () => { if (!confirm("Reset this company's rubric to the platform default?")) return; this.patchRubric(() => JSON.parse(JSON.stringify(window.GRADER_DEFAULT))); this.setState({ rubricDirty: false }); },
+      bumpRubric: () => { this.patchRubric(r => { r.version = (r.version || 1) + 1; r.publishedAt = new Date().toISOString(); return r; }); this.setState({ rubricDirty: false }); }
+    };
+    const hero = this.state.hero;
+    const isVideo = hero.mode === "video";
+    const hasUrl = !!(hero.videoUrl || "").trim();
+    const heroVals = {
+      hero,
+      heroModeCard: () => this.setHero({ mode: "card" }),
+      heroModeVideo: () => this.setHero({ mode: "video" }),
+      heroCardBg: isVideo ? "transparent" : "#0A1626", heroCardFg: isVideo ? "#425973" : "#FFFFFF",
+      heroVideoBg: isVideo ? "#0A1626" : "transparent", heroVideoFg: isVideo ? "#FFFFFF" : "#425973",
+      heroFieldsOff: !isVideo, heroFieldOpacity: isVideo ? 1 : 0.5,
+      onHeroUrl: e => this.setHero({ videoUrl: e.target.value }),
+      onHeroPoster: e => this.setHero({ poster: e.target.value }),
+      onHeroTitle: e => this.setHero({ title: e.target.value }),
+      onHeroCaption: e => this.setHero({ caption: e.target.value }),
+      heroPreviewVideo: isVideo && hasUrl, heroPreviewCard: !(isVideo && hasUrl),
+      heroUrlShort: (hero.videoUrl || "").replace(/^https?:\/\//, ""),
+      heroStatus: !isVideo ? "Showing the audit card (default)." : hasUrl ? "Showing video on the landing page." : "Video selected — add a URL or the card stays live.",
+      heroStatusColor: !isVideo ? "#6A809A" : hasUrl ? "#1E7A4C" : "#8A6320"
+    };
+    const setDraft = (k, v) => this.setState(s => ({ draft: Object.assign({}, s.draft, { [k]: v }) }));
+    const reviewVals = {
+      reviewRows, reviewLiveCount: live,
+      reviewSummary: live + " live · " + (reviews.length - live) + " hidden",
+      reviewEditorOpen: !!draft,
+      reviewEditorTitle: editing === "new" ? "Add a review" : "Edit review",
+      draft: draft || {},
+      draftLength: draft ? draft.quote.length : 0,
+      openNewReview: () => this.setState({ editing: "new", draft: this.blankReview() }),
+      closeReviewEditor: () => this.setState({ editing: null, draft: null }),
+      onDraftName: e => setDraft("name", e.target.value),
+      onDraftRole: e => setDraft("role", e.target.value),
+      onDraftCategory: e => setDraft("category", e.target.value),
+      onDraftLinkedin: e => setDraft("linkedin", e.target.value),
+      onDraftQuote: e => setDraft("quote", e.target.value),
+      onDraftVisible: e => setDraft("visible", e.target.checked),
+      saveReview: ev => {
+        ev.preventDefault();
+        const d = this.state.draft; if (!d || !d.name.trim() || !d.quote.trim()) return;
+        this.setReviews(rs => editing === "new" ? rs.concat([d]) : rs.map(x => x.id === d.id ? d : x));
+        this.setState({ editing: null, draft: null });
+      }
+    };
+    const q = query.trim().toLowerCase();
+    const rows = leads
+      .filter(l => filter === "All" || l.status === filter)
+      .filter(l => !q || (l.name + " " + l.email + " " + l.phone + " " + l.category).toLowerCase().includes(q))
+      .map(l => {
+        const d = this.decorate(l);
+        d.open = () => this.setState({ selectedId: l.id, sent: false, note: "" });
+        return d;
+      });
+    const selected = leads.find(l => l.id === selectedId);
+    const { stages, view, manageOpen, newStageName, dragId, overStage } = this.state;
+    const chip = (label, val) => ({ label, go: () => this.setFilter(val), bg: filter === val ? "#0A1626" : "#FFFFFF", fg: filter === val ? "#FFFFFF" : "#425973" });
+    const matchesQuery = l => !q || (l.name + " " + l.email + " " + l.phone + " " + l.category).toLowerCase().includes(q);
+    const chips = {
+      stageChips: [chip("All", "All")].concat(stages.map(st => chip(st.name, st.name))),
+      stageOptions: stages.map(st => ({ name: st.name })),
+      isList: view === "list", isBoard: view === "board",
+      viewList: () => this.setState({ view: "list", manageOpen: false }), viewBoard: () => this.setState({ view: "board" }),
+      listBg: view === "list" ? "#0A1626" : "transparent", listFg: view === "list" ? "#FFFFFF" : "#425973",
+      boardBg: view === "board" ? "#0A1626" : "transparent", boardFg: view === "board" ? "#FFFFFF" : "#425973",
+      manageOpen, toggleManage: () => this.setState(s => ({ manageOpen: !s.manageOpen })),
+      manageBg: manageOpen ? "#0A1626" : "#FFFFFF", manageFg: manageOpen ? "#FFFFFF" : "#425973", manageLabel: manageOpen ? "Done" : "Manage columns",
+      newStageName, onNewStageName: e => this.setState({ newStageName: e.target.value }),
+      addStage: ev => {
+        ev.preventDefault();
+        const name = newStageName.trim(); if (!name || stages.some(x => x.name.toLowerCase() === name.toLowerCase())) return;
+        const color = PALETTE[stages.length % PALETTE.length];
+        const insertAt = Math.max(0, stages.findIndex(x => x.kind !== "open"));
+        this.setStages(ss => { const a = ss.slice(); a.splice(insertAt < 0 ? a.length : insertAt, 0, { id: "s" + Date.now(), name, kind: "open", color }); return a; });
+        this.setState({ newStageName: "" });
+      },
+      stageRows: stages.map((st, i) => {
+        const count = leads.filter(l => l.status === st.name).length;
+        const locked = stages.length <= 2;
+        return {
+          name: st.name, kind: st.kind, dot: (COLOR[st.color] || COLOR.blue).dot, count, locked, removeOpacity: locked ? 0.4 : 1,
+          rename: e => { const name = e.target.value; const old = st.name; this.setStages(ss => ss.map(x => x.id === st.id ? Object.assign({}, x, { name }) : x)); this.setState(s => ({ leads: s.leads.map(l => l.status === old ? Object.assign({}, l, { status: name }) : l), filter: s.filter === old ? name : s.filter })); },
+          setKind: e => { const kind = e.target.value; this.setStages(ss => ss.map(x => x.id === st.id ? Object.assign({}, x, { kind, color: kind === "won" ? "navy" : kind === "lost" ? "grey" : (PALETTE.includes(x.color) ? x.color : "blue") }) : x)); },
+          up: () => i > 0 && this.setStages(ss => { const a = ss.slice(); [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a; }),
+          down: () => i < stages.length - 1 && this.setStages(ss => { const a = ss.slice(); [a[i + 1], a[i]] = [a[i], a[i + 1]]; return a; }),
+          remove: () => {
+            if (locked) return;
+            const fallback = stages.find(x => x.id !== st.id).name;
+            if (count && !confirm("Remove “" + st.name + "”? " + count + " lead" + (count > 1 ? "s" : "") + " will move to “" + fallback + "”.")) return;
+            this.setStages(ss => ss.filter(x => x.id !== st.id));
+            this.setState(s => ({ leads: s.leads.map(l => l.status === st.name ? Object.assign({}, l, { status: fallback }) : l), filter: s.filter === st.name ? "All" : s.filter }));
+          }
+        };
+      }),
+      columns: stages.map(st => {
+        const c = COLOR[st.color] || COLOR.blue;
+        const cards = leads.filter(l => l.status === st.name).filter(matchesQuery).map(l => ({
+          initials: l.name.split(/\s+/).map(w => w[0]).slice(0, 2).join(""), name: l.name, category: l.category, received: l.received.split(",")[0], goal: l.goal, phone: l.phone,
+          hasBooking: !!l.booked, opacity: dragId === l.id ? 0.4 : 1,
+          dragStart: e => { try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(l.id)); } catch (x) {} this.setState({ dragId: l.id }); },
+          dragEnd: () => this.setState({ dragId: null, overStage: null }),
+          open: () => { if (dragId == null) this.setState({ selectedId: l.id, sent: false, note: "" }); }
+        }));
+        const over = overStage === st.id;
+        return {
+          name: st.name, count: cards.length, dot: c.dot, cards, empty: cards.length === 0,
+          bg: over ? "#EAF2FD" : "#FFFFFF", border: over ? "#1668F0" : "#DDE8F7",
+          over: e => { e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch (x) {} if (overStage !== st.id) this.setState({ overStage: st.id }); },
+          leave: () => { if (overStage === st.id) this.setState({ overStage: null }); },
+          drop: e => { e.preventDefault(); let id = dragId; try { id = Number(e.dataTransfer.getData("text/plain")) || dragId; } catch (x) {} if (id != null) this.moveLead(id, st.name); }
+        };
+      })
+    };
+
+    return Object.assign({
+      rows,
+      noResults: rows.length === 0,
+      shownCount: rows.length + " of " + leads.length + " leads",
+      totalLeads: leads.length,
+      calendlyUrl: CALENDLY_URL,
+      query,
+      onQuery: e => this.setState({ query: e.target.value }),
+
+      kpiNew: leads.filter(l => l.status === stages[0].name).length,
+      kpiTalking: leads.filter(l => { const st = this.stageFor(l.status); return st.kind === "open" && st.id !== stages[0].id; }).length,
+      kpiClients: leads.filter(l => this.stageFor(l.status).kind === "won").length,
+      lastRun: "9:12 AM",
+      drawerOpen: !!selected,
+      sel: selected ? this.decorate(selected) : {},
+      closeDrawer: () => this.setState({ selectedId: null }),
+      onStatus: e => {
+        const status = e.target.value;
+        this.setState(s => ({ leads: s.leads.map(l => l.id === s.selectedId ? Object.assign({}, l, { status }) : l) }));
+      },
+      template, note,
+      onTemplate: e => this.setState({ template: e.target.value }),
+      onNote: e => this.setState({ note: e.target.value }),
+      send: () => this.setState({ sent: true }),
+      sendLabel: sent ? "Queued in SendGrid ✓" : "Send email"
+    }, chips, reviewVals, heroVals, cmsVals, companyVals, rubricVals);
+  }
+}
+
+</script>
+</body>
+</html>

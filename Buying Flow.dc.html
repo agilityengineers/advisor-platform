@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet" />
+<script src="https://assets.calendly.com/assets/external/widget.js" async=""></script>
+<style>
+  body { margin:0; padding:0; font-family:Manrope, system-ui, sans-serif; color:#0A1626; background:#F4F8FE; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#1668F0; text-decoration:none; }
+  a:hover { color:#0B4FD0; }
+  input, select, textarea, button { font-family:inherit; }
+  ::placeholder { color:#9AAABF; }
+  @keyframes mtcSpin { to { transform: rotate(360deg); } }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; flex-direction:column">
+
+  <div style="background:#0A1626; color:#FFFFFF; position:sticky; top:0; z-index:50; borderBottom:1px solid rgba(255,255,255,0.1)">
+    <div style="max-width:1180px; margin:0 auto; padding:12px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px">
+      <div style="display:flex; align-items:center; gap:10px; margin-right:8px">
+        <img src="uploads/ptc-logo-only.png" alt="" style="width:28px; height:28px; object-fit:contain" />
+        <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">BUYING FLOW · PROTOTYPE</div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; flex:1">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
+          <button type="button" onClick="{{ s.go }}" style="display:flex; align-items:center; gap:8px; background:{{ s.bg }}; color:{{ s.fg }}; border:1px solid {{ s.border }}; font-size:12.5px; font-weight:700; padding:7px 12px; border-radius:999px; cursor:pointer; white-space:nowrap"><span style="font-family:Sora,sans-serif; font-size:11px; opacity:0.7">{{ s.n }}</span>{{ s.label }}</button>
+        </sc-for>
+      </div>
+      <a href="Standard Pricing.dc.html" style="font-size:12.5px; font-weight:700; color:#B9CBE0; white-space:nowrap" style-hover="color:#FFFFFF">← Pricing</a>
+    </div>
+  </div>
+
+  <!-- 0 · FLOW MAP -->
+  <sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+    <section data-screen-label="Flow map" style="flex:1; padding:56px 20px 80px">
+      <div style="max-width:1180px; margin:0 auto">
+        <div style="max-width:720px">
+          <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">How a purchase moves</div>
+          <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(28px,3.4vw,42px); line-height:1.1; letter-spacing:-0.02em; margin:14px 0 0">From the pricing page to a client in the portal — one Stripe payment, everything else automated.</h1>
+          <p style="font-size:16px; line-height:1.65; color:#3D556F; margin:16px 0 0">Click any step above to walk the screens a buyer sees. The grey rail below is what runs in the background.</p>
+        </div>
+
+        <div style="margin-top:44px; display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px">
+          <sc-for list="{{ mapCards }}" as="c" hint-placeholder-count="6">
+            <button type="button" onClick="{{ c.go }}" style="text-align:left; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:16px; padding:18px; cursor:pointer; display:flex; flex-direction:column; gap:10px; min-width:0; min-height:168px" style-hover="border-color:#1668F0">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px"><div style="width:30px; height:30px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:12.5px; display:flex; align-items:center; justify-content:center">{{ c.n }}</div><div style="font-size:10.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">{{ c.tag }}</div></div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:15px; color:#0A1626">{{ c.title }}</div>
+              <div style="font-size:13px; line-height:1.5; color:#5A718C">{{ c.body }}</div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:14px; background:#FFFFFF; border:1px dashed #B9D2F4; border-radius:16px; padding:20px 22px">
+          <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">BACKGROUND · RUNS ON STRIPE WEBHOOKS</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:14px">
+            <div style="display:flex; gap:10px; align-items:flex-start"><div style="width:8px; height:8px; border-radius:50%; background:#635BFF; margin-top:6px; flex-shrink:0"></div><div style="font-size:13.5px; line-height:1.5; color:#3D556F"><strong style="color:#0A1626">Stripe</strong> — Payment Element embedded on our checkout; <span style="font-family:ui-monospace,monospace; font-size:12px">checkout.session.completed</span> fires on success; subscriptions schedule 2× / 3× plans.</div></div>
+            <div style="display:flex; gap:10px; align-items:flex-start"><div style="width:8px; height:8px; border-radius:50%; background:#FF4A00; margin-top:6px; flex-shrink:0"></div><div style="font-size:13.5px; line-height:1.5; color:#3D556F"><strong style="color:#0A1626">Zapier</strong> — catches the webhook, creates/updates the lead as a client in the CRM, tags the offer and bumps, opens the portal record.</div></div>
+            <div style="display:flex; gap:10px; align-items:flex-start"><div style="width:8px; height:8px; border-radius:50%; background:#1A82E2; margin-top:6px; flex-shrink:0"></div><div style="font-size:13.5px; line-height:1.5; color:#3D556F"><strong style="color:#0A1626">SendGrid</strong> — receipt + welcome email with the booking link, intake link, and portal login. Reminder if intake is incomplete at 48h.</div></div>
+            <div style="display:flex; gap:10px; align-items:flex-start"><div style="width:8px; height:8px; border-radius:50%; background:#006BFF; margin-top:6px; flex-shrink:0"></div><div style="font-size:13.5px; line-height:1.5; color:#3D556F"><strong style="color:#0A1626">Calendly</strong> — <span style="font-family:ui-monospace,monospace; font-size:12px">invitee.created</span> marks the interview as scheduled in the portal and CRM.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- 1 · CHECKOUT -->
+  <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Checkout" style="flex:1; padding:48px 20px 80px">
+      <div style="max-width:1080px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:28px; align-items:start">
+
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0">
+          <div style="display:flex; align-items:center; gap:12px"><img src="uploads/ptc-simple-flat2.png" alt="My Target Client" style="height:34px; width:auto" /><div style="margin-left:auto; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#1E7A4C"><span style="width:8px; height:8px; border-radius:50%; background:#2FBF71"></span>Secure checkout</div></div>
+
+          <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px">
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">YOUR ORDER</div>
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-top:12px">
+              <div style="min-width:0"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; color:#0A1626">{{ offer.name }}</div><div style="font-size:13.5px; color:#6A809A; font-weight:600; margin-top:3px">{{ offer.sub }}</div></div>
+              <div style="font-family:Sora,sans-serif; font-weight:700; font-size:19px; color:#0A1626; white-space:nowrap">{{ offerPriceLabel }}</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px">
+              <sc-for list="{{ offer.includes }}" as="i" hint-placeholder-count="3"><div style="display:flex; gap:9px; font-size:13.5px; color:#3D556F; line-height:1.5"><span style="color:#1668F0; font-weight:700">✓</span>{{ i }}</div></sc-for>
+            </div>
+            <sc-if value="{{ offer.splittable }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:18px; display:inline-flex; background:#F4F8FE; border:1px solid #D8E5F5; border-radius:999px; padding:4px">
+                <button type="button" onClick="{{ payFull }}" style="background:{{ fullBg }}; color:{{ fullFg }}; border:none; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer">Pay in full</button>
+                <button type="button" onClick="{{ paySplit }}" style="background:{{ splitBg }}; color:{{ splitFg }}; border:none; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer">{{ splitLabel }}</button>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px">
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">ADD TO THIS ORDER</div>
+            <label style="display:flex; align-items:flex-start; gap:14px; margin-top:14px; padding:14px; border:1px solid {{ bannerBorder }}; background:{{ bannerBg }}; border-radius:12px; cursor:pointer">
+              <input type="checkbox" checked="{{ bumps.banner }}" onChange="{{ toggleBanner }}" style="width:18px; height:18px; margin-top:2px; accent-color:#1668F0" />
+              <div style="min-width:0; flex:1"><div style="display:flex; justify-content:space-between; gap:10px"><div style="font-size:14.5px; font-weight:700; color:#0A1626">Custom banner design</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:14.5px">+$150</div></div><div style="font-size:13px; color:#5A718C; line-height:1.5; margin-top:3px">Three header options on brand with your new headline. Most clients add this.</div></div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:14px; margin-top:10px; padding:14px; border:1px solid {{ rushBorder }}; background:{{ rushBg }}; border-radius:12px; cursor:pointer">
+              <input type="checkbox" checked="{{ bumps.rush }}" onChange="{{ toggleRush }}" style="width:18px; height:18px; margin-top:2px; accent-color:#1668F0" />
+              <div style="min-width:0; flex:1"><div style="display:flex; justify-content:space-between; gap:10px"><div style="font-size:14.5px; font-weight:700; color:#0A1626">72-hour rush</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:14.5px">+30% · {{ rushAmount }}</div></div><div style="font-size:13px; color:#5A718C; line-height:1.5; margin-top:3px">Delivered within three business days of your interview.</div></div>
+            </label>
+          </div>
+
+          <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px">
+            <div style="display:flex; justify-content:space-between; font-size:14px; color:#3D556F; padding:6px 0"><span>{{ offer.name }}</span><span>{{ baseLabel }}</span></div>
+            <sc-if value="{{ bumps.banner }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:14px; color:#3D556F; padding:6px 0"><span>Custom banner design</span><span>$150</span></div></sc-if>
+            <sc-if value="{{ bumps.rush }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:14px; color:#3D556F; padding:6px 0"><span>72-hour rush</span><span>{{ rushAmount }}</span></div></sc-if>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; borderTop:1px solid #E4EDF9; margin-top:8px; padding-top:14px"><span style="font-size:14px; font-weight:700; color:#0A1626">{{ dueLabel }}</span><span style="font-family:Sora,sans-serif; font-weight:700; font-size:26px; letter-spacing:-0.02em">{{ dueToday }}</span></div>
+            <sc-if value="{{ isSplit }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:6px">{{ splitNote }}</div></sc-if>
+          </div>
+        </div>
+
+        <form onSubmit="{{ pay }}" style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:26px; display:flex; flex-direction:column; gap:16px; min-width:0; box-shadow:0 24px 60px rgba(10,22,38,0.08)">
+          <div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px">Payment</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <button type="button" style="background:#0A1626; color:#FFFFFF; border:none; border-radius:8px; padding:12px; font-weight:700; font-size:14px; cursor:pointer"> Pay</button>
+            <button type="button" style="background:#00D66F; color:#0A1626; border:none; border-radius:8px; padding:12px; font-weight:700; font-size:14px; cursor:pointer">Link</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; color:#9AAABF; font-size:12.5px; font-weight:600"><div style="flex:1; height:1px; background:#E4EDF9"></div>Or pay with card<div style="flex:1; height:1px; background:#E4EDF9"></div></div>
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="co-email" style="font-size:13px; font-weight:700; color:#16283D">Email</label><input id="co-email" type="email" required="" value="{{ buyer.email }}" onChange="{{ onEmail }}" placeholder="you@company.com" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:8px; outline:none; background:#FFFFFF" style-focus="border-color:#635BFF; box-shadow:0 0 0 3px rgba(99,91,255,0.15)" /></div>
+          <div style="display:flex; flex-direction:column; gap:6px">
+            <label for="co-card" style="font-size:13px; font-weight:700; color:#16283D">Card information</label>
+            <div style="border:1px solid #D8E5F5; border-radius:8px; overflow:hidden">
+              <input id="co-card" type="text" inputmode="numeric" placeholder="1234 1234 1234 1234" style="width:100%; padding:12px 13px; font-size:15px; border:none; borderBottom:1px solid #D8E5F5; outline:none" />
+              <div style="display:grid; grid-template-columns:1fr 1fr"><input type="text" placeholder="MM / YY" aria-label="Expiry" style="padding:12px 13px; font-size:15px; border:none; borderRight:1px solid #D8E5F5; outline:none" /><input type="text" placeholder="CVC" aria-label="CVC" style="padding:12px 13px; font-size:15px; border:none; outline:none" /></div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="co-name" style="font-size:13px; font-weight:700; color:#16283D">Name on card</label><input id="co-name" type="text" required="" value="{{ buyer.name }}" onChange="{{ onName }}" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:8px; outline:none" style-focus="border-color:#635BFF; box-shadow:0 0 0 3px rgba(99,91,255,0.15)" /></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <div style="display:flex; flex-direction:column; gap:6px"><label for="co-country" style="font-size:13px; font-weight:700; color:#16283D">Country</label><select id="co-country" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:8px; outline:none; background:#FFFFFF"><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option></select></div>
+            <div style="display:flex; flex-direction:column; gap:6px"><label for="co-zip" style="font-size:13px; font-weight:700; color:#16283D">ZIP</label><input id="co-zip" type="text" inputmode="numeric" placeholder="12345" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:8px; outline:none" /></div>
+          </div>
+          <button type="submit" disabled="{{ paying }}" style="margin-top:6px; background:#1668F0; color:#FFFFFF; border:none; border-radius:999px; padding:16px; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 12px 26px rgba(22,104,240,0.3)" style-hover="background:#0B4FD0">{{ payLabel }}</button>
+          <div style="font-size:12px; color:#7C93AD; line-height:1.55; text-align:center">By paying you agree to the engagement terms. Activity-based marketing — not paid advertising; no performance guarantees. <br />Payments processed by <strong style="color:#635BFF">Stripe</strong>. We never see your card number.</div>
+        </form>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- 2 · THANK YOU -->
+  <sc-if value="{{ isThanks }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Thank you" style="flex:1; padding:56px 20px 80px">
+      <div style="max-width:880px; margin:0 auto">
+        <div style="background:#0A1626; color:#FFFFFF; border-radius:22px; padding:36px; position:relative; overflow:hidden">
+          <div style="position:absolute; inset:0; background:radial-gradient(600px 300px at 90% 0%, rgba(22,104,240,0.35), rgba(10,22,38,0) 70%)"></div>
+          <div style="position:relative; display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between">
+            <div style="min-width:0">
+              <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(47,191,113,0.18); border:1px solid rgba(47,191,113,0.4); color:#8FE3B4; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:6px 11px; border-radius:999px">✓ PAYMENT RECEIVED</div>
+              <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(26px,3.2vw,38px); line-height:1.1; letter-spacing:-0.02em; margin:16px 0 0">You're in, {{ buyerFirst }}. Here's what happens next.</h1>
+              <div style="font-size:14.5px; color:#B9CBE0; font-weight:600; margin-top:12px">Order {{ orderId }} · {{ offer.name }} · {{ dueToday }} charged to card ending 4242 · Receipt sent to {{ buyer.email }}</div>
+            </div>
+            <img src="uploads/BTLIpic.jpg" alt="" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.2); flex-shrink:0" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:16px">
+          <div style="background:#FFFFFF; border:2px solid #1668F0; border-radius:18px; padding:24px; display:flex; flex-direction:column">
+            <div style="width:34px; height:34px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center">1</div>
+            <div style="font-family:Sora,sans-serif; font-weight:700; font-size:17px; margin-top:14px">Book your Brand Voice Interview</div>
+            <div style="font-size:14px; line-height:1.55; color:#5A718C; margin-top:6px; flex:1">90 minutes with Brian. Pick a time now — it's the one thing that gates everything else.</div>
+            <button type="button" onClick="{{ goBook }}" style="margin-top:16px; background:#1668F0; color:#FFFFFF; border:none; border-radius:999px; padding:13px 18px; font-size:14.5px; font-weight:700; cursor:pointer" style-hover="background:#0B4FD0">Pick a time →</button>
+          </div>
+          <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:24px; display:flex; flex-direction:column">
+            <div style="width:34px; height:34px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center">2</div>
+            <div style="font-family:Sora,sans-serif; font-weight:700; font-size:17px; margin-top:14px">Complete a 3-minute intake</div>
+            <div style="font-size:14px; line-height:1.55; color:#5A718C; margin-top:6px; flex:1">Your LinkedIn URL, who you want to reach, and how we'll publish. Brian reads it before your call.</div>
+            <button type="button" onClick="{{ goIntake }}" style="margin-top:16px; background:#FFFFFF; color:#0A1626; border:1px solid #D8E5F5; border-radius:999px; padding:13px 18px; font-size:14.5px; font-weight:700; cursor:pointer" style-hover="border-color:#1668F0; color:#0B4FD0">Start intake</button>
+          </div>
+          <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:24px; display:flex; flex-direction:column">
+            <div style="width:34px; height:34px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center">3</div>
+            <div style="font-family:Sora,sans-serif; font-weight:700; font-size:17px; margin-top:14px">Track it in your portal</div>
+            <div style="font-size:14px; line-height:1.55; color:#5A718C; margin-top:6px; flex:1">Every stage, every file, every payment in one place. Login link is in your welcome email.</div>
+            <button type="button" onClick="{{ goPortal }}" style="margin-top:16px; background:#FFFFFF; color:#0A1626; border:1px solid #D8E5F5; border-radius:999px; padding:13px 18px; font-size:14.5px; font-weight:700; cursor:pointer" style-hover="border-color:#1668F0; color:#0B4FD0">Open portal</button>
+          </div>
+        </div>
+        <div style="margin-top:16px; font-size:13.5px; color:#6A809A; font-weight:600; text-align:center">Questions? Reply to your receipt — it goes straight to Brian.</div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- 3 · BOOK -->
+  <sc-if value="{{ isBook }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Book interview" style="flex:1; padding:56px 20px 80px">
+      <div style="max-width:1080px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:28px; align-items:start">
+        <div style="min-width:0">
+          <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">Step 1 of 2</div>
+          <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(26px,3vw,36px); line-height:1.1; letter-spacing:-0.02em; margin:14px 0 0">Book your Brand Voice Interview</h1>
+          <p style="font-size:16px; line-height:1.65; color:#3D556F; margin:14px 0 0">90 minutes on Zoom, recorded. Talk the way you would to a client — Brian asks the questions. Your name and email are already filled in.</p>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:22px">
+            <div style="display:flex; gap:10px; font-size:14.5px; color:#16283D"><span style="color:#1668F0; font-weight:700">✓</span>Calendar invite with Zoom link, instantly</div>
+            <div style="display:flex; gap:10px; font-size:14.5px; color:#16283D"><span style="color:#1668F0; font-weight:700">✓</span>Reminders 24h and 1h before</div>
+            <div style="display:flex; gap:10px; font-size:14.5px; color:#16283D"><span style="color:#1668F0; font-weight:700">✓</span>Reschedule any time from the invite</div>
+          </div>
+          <div style="margin-top:26px; display:flex; flex-wrap:wrap; gap:12px">
+            <a href="{{ calendlyPrefill }}" target="_blank" rel="noopener" style="background:#1668F0; color:#FFFFFF; font-weight:700; font-size:15px; padding:14px 22px; border-radius:999px" style-hover="background:#0B4FD0">Open in Calendly ↗</a>
+            <button type="button" onClick="{{ goIntake }}" style="background:#FFFFFF; color:#0A1626; border:1px solid #D8E5F5; border-radius:999px; padding:14px 22px; font-size:15px; font-weight:700; cursor:pointer" style-hover="border-color:#1668F0; color:#0B4FD0">I'll book later — go to intake</button>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px; min-width:0">
+          <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden; box-shadow:0 24px 60px rgba(10,22,38,0.08)">
+            <div style="padding:16px 20px; borderBottom:1px solid #E4EDF9; display:flex; align-items:center; gap:12px"><img src="uploads/BTLIpic.jpg" alt="" style="width:40px; height:40px; border-radius:50%; object-fit:cover" /><div><div style="font-size:12px; color:#6A809A; font-weight:700">Brian Traichel</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:16px">Brand Voice Interview · 90 min</div></div><div style="margin-left:auto; display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#006BFF; letter-spacing:0.06em"><span style="width:7px; height:7px; border-radius:50%; background:{{ calendlyDot }}"></span>{{ calendlyState }}</div></div>
+            <sc-if value="{{ bookedNow }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:36px 24px; text-align:center">
+                <div style="width:56px; height:56px; border-radius:50%; background:#EDF7F1; color:#1E7A4C; font-size:24px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto">✓</div>
+                <div style="font-family:Sora,sans-serif; font-weight:700; font-size:20px; margin-top:16px">Interview booked</div>
+                <div style="font-size:14.5px; color:#5A718C; margin-top:6px">{{ bookedLabel }} · invite and Zoom link are in your inbox</div>
+                <button type="button" onClick="{{ afterBooking }}" style="margin-top:20px; background:#1668F0; color:#FFFFFF; border:none; border-radius:999px; padding:13px 22px; font-size:14.5px; font-weight:700; cursor:pointer" style-hover="background:#0B4FD0">{{ afterBookingLabel }}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ showCalendly }}" hint-placeholder-val="{{ true }}">
+              <div data-calendly-inline="1" class="calendly-inline-widget" style="height:700px; min-height:700px; width:100%; position:relative; background:#FFFFFF">
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:#6A809A; font-size:13.5px; font-weight:600; pointer-events:none">
+                  <div style="width:36px; height:36px; border-radius:50%; border:3px solid #DDE8F7; borderTopColor:#1668F0; animation:mtcSpin .9s linear infinite"></div>
+                  Loading Brian's calendar…
+                </div>
+              </div>
+            </sc-if>
+          </div>
+          <div style="background:#FFFFFF; border:1px dashed #B9D2F4; border-radius:14px; padding:14px 16px; font-size:12.5px; line-height:1.6; color:#5A718C">
+            <strong style="color:#0A1626">Integration:</strong> Calendly inline embed, prefilled with name, email, and LinkedIn URL from the order. On <span style="font-family:ui-monospace,monospace; font-size:12px; background:#EAF2FD; padding:1px 5px; border-radius:4px">calendly.event_scheduled</span> this page advances automatically; the Calendly API webhook <span style="font-family:ui-monospace,monospace; font-size:12px; background:#EAF2FD; padding:1px 5px; border-radius:4px">invitee.created</span> (filtered by order ID in UTM) writes the booking to the CRM and portal.
+            <sc-if value="{{ calendlyBlocked }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px; color:#8A6320; font-weight:700">Calendly couldn't load in this preview — use "Open in Calendly" above. In production this is Brian's live event type.</div></sc-if>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- 4 · INTAKE -->
+  <sc-if value="{{ isIntake }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Intake" style="flex:1; padding:56px 20px 80px">
+      <div style="max-width:720px; margin:0 auto">
+        <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">Step 2 of 2 · 3 minutes</div>
+        <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(26px,3vw,36px); line-height:1.1; letter-spacing:-0.02em; margin:14px 0 0">Tell Brian what he's walking into</h1>
+        <p style="font-size:16px; line-height:1.65; color:#3D556F; margin:14px 0 0">He reads this before your interview so the 90 minutes go to the right places.</p>
+        <form onSubmit="{{ submitIntake }}" style="margin-top:28px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:28px; display:flex; flex-direction:column; gap:18px">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px">
+            <div style="display:flex; flex-direction:column; gap:6px"><label for="in-name" style="font-size:13px; font-weight:700; color:#16283D">Name</label><input id="in-name" type="text" value="{{ buyer.name }}" onChange="{{ onName }}" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:10px; outline:none; background:#F7FBFF" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+            <div style="display:flex; flex-direction:column; gap:6px"><label for="in-phone" style="font-size:13px; font-weight:700; color:#16283D">Phone</label><input id="in-phone" type="tel" value="{{ intake.phone }}" onChange="{{ onPhone }}" placeholder="(555) 214-8890" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:10px; outline:none; background:#F7FBFF" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="in-li" style="font-size:13px; font-weight:700; color:#16283D">Your LinkedIn profile URL</label><input id="in-li" type="url" required="" value="{{ intake.linkedin }}" onChange="{{ onLinkedin }}" placeholder="linkedin.com/in/yourname" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:10px; outline:none; background:#F7FBFF" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="in-known" style="font-size:13px; font-weight:700; color:#16283D">What do you want to be known for?</label><textarea id="in-known" rows="3" required="" value="{{ intake.knownFor }}" onChange="{{ onKnownFor }}" placeholder="One or two sentences — the niche, the problem you solve, the people you solve it for." style="padding:12px 13px; font-size:15px; line-height:1.55; border:1px solid #D8E5F5; border-radius:10px; outline:none; background:#F7FBFF; resize:vertical" style-focus="border-color:#1668F0; background:#FFFFFF"></textarea></div>
+          <div style="display:flex; flex-direction:column; gap:6px"><label for="in-audience" style="font-size:13px; font-weight:700; color:#16283D">Who should be finding you?</label><input id="in-audience" type="text" value="{{ intake.audience }}" onChange="{{ onAudience }}" placeholder="e.g. COOs at mid-market manufacturers; event programmers; literary agents" style="padding:12px 13px; font-size:15px; border:1px solid #D8E5F5; border-radius:10px; outline:none; background:#F7FBFF" style-focus="border-color:#1668F0; background:#FFFFFF" /></div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="font-size:13px; font-weight:700; color:#16283D">How should we publish the finished profile?</div>
+            <label style="display:flex; align-items:flex-start; gap:12px; padding:13px 14px; border:1px solid {{ accessUploadBorder }}; background:{{ accessUploadBg }}; border-radius:12px; cursor:pointer"><input type="radio" name="access" checked="{{ accessUpload }}" onChange="{{ setAccessUpload }}" style="margin-top:3px; accent-color:#1668F0" /><div><div style="font-size:14.5px; font-weight:700">You upload it for me</div><div style="font-size:13px; color:#5A718C; line-height:1.5; margin-top:2px">We'll schedule a 15-minute screen-share; you stay logged in, we paste. No password shared.</div></div></label>
+            <label style="display:flex; align-items:flex-start; gap:12px; padding:13px 14px; border:1px solid {{ accessSelfBorder }}; background:{{ accessSelfBg }}; border-radius:12px; cursor:pointer"><input type="radio" name="access" checked="{{ accessSelf }}" onChange="{{ setAccessSelf }}" style="margin-top:3px; accent-color:#1668F0" /><div><div style="font-size:14.5px; font-weight:700">I'll paste it myself</div><div style="font-size:13px; color:#5A718C; line-height:1.5; margin-top:2px">You get a section-by-section document with a short video walkthrough.</div></div></label>
+          </div>
+          <button type="submit" style="margin-top:4px; background:#1668F0; color:#FFFFFF; border:none; border-radius:999px; padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; box-shadow:0 12px 26px rgba(22,104,240,0.3)" style-hover="background:#0B4FD0">Send to Brian</button>
+        </form>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- 5 · EMAIL -->
+  <sc-if value="{{ isEmail }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Welcome email" style="flex:1; padding:56px 20px 80px">
+      <div style="max-width:980px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:28px; align-items:start">
+        <div style="min-width:0">
+          <div style="font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0B4FD0">SendGrid · dynamic template</div>
+          <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(24px,2.8vw,32px); line-height:1.12; letter-spacing:-0.02em; margin:14px 0 0">Welcome + receipt email</h1>
+          <p style="font-size:15px; line-height:1.65; color:#3D556F; margin:12px 0 0">Sent within a minute of <span style="font-family:ui-monospace,monospace; font-size:13px; background:#EAF2FD; padding:2px 6px; border-radius:5px">checkout.session.completed</span>. One template, merge fields filled from the order.</p>
+          <div style="margin-top:20px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:14px; padding:16px 18px">
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">TEMPLATE DATA</div>
+            <div style="font-family:ui-monospace,monospace; font-size:12.5px; line-height:1.7; color:#3D556F; margin-top:8px; white-space:pre-wrap">{{ templateJson }}</div>
+          </div>
+          <div style="margin-top:14px; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:14px; padding:16px 18px">
+            <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">ALSO IN THE SEQUENCE</div>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px; font-size:13.5px; color:#3D556F">
+              <div style="display:flex; justify-content:space-between; gap:10px"><span>Intake reminder (if incomplete)</span><span style="font-weight:700; color:#0B4FD0">+48h</span></div>
+              <div style="display:flex; justify-content:space-between; gap:10px"><span>Interview prep — what to have handy</span><span style="font-weight:700; color:#0B4FD0">24h before</span></div>
+              <div style="display:flex; justify-content:space-between; gap:10px"><span>Payment 2 of 2 receipt (plans only)</span><span style="font-weight:700; color:#0B4FD0">+30d</span></div>
+              <div style="display:flex; justify-content:space-between; gap:10px"><span>Your draft is ready for review</span><span style="font-weight:700; color:#0B4FD0">on status change</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden; box-shadow:0 24px 60px rgba(10,22,38,0.08)">
+          <div style="padding:14px 20px; borderBottom:1px solid #E4EDF9; background:#F7FBFF; font-size:13px; color:#3D556F; line-height:1.7">
+            <div><strong style="color:#0A1626">From:</strong> Brian Traichel &lt;brian@mytargetclient.com&gt;</div>
+            <div><strong style="color:#0A1626">To:</strong> {{ buyer.email }}</div>
+            <div><strong style="color:#0A1626">Subject:</strong> You're in — next step is your Brand Voice Interview</div>
+          </div>
+          <div style="padding:28px 28px 24px">
+            <img src="uploads/ptc-simple-flat2.png" alt="My Target Client" style="height:30px; width:auto" />
+            <h2 style="font-family:Sora,sans-serif; font-weight:700; font-size:22px; line-height:1.2; margin:22px 0 0; color:#0A1626">Welcome aboard, {{ buyerFirst }}.</h2>
+            <p style="font-size:15px; line-height:1.65; color:#3D556F; margin:14px 0 0">Thanks for choosing the {{ offer.name }}. Your payment of {{ dueToday }} went through; the receipt is below. Two quick things and then it's on me:</p>
+            <div style="margin-top:18px; display:flex; flex-direction:column; gap:10px">
+              <a href="{{ calendlyPrefill }}" style="display:block; background:#1668F0; color:#FFFFFF; text-align:center; font-weight:700; font-size:15px; padding:14px; border-radius:999px">1 · Book your Brand Voice Interview</a>
+              <a href="#intake" onClick="{{ goIntakeLink }}" style="display:block; background:#FFFFFF; color:#0A1626; border:1px solid #D8E5F5; text-align:center; font-weight:700; font-size:15px; padding:14px; border-radius:999px">2 · Complete your 3-minute intake</a>
+            </div>
+            <p style="font-size:15px; line-height:1.65; color:#3D556F; margin:18px 0 0">You can follow every step in your client portal: <a href="#portal" onClick="{{ goPortalLink }}" style="font-weight:700">portal.mytargetclient.com/{{ portalSlug }}</a></p>
+            <p style="font-size:15px; line-height:1.65; color:#3D556F; margin:14px 0 0">Reply to this email any time — it comes straight to me.<br />— Brian</p>
+            <div style="margin-top:24px; borderTop:1px solid #E4EDF9; padding-top:16px">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">RECEIPT · {{ orderId }}</div>
+              <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#3D556F; margin-top:8px"><span>{{ offer.name }}</span><span>{{ baseLabel }}</span></div>
+              <sc-if value="{{ bumps.banner }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:13.5px; color:#3D556F; margin-top:4px"><span>Custom banner design</span><span>$150</span></div></sc-if>
+              <sc-if value="{{ bumps.rush }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:13.5px; color:#3D556F; margin-top:4px"><span>72-hour rush</span><span>{{ rushAmount }}</span></div></sc-if>
+              <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:700; color:#0A1626; margin-top:8px; padding-top:8px; borderTop:1px solid #EEF4FC"><span>{{ dueLabel }}</span><span>{{ dueToday }}</span></div>
+            </div>
+            <div style="font-size:11.5px; color:#9AAABF; margin-top:20px; line-height:1.6">My Target Client LLC · Activity-based marketing, not paid advertising · <a href="#" style="color:#9AAABF; text-decoration:underline">Manage email preferences</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- 6 · PORTAL -->
+  <sc-if value="{{ isPortal }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Client portal" style="flex:1; padding:40px 20px 80px">
+      <div style="max-width:1080px; margin:0 auto">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px">
+          <div style="display:flex; align-items:center; gap:14px"><div style="width:48px; height:48px; border-radius:50%; background:#EAF2FD; color:#0B4FD0; font-family:Sora,sans-serif; font-weight:700; font-size:16px; display:flex; align-items:center; justify-content:center">{{ buyerInitials }}</div><div><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">CLIENT PORTAL</div><h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:24px; letter-spacing:-0.02em; margin:4px 0 0">{{ buyer.name }}</h1></div></div>
+          <div style="display:flex; align-items:center; gap:10px"><span style="background:#EDF7F1; color:#1E7A4C; font-size:12px; font-weight:700; padding:7px 12px; border-radius:999px">{{ offer.name }} · Active</span><a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="font-size:13.5px; font-weight:700; color:#0B4FD0">Message Brian →</a></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; margin-top:28px; align-items:start">
+          <div style="grid-column:span 2; background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:26px; min-width:0">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:18px">Where your profile is</div><div style="font-size:13px; font-weight:700; color:#0B4FD0">{{ progressLabel }}</div></div>
+            <div style="height:8px; border-radius:999px; background:#EEF4FC; margin-top:14px; overflow:hidden"><div style="height:100%; width:{{ progressPct }}; background:#1668F0; border-radius:999px; transition:width .6s"></div></div>
+            <div style="display:flex; flex-direction:column; margin-top:20px">
+              <sc-for list="{{ stages }}" as="st" hint-placeholder-count="7">
+                <div style="display:flex; gap:14px; align-items:flex-start; padding:12px 0; borderBottom:1px solid #F1F5FB">
+                  <div style="width:26px; height:26px; border-radius:50%; background:{{ st.bg }}; color:{{ st.fg }}; border:2px solid {{ st.border }}; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ st.mark }}</div>
+                  <div style="min-width:0; flex:1"><div style="font-size:14.5px; font-weight:700; color:{{ st.titleColor }}">{{ st.title }}</div><div style="font-size:13px; color:#6A809A; margin-top:2px">{{ st.meta }}</div></div>
+                  <sc-if value="{{ st.hasAction }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ st.action }}" style="background:#1668F0; color:#FFFFFF; border:none; border-radius:999px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap">{{ st.actionLabel }}</button></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:18px; min-width:0">
+            <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">PAYMENTS · STRIPE</div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:12px"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:24px">{{ dueToday }}</div><div style="font-size:12.5px; font-weight:700; color:#1E7A4C">Paid · {{ todayLabel }}</div></div>
+              <sc-if value="{{ isSplit }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:10px; padding-top:10px; borderTop:1px solid #EEF4FC"><div style="font-size:14px; font-weight:700; color:#3D556F">{{ nextPaymentLabel }}</div><div style="font-size:12.5px; font-weight:700; color:#8A6320">Scheduled · {{ nextPaymentDate }}</div></div></sc-if>
+              <div style="font-size:12.5px; color:#6A809A; font-weight:600; margin-top:12px">Card ending 4242 · <a href="#" style="font-weight:700">Update card</a> · <a href="#" style="font-weight:700">Receipts</a></div>
+            </div>
+            <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7C93AD">YOUR FILES</div>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px">
+                <div style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:#F7FBFF; border:1px solid #E4EDF9; border-radius:10px; font-size:13.5px; font-weight:600; color:#3D556F"><span style="width:8px; height:8px; border-radius:50%; background:#2FBF71"></span>Intake summary.pdf</div>
+                <div style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:#F7FBFF; border:1px dashed #D8E5F5; border-radius:10px; font-size:13.5px; font-weight:600; color:#9AAABF"><span style="width:8px; height:8px; border-radius:50%; background:#D8E5F5"></span>Brand Voice Blueprint.pdf — after interview</div>
+                <div style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:#F7FBFF; border:1px dashed #D8E5F5; border-radius:10px; font-size:13.5px; font-weight:600; color:#9AAABF"><span style="width:8px; height:8px; border-radius:50%; background:#D8E5F5"></span>Profile draft v1.docx — after Blueprint</div>
+              </div>
+            </div>
+            <div style="background:#0A1626; color:#FFFFFF; border-radius:18px; padding:22px">
+              <div style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:#7FB6FF">YOUR TEAM</div>
+              <div style="display:flex; align-items:center; gap:12px; margin-top:12px"><img src="uploads/BTLIpic.jpg" alt="" style="width:40px; height:40px; border-radius:50%; object-fit:cover" /><div><div style="font-size:14.5px; font-weight:700">Brian Traichel</div><div style="font-size:12.5px; color:#B9CBE0; font-weight:600">Your strategist · replies within 1 business day</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;calendlyUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://calendly.com/briantraichel/brand-voice-interview&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Integrations&quot;}}">
+const CALENDLY_URL = "https://calendly.com/briantraichel/brand-voice-interview";
+
+const OFFERS = {
+  audit:     { name: "Profile Audit", sub: "Expert review — you make the edits", price: 197, splittable: false, includes: ["30-minute call", "Recorded video walkthrough", "Top 10 fixes + two headline options", "$100 credit toward Voice-Built for 14 days"] },
+  blueprint: { name: "Brand Voice Blueprint", sub: "Interview-based voice document", price: 347, splittable: false, includes: ["90-minute recorded interview", "AI-ready voice PDF", "Credited in full toward any profile tier for 30 days"] },
+  lab:       { name: "Group Profile Lab", sub: "Live group workshop seat", price: 197, splittable: false, includes: ["90-minute live session", "Edit your profile as we go", "VIP upgrade available"] },
+  live:      { name: "Live Profile Session", sub: "Done with you", price: 697, splittable: false, includes: ["Brand Voice Interview first", "90-minute live rewrite on screen", "Banner copy + recording", "14-day follow-up review"] },
+  voice:     { name: "Voice-Built Profile", sub: "Done for you", price: 997, splittable: true, split: { n: 2, each: 499 }, includes: ["Brand Voice Blueprint included", "Full rewrite — headline, About, up to 5 roles, Featured, skills", "Custom banner + 2 revision rounds", "We upload it, then a 30-day check-in"] },
+  exec:      { name: "Executive Authority Profile", sub: "Done for you · white glove", price: 1997, splittable: true, split: { n: 3, each: 699 }, includes: ["Everything in Voice-Built Profile", "Two strategy sessions", "30 days of posts from your Blueprint", "Connection + follow-up scripts"] }
+};
+const STEPS = [["map","Flow map"],["checkout","Checkout"],["thanks","Thank you"],["book","Book interview"],["intake","Intake"],["email","Welcome email"],["portal","Client portal"]];
+const money = n => "$" + n.toLocaleString("en-US");
+
+class Component extends DCLogic {
+  state = {
+    screen: "map", offer: "voice", plan: "full",
+    bumps: { banner: false, rush: false },
+    buyer: { name: "Dana Whitfield", email: "dana@whitfieldadvisory.com" },
+    intake: { phone: "", linkedin: "", knownFor: "", audience: "", access: "upload" },
+    paying: false, paid: false, intakeDone: false,
+    booked: null, bookedJustNow: false, calendlyReady: false, calendlyBlocked: false,
+    orderId: "MTC-" + Math.floor(10000 + Math.random() * 89999)
+  };
+
+  componentDidMount() {
+    this._onMsg = (e) => {
+      if (!e.data || typeof e.data !== "object" || !/^calendly\./.test(e.data.event || "")) return;
+      if (e.data.event === "calendly.event_scheduled") {
+        // Production: the invitee.created webhook carries the real start time; we read it back via the API.
+        const when = "Scheduled via Calendly";
+        this.setState({ booked: when, bookedJustNow: true });
+      }
+      if (e.data.event === "calendly.event_type_viewed") this.setState({ calendlyReady: true });
+    };
+    window.addEventListener("message", this._onMsg);
+    this.mountCalendly();
+    const q = new URLSearchParams(location.search);
+    const hash = (location.hash || "").replace("#", "");
+    const patch = {};
+    if (q.get("offer") && OFFERS[q.get("offer")]) patch.offer = q.get("offer");
+    if (q.get("plan") === "split") patch.plan = "split";
+    if (STEPS.some(s => s[0] === hash)) patch.screen = hash;
+    if (Object.keys(patch).length) this.setState(patch);
+  }
+
+  componentDidUpdate() { this.mountCalendly(); }
+  componentWillUnmount() { window.removeEventListener("message", this._onMsg); clearTimeout(this._calTimer); }
+
+  // Mounts Calendly's inline widget into the booking card (once per appearance).
+  mountCalendly() {
+    const el = document.querySelector("[data-calendly-inline]");
+    if (!el || el.dataset.mounted) return;
+    const s = this.state;
+    const url = (this.props.calendlyUrl || CALENDLY_URL) + "?hide_gdpr_banner=1&primary_color=1668f0&utm_source=mtc&utm_campaign=" + encodeURIComponent(s.offer) + "&utm_content=" + encodeURIComponent(s.orderId);
+    const tryInit = (attempt) => {
+      if (!document.querySelector("[data-calendly-inline]")) return;
+      if (window.Calendly && window.Calendly.initInlineWidget) {
+        el.dataset.mounted = "1";
+        el.innerHTML = "";
+        window.Calendly.initInlineWidget({
+          url, parentElement: el,
+          prefill: { name: s.buyer.name, email: s.buyer.email, customAnswers: { a1: s.intake.linkedin || "" } }
+        });
+        const fr = el.querySelector("iframe");
+        if (fr) fr.style.cssText = "width:100%; height:100%; border:0; display:block";
+        // If Calendly never reports back (blocked iframe / placeholder URL), surface the fallback.
+        this._calTimer = setTimeout(() => { if (!this.state.calendlyReady) this.setState({ calendlyBlocked: true }); }, 8000);
+      } else if (attempt < 40) {
+        this._calTimer = setTimeout(() => tryInit(attempt + 1), 250);
+      } else {
+        this.setState({ calendlyBlocked: true });
+      }
+    };
+    tryInit(0);
+  }
+
+  go(screen) { this.setState({ screen }); try { history.replaceState(null, "", "#" + screen); } catch (e) {} window.scrollTo(0, 0); }
+
+  renderVals() {
+    const s = this.state;
+    const offer = OFFERS[s.offer];
+    const isSplit = s.plan === "split" && offer.splittable;
+    const rush = s.bumps.rush ? Math.round(offer.price * 0.3) : 0;
+    const bumpsTotal = (s.bumps.banner ? 150 : 0) + rush;
+    const total = offer.price + bumpsTotal;
+    const firstPay = isSplit ? offer.split.each + bumpsTotal : total;
+    const first = (s.buyer.name || "there").split(" ")[0];
+    const today = new Date();
+    const fmt = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const next = new Date(today); next.setDate(next.getDate() + 30);
+    const calendlyPrefill = (this.props.calendlyUrl || CALENDLY_URL) + "?name=" + encodeURIComponent(s.buyer.name) + "&email=" + encodeURIComponent(s.buyer.email);
+
+    const stageDefs = [
+      { title: "Payment received", meta: money(firstPay) + " · " + fmt(today) + " · Stripe", done: true },
+      { title: "Intake complete", meta: s.intakeDone ? "Received — Brian has it" : "3 minutes · tells Brian what to focus on", done: s.intakeDone, action: () => this.go("intake"), actionLabel: "Complete intake" },
+      { title: "Brand Voice Interview", meta: s.booked ? "Scheduled · " + s.booked : "90 min · pick a time", done: false, current: !s.booked, action: () => this.go("book"), actionLabel: s.booked ? "Reschedule" : "Book" , scheduled: !!s.booked },
+      { title: "Brand Voice Blueprint delivered", meta: "Within 5 business days of the interview", done: false },
+      { title: "Profile draft v1", meta: "All 22 sections · you review", done: false },
+      { title: "Revisions", meta: "Up to 2 rounds", done: false },
+      { title: "Published + 30-day check-in", meta: s.intake.access === "self" ? "Doc + video walkthrough" : "15-min screen-share upload", done: false }
+    ];
+    const doneCount = stageDefs.filter(x => x.done || x.scheduled).length;
+    const stages = stageDefs.map((d, i) => {
+      const done = d.done, sched = d.scheduled, pending = !done && !sched;
+      const showAction = !!d.action && !done;
+      return { title: d.title, meta: d.meta, mark: done ? "✓" : sched ? "◷" : String(i + 1),
+        bg: done ? "#1668F0" : sched ? "#FFF8F0" : "#FFFFFF", fg: done ? "#FFFFFF" : sched ? "#8A6320" : "#9AAABF", border: done ? "#1668F0" : sched ? "#F6E4CC" : "#DDE8F7",
+        titleColor: pending ? "#6A809A" : "#0A1626", hasAction: showAction, action: d.action || (() => {}), actionLabel: d.actionLabel || "" };
+    });
+
+    const steps = STEPS.map(([key, label], i) => ({ n: String(i).padStart(2, "0"), label, go: () => this.go(key),
+      bg: s.screen === key ? "#1668F0" : "rgba(255,255,255,0.06)", fg: s.screen === key ? "#FFFFFF" : "#B9CBE0", border: s.screen === key ? "#1668F0" : "rgba(255,255,255,0.14)" }));
+
+    const mapCards = [
+      { n: "01", tag: "PRICING → STRIPE", title: "Checkout", body: "On-brand page, Stripe Payment Element embedded. Order bumps and 2× / 3× plans.", go: () => this.go("checkout") },
+      { n: "02", tag: "INSTANT", title: "Thank-you page", body: "Confirms the charge and lays out the three next steps in order.", go: () => this.go("thanks") },
+      { n: "03", tag: "CALENDLY", title: "Book the interview", body: "Prefilled with name + email. Booking posts back to the portal and CRM.", go: () => this.go("book") },
+      { n: "04", tag: "3 MIN", title: "Intake form", body: "LinkedIn URL, positioning, audience, how we publish. Lands in the CRM.", go: () => this.go("intake") },
+      { n: "05", tag: "SENDGRID", title: "Welcome email", body: "Receipt plus the same three links. Reminders if intake or booking stall.", go: () => this.go("email") },
+      { n: "06", tag: "ALWAYS ON", title: "Client portal", body: "Stage tracker, files, payments, and a line to Brian.", go: () => this.go("portal") }
+    ];
+
+    const templateJson = JSON.stringify({ first_name: first, offer: offer.name, amount: money(firstPay), plan: isSplit ? offer.split.n + " payments" : "paid in full", order_id: s.orderId, booking_url: "calendly.com/…?name=…", intake_url: "mtc.link/intake/" + s.orderId, portal_url: "portal.mytargetclient.com/" + first.toLowerCase() }, null, 2);
+
+    const set = (k, v) => this.setState(st => ({ intake: Object.assign({}, st.intake, { [k]: v }) }));
+    return {
+      steps, mapCards, offer, isSplit,
+      isMap: s.screen === "map", isCheckout: s.screen === "checkout", isThanks: s.screen === "thanks", isBook: s.screen === "book", isIntake: s.screen === "intake", isEmail: s.screen === "email", isPortal: s.screen === "portal",
+      offerPriceLabel: isSplit ? offer.split.n + " × " + money(offer.split.each) : money(offer.price),
+      baseLabel: isSplit ? money(offer.split.each) + " today" : money(offer.price),
+      splitLabel: offer.splittable ? offer.split.n + " × " + money(offer.split.each) : "",
+      splitNote: isSplit ? "Then " + (offer.split.n - 1) + " more payment" + (offer.split.n > 2 ? "s" : "") + " of " + money(offer.split.each) + " every 30 days. Total " + money(total) + "." : "",
+      payFull: () => this.setState({ plan: "full" }), paySplit: () => this.setState({ plan: "split" }),
+      fullBg: isSplit ? "transparent" : "#0A1626", fullFg: isSplit ? "#425973" : "#FFFFFF", splitBg: isSplit ? "#0A1626" : "transparent", splitFg: isSplit ? "#FFFFFF" : "#425973",
+      bumps: s.bumps, rushAmount: money(Math.round(offer.price * 0.3)),
+      toggleBanner: e => this.setState(st => ({ bumps: Object.assign({}, st.bumps, { banner: e.target.checked }) })),
+      toggleRush: e => this.setState(st => ({ bumps: Object.assign({}, st.bumps, { rush: e.target.checked }) })),
+      bannerBorder: s.bumps.banner ? "#1668F0" : "#DDE8F7", bannerBg: s.bumps.banner ? "#EAF2FD" : "#FFFFFF",
+      rushBorder: s.bumps.rush ? "#1668F0" : "#DDE8F7", rushBg: s.bumps.rush ? "#EAF2FD" : "#FFFFFF",
+      dueLabel: isSplit ? "Due today" : "Total", dueToday: money(firstPay),
+      buyer: s.buyer, buyerFirst: first, buyerInitials: (s.buyer.name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase(),
+      onEmail: e => this.setState(st => ({ buyer: Object.assign({}, st.buyer, { email: e.target.value }) })),
+      onName: e => this.setState(st => ({ buyer: Object.assign({}, st.buyer, { name: e.target.value }) })),
+      paying: s.paying, payLabel: s.paying ? "Processing…" : "Pay " + money(firstPay),
+      pay: ev => { ev.preventDefault(); this.setState({ paying: true }); setTimeout(() => { this.setState({ paying: false, paid: true }); this.go("thanks"); }, 1100); },
+      orderId: s.orderId, todayLabel: fmt(today),
+      nextPaymentLabel: isSplit ? "Payment 2 of " + offer.split.n + " · " + money(offer.split.each) : "", nextPaymentDate: fmt(next),
+      goBook: () => this.go("book"), goIntake: () => this.go("intake"), goPortal: () => this.go("portal"),
+      goIntakeLink: e => { e.preventDefault(); this.go("intake"); }, goPortalLink: e => { e.preventDefault(); this.go("portal"); },
+      calendlyUrl: this.props.calendlyUrl || CALENDLY_URL, calendlyPrefill,
+      bookedNow: !!s.booked, showCalendly: !s.booked, bookedLabel: s.booked || "",
+      afterBooking: () => this.go(s.intakeDone ? "portal" : "intake"), afterBookingLabel: s.intakeDone ? "Go to your portal →" : "Continue to intake →",
+      calendlyDot: s.calendlyBlocked ? "#E39A2B" : s.calendlyReady ? "#2FBF71" : "#C4D0DF",
+      calendlyState: s.calendlyBlocked ? "CALENDLY · OFFLINE IN PREVIEW" : s.calendlyReady ? "CALENDLY · LIVE" : "CALENDLY · CONNECTING",
+      calendlyBlocked: s.calendlyBlocked,
+      intake: s.intake,
+      onPhone: e => set("phone", e.target.value), onLinkedin: e => set("linkedin", e.target.value), onKnownFor: e => set("knownFor", e.target.value), onAudience: e => set("audience", e.target.value),
+      accessUpload: s.intake.access === "upload", accessSelf: s.intake.access === "self",
+      setAccessUpload: () => set("access", "upload"), setAccessSelf: () => set("access", "self"),
+      accessUploadBorder: s.intake.access === "upload" ? "#1668F0" : "#DDE8F7", accessUploadBg: s.intake.access === "upload" ? "#EAF2FD" : "#FFFFFF",
+      accessSelfBorder: s.intake.access === "self" ? "#1668F0" : "#DDE8F7", accessSelfBg: s.intake.access === "self" ? "#EAF2FD" : "#FFFFFF",
+      submitIntake: ev => { ev.preventDefault(); this.setState({ intakeDone: true }); this.go("portal"); },
+      templateJson, portalSlug: first.toLowerCase(),
+      stages, progressPct: Math.round(doneCount / stageDefs.length * 100) + "%", progressLabel: doneCount + " of " + stageDefs.length + " stages"
+    };
+  }
+}
+
+</script>
+</body>
+</html>

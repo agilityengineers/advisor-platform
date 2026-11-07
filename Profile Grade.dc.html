@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="platform.js"></script>
+<script src="grader.js"></script>
+<style>
+  body { margin:0; padding:0; font-family:Manrope, system-ui, sans-serif; color:#0A1626; background:#F4F8FE; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#1668F0; text-decoration:none; }
+  a:hover { color:#0B4FD0; }
+  input, select, button { font-family:inherit; }
+  @keyframes mtcBar { from { width:0; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh">
+  <header style="background:#FFFFFF; borderBottom:1px solid #E4EDF9">
+    <div style="max-width:1100px; margin:0 auto; padding:14px 20px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px">
+      <div style="display:flex; align-items:center; gap:10px"><div style="width:30px; height:30px; border-radius:8px; background:#1668F0; color:#FFFFFF; font-family:Sora,sans-serif; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center">{{ coInitials }}</div><div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:15px">{{ coName }}</div><div style="font-size:11.5px; font-weight:700; letter-spacing:0.08em; color:#7C93AD">PROFILE GRADE · PREPARED FOR {{ profileNameUpper }}</div></div></div>
+      <div style="display:flex; align-items:center; gap:10px">
+        <label for="pg-view" style="font-size:12px; font-weight:700; color:#6A809A">View as</label>
+        <select id="pg-view" value="{{ mode }}" onChange="{{ onMode }}" style="padding:8px 10px; font-size:13px; font-weight:700; border:1px solid #D8E5F5; border-radius:9px; background:#FFFFFF"><option value="summary">Lead · quick summary</option><option value="full">Unlocked · full report</option></select>
+        <a href="CRM Dashboard.dc.html#grader" style="font-size:13px; font-weight:700; color:#0B4FD0">Edit rubric in CRM →</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width:1100px; margin:0 auto; padding:36px 20px 80px; display:flex; flex-direction:column; gap:22px">
+
+    <section style="background:#0A1626; color:#FFFFFF; border-radius:22px; padding:clamp(26px,4vw,40px); position:relative; overflow:hidden; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:32px; align-items:center">
+      <div style="position:absolute; inset:0; background:radial-gradient(700px 320px at 90% 0%, rgba(22,104,240,0.35), rgba(10,22,38,0) 70%)"></div>
+      <div style="position:relative; display:flex; align-items:center; gap:24px">
+        <div style="width:132px; height:132px; border-radius:50%; background:conic-gradient(#1668F0 {{ ringDeg }}, rgba(255,255,255,0.12) 0); display:flex; align-items:center; justify-content:center; flex-shrink:0"><div style="width:106px; height:106px; border-radius:50%; background:#0A1626; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:44px; line-height:1; letter-spacing:-0.03em">{{ grade }}</div><div style="font-size:12px; font-weight:700; color:#7FB6FF; margin-top:4px">{{ total }} / {{ maxTotal }}</div></div></div>
+        <div style="min-width:0">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.12em; color:#7FB6FF">{{ gradeLabelUpper }}</div>
+          <h1 style="font-family:Sora,sans-serif; font-weight:700; font-size:clamp(22px,2.8vw,30px); line-height:1.15; letter-spacing:-0.02em; margin:8px 0 0">{{ profileName }}, your profile scores {{ pctTotal }}%.</h1>
+          <p style="font-size:15px; line-height:1.6; color:#B9CBE0; margin:10px 0 0; max-width:48ch">{{ gradeMessage }}</p>
+        </div>
+      </div>
+      <div style="position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px">
+        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px"><div style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7FB6FF">CORE SECTIONS</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:24px; margin-top:6px">{{ coreScore }}</div><div style="font-size:12px; color:#B9CBE0; font-weight:600">of {{ coreMax }} points</div></div>
+        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px"><div style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7FB6FF">ADDITIONAL SECTIONS</div><div style="font-family:Sora,sans-serif; font-weight:700; font-size:24px; margin-top:6px">{{ addScore }}</div><div style="font-size:12px; color:#B9CBE0; font-weight:600">of {{ addMax }} points</div></div>
+        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px"><div style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#8FE3B4">STRONGEST</div><div style="font-size:14px; font-weight:700; margin-top:6px">{{ strongest }}</div></div>
+        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px"><div style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#F3B6A6">BIGGEST GAP</div><div style="font-size:14px; font-weight:700; margin-top:6px">{{ weakest }}</div></div>
+      </div>
+    </section>
+
+    <sc-if value="{{ hasQuickWins }}" hint-placeholder-val="{{ true }}">
+      <section style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px 24px">
+        <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">QUICK WINS · HIGH IMPACT, LOW EFFORT</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:12px">
+          <sc-for list="{{ quickWins }}" as="q" hint-placeholder-count="3"><div style="display:flex; gap:12px; align-items:flex-start; background:#F4F8FE; border:1px solid #DDE8F7; border-radius:12px; padding:14px"><div style="width:22px; height:22px; border-radius:50%; background:#1668F0; color:#FFFFFF; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">{{ q.n }}</div><div style="font-size:14px; line-height:1.55; color:#16283D">{{ q.action }}</div></div></sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <section style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; overflow:hidden">
+      <div style="padding:18px 24px; borderBottom:1px solid #E4EDF9; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:17px">Category breakdown</div><div style="display:flex; gap:12px; font-size:11.5px; font-weight:700; color:#6A809A"><span style="display:flex; align-items:center; gap:5px"><span style="width:8px; height:8px; border-radius:50%; background:#2FBF71"></span>Excellent</span><span style="display:flex; align-items:center; gap:5px"><span style="width:8px; height:8px; border-radius:50%; background:#1668F0"></span>Good</span><span style="display:flex; align-items:center; gap:5px"><span style="width:8px; height:8px; border-radius:50%; background:#E39A2B"></span>Needs work</span><span style="display:flex; align-items:center; gap:5px"><span style="width:8px; height:8px; border-radius:50%; background:#C2361F"></span>Critical</span></div></div>
+      <div style="display:flex; flex-direction:column">
+        <sc-for list="{{ categories }}" as="c" hint-placeholder-count="9">
+          <div style="padding:16px 24px; borderBottom:1px solid #EEF4FC; display:grid; grid-template-columns:minmax(180px,1.1fr) minmax(0,2fr); gap:14px 24px; align-items:start">
+            <div><div style="display:flex; align-items:center; gap:8px"><span style="width:9px; height:9px; border-radius:50%; background:{{ c.color }}; flex-shrink:0"></span><div style="font-size:14.5px; font-weight:700">{{ c.name }}</div></div><div style="font-size:12px; color:#7C93AD; font-weight:700; margin-top:3px; padding-left:17px">{{ c.group }} · {{ c.score }} / {{ c.max }}</div><div style="height:6px; border-radius:999px; background:#EEF4FC; margin-top:9px; margin-left:17px; overflow:hidden"><div style="height:100%; width:{{ c.width }}; background:{{ c.color }}; border-radius:999px; animation:mtcBar .8s cubic-bezier(.2,.7,.2,1)"></div></div></div>
+            <sc-if value="{{ isFull }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:5px; min-width:0">
+                <sc-for list="{{ c.findings }}" as="f" hint-placeholder-count="2"><div style="font-size:13.5px; color:#3D556F; display:flex; gap:8px"><span style="color:#2FBF71; font-weight:700">✓</span><span>{{ f }}</span></div></sc-for>
+                <sc-for list="{{ c.recTexts }}" as="r" hint-placeholder-count="1"><div style="font-size:13.5px; color:#16283D; display:flex; gap:8px"><span style="color:#E39A2B; font-weight:700">→</span><span>{{ r }}</span></div></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isSummary }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#9AAABF; font-weight:600; display:flex; align-items:center; gap:8px"><span>🔒</span>Findings and fixes unlock with your full report</div></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <sc-if value="{{ isSummary }}" hint-placeholder-val="{{ false }}">
+      <section style="background:#1668F0; color:#FFFFFF; border-radius:18px; padding:28px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px">
+        <div style="min-width:0; flex:1 1 320px"><div style="font-family:Sora,sans-serif; font-weight:700; font-size:21px">Unlock the full report</div><div style="font-size:14.5px; line-height:1.55; color:#DCE7F4; margin-top:6px">All findings, the prioritized action plan, and {{ coOwnerFirst }}'s notes — then a 15-minute call to walk through it.</div></div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px"><button type="button" onClick="{{ unlock }}" style="background:#FFFFFF; color:#0A1626; border:none; border-radius:999px; padding:14px 22px; font-size:15px; font-weight:700; cursor:pointer">Unlock my report</button><a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.3); color:#FFFFFF; border-radius:999px; padding:14px 22px; font-size:15px; font-weight:700">Book the walkthrough</a></div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isFull }}" hint-placeholder-val="{{ true }}">
+      <section style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px">
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px"><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#C2361F">DO THIS WEEK</div><div style="display:flex; flex-direction:column; gap:10px; margin-top:12px"><sc-for list="{{ immediate }}" as="r" hint-placeholder-count="5"><div style="font-size:13.5px; line-height:1.55; color:#16283D; display:flex; gap:10px"><span style="font-weight:700; color:#7C93AD; flex-shrink:0">{{ r.n }}</span><div><div>{{ r.action }}</div><div style="font-size:11.5px; font-weight:700; color:#7C93AD; margin-top:3px">{{ r.category }} · {{ r.impact }} impact · {{ r.effort }} effort</div></div></div></sc-for></div></div>
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px"><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#E39A2B">NEXT 30 DAYS</div><div style="display:flex; flex-direction:column; gap:10px; margin-top:12px"><sc-for list="{{ shortTerm }}" as="r" hint-placeholder-count="4"><div style="font-size:13.5px; line-height:1.55; color:#16283D; display:flex; gap:10px"><span style="font-weight:700; color:#7C93AD; flex-shrink:0">{{ r.n }}</span><div><div>{{ r.action }}</div><div style="font-size:11.5px; font-weight:700; color:#7C93AD; margin-top:3px">{{ r.category }}</div></div></div></sc-for><sc-if value="{{ noShortTerm }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px; color:#9AAABF; font-weight:600">Nothing queued — the week-one list covers it.</div></sc-if></div></div>
+        <div style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px"><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">ONGOING · NOT SCORED</div><div style="display:flex; flex-direction:column; gap:10px; margin-top:12px"><sc-for list="{{ tips }}" as="t" hint-placeholder-count="2"><div style="font-size:13.5px; line-height:1.55; color:#16283D"><span style="font-weight:700">{{ t.label }}.</span> {{ t.text }}</div></sc-for><sc-for list="{{ ongoing }}" as="r" hint-placeholder-count="2"><div style="font-size:13.5px; line-height:1.55; color:#16283D">{{ r.action }}</div></sc-for></div></div>
+      </section>
+      <section style="background:#FFFFFF; border:1px solid #DDE8F7; border-radius:18px; padding:22px 24px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px">
+        <div style="min-width:0; flex:1 1 320px"><div style="font-size:12px; font-weight:700; letter-spacing:0.1em; color:#0B4FD0">WHAT WE'D DO WITH THIS</div><div style="font-size:15px; line-height:1.6; color:#3D556F; margin-top:6px">A {{ grade }} usually means the fundamentals exist but the positioning doesn't. The Brand Voice Blueprint fixes the headline, About, and Featured section at the root — and re-grades you when it's live.</div></div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px"><a href="Standard Pricing.dc.html" style="background:#1668F0; color:#FFFFFF; border-radius:999px; padding:13px 20px; font-size:14.5px; font-weight:700" style-hover="background:#0B4FD0">See engagements</a><a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="background:#FFFFFF; border:1px solid #D8E5F5; color:#0A1626; border-radius:999px; padding:13px 20px; font-size:14.5px; font-weight:700" style-hover="border-color:#1668F0; color:#0B4FD0">Book the 15-min walkthrough</a></div>
+      </section>
+    </sc-if>
+
+    <div style="font-size:12px; color:#7C93AD; font-weight:600; text-align:center; line-height:1.6">Rubric v{{ rubricVersion }} · {{ coName }} · Scored against the {{ catCount }}-category framework. Activity-based marketing, not paid advertising; grades are guidance, not guarantees.</div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const COLORS = { excellent: "#2FBF71", good: "#1668F0", needs_work: "#E39A2B", critical: "#C2361F" };
+
+class Component extends DCLogic {
+  state = { mode: "summary", accountId: "mtc", rubric: null, profile: null };
+
+  componentDidMount() {
+    const q = new URLSearchParams(location.search);
+    const accountId = q.get("account") || "mtc";
+    let profile = null;
+    try { profile = JSON.parse(localStorage.getItem("grader-profile:" + accountId) || "null"); } catch (e) {}
+    this.setState({ accountId, rubric: window.GRADER_load ? window.GRADER_load(accountId) : window.GRADER_DEFAULT, profile: profile || window.GRADER_SAMPLE, mode: q.get("view") === "full" ? "full" : "summary" });
+  }
+
+  renderVals() {
+    const { mode, accountId } = this.state;
+    const rubric = this.state.rubric || window.GRADER_DEFAULT;
+    const profile = this.state.profile || window.GRADER_SAMPLE;
+    const r = window.GRADER_score(rubric, profile);
+    const accounts = window.PLATFORM_loadAccounts ? window.PLATFORM_loadAccounts() : [];
+    const co = accounts.find(a => a.id === accountId) || { name: "My Target Client", owner: "Brian Traichel", integrations: {} };
+    const sum = (g, k) => r.categories.filter(c => c.group === g).reduce((s, c) => s + c[k], 0);
+    const sorted = r.categories.slice().sort((a, b) => b.pct - a.pct);
+    const num = list => list.map((x, i) => Object.assign({}, x, { n: i + 1 }));
+    return {
+      mode, onMode: e => this.setState({ mode: e.target.value }), isFull: mode === "full", isSummary: mode !== "full",
+      unlock: () => this.setState({ mode: "full" }),
+      coName: co.name, coInitials: co.name.split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase(), coOwnerFirst: (co.owner || "").split(" ")[0],
+      calendlyUrl: ((co.integrations || {}).calendly || {}).url || "https://calendly.com/briantraichel/intro-call",
+      profileName: profile.name, profileNameUpper: (profile.name || "").toUpperCase(),
+      grade: r.grade, gradeLabelUpper: r.gradeLabel.toUpperCase(), gradeMessage: r.gradeMessage, total: r.total, maxTotal: r.maxTotal, pctTotal: r.pctTotal, ringDeg: Math.round(r.pctTotal * 3.6) + "deg",
+      coreScore: sum("Core", "score"), coreMax: sum("Core", "max"), addScore: sum("Additional", "score"), addMax: sum("Additional", "max"),
+      strongest: sorted[0] ? sorted[0].name : "—", weakest: sorted.length ? sorted[sorted.length - 1].name : "—",
+      categories: r.categories.map(c => ({ name: c.name, group: c.group, score: c.score, max: c.max, width: Math.round(c.pct * 100) + "%", color: COLORS[c.status], findings: c.findings, recTexts: c.recs.map(x => x.text) })),
+      hasQuickWins: r.quickWins.length > 0, quickWins: num(r.quickWins), immediate: num(r.immediate), shortTerm: num(r.shortTerm), noShortTerm: r.shortTerm.length === 0, ongoing: r.ongoing, tips: r.tips,
+      rubricVersion: rubric.version || 1, catCount: rubric.categories.length
+    };
+  }
+}
+
+</script>
+</body>
+</html>
