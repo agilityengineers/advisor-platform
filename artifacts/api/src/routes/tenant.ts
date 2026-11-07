@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, companyBrandingTable, companiesTable, customDomainsTable, type Company } from "@workspace/db";
 import { PLATFORM } from "@workspace/shared";
 import { companyFeatures } from "../lib/features";
+import { checkoutReady } from "../lib/stripe";
 import { env } from "../env";
 
 const router: IRouter = Router();
@@ -12,6 +13,7 @@ export async function publicCompanyPayload(company: Company) {
   const features = await companyFeatures(company);
   // Without the White label feature, logo and colours fall back to the platform defaults on public surfaces.
   const whiteLabel = features.white_label;
+  const checkout = await checkoutReady(company.id, features.stripe_checkout);
   return {
     id: company.id,
     name: company.name,
@@ -34,6 +36,8 @@ export async function publicCompanyPayload(company: Company) {
       reviews: features.reviews,
       client_portal: features.client_portal,
     },
+    /** Whether the pricing pages may send a buyer to /buy right now (feature + Stripe connected, or demo mode). */
+    checkout: { ready: checkout.ready, mode: checkout.mode },
   };
 }
 

@@ -147,3 +147,49 @@ export const PlatformLeadUpdateBody = z.object({
   notes: z.string().trim().max(4000).optional(),
   convertedCompanyId: z.number().int().positive().nullable().optional(),
 });
+
+// ---------------------------------------------------------------------------
+// Buying flow
+// ---------------------------------------------------------------------------
+
+export const CheckoutBody = z.object({
+  offer: z.enum(["audit", "blueprint", "lab", "live", "voice", "exec"]),
+  plan: z.enum(["full", "split"]).default("full"),
+  bumps: z.object({ banner: z.boolean().optional(), rush: z.boolean().optional() }).default({}),
+  name: z.string().trim().min(2).max(120),
+  email: emailSchema,
+  phone: z.string().trim().max(40).default(""),
+  leadId: z.string().trim().max(60).optional(),
+  website: z.string().max(0).optional(),
+});
+
+export const IntakeBody = z.object({
+  name: z.string().trim().min(2).max(120),
+  phone: z.string().trim().max(40).default(""),
+  linkedin: z.string().trim().min(1, "Your LinkedIn URL is required.").max(300),
+  knownFor: z.string().trim().min(10, "A sentence or two is plenty.").max(2000),
+  audience: z.string().trim().max(500).default(""),
+  access: z.enum(["upload", "self"]).default("upload"),
+});
+
+export const BookedBody = z.object({
+  eventUri: z.string().trim().max(400).default(""),
+  inviteeUri: z.string().trim().max(400).default(""),
+});
+
+export const ClientStageUpdateBody = z.object({
+  status: z.enum(["pending", "current", "done", "scheduled"]),
+  note: z.string().trim().max(500).optional(),
+  notify: z.boolean().default(true),
+});
+
+export const ClientFileBody = z.object({
+  name: z.string().trim().min(1).max(160),
+  url: z.string().trim().url().max(2000),
+  stageKey: z.string().trim().max(40).default(""),
+  notify: z.boolean().default(false),
+});
+
+export const InstallmentActionBody = z.object({
+  action: z.enum(["charge", "mark_paid", "cancel"]),
+});

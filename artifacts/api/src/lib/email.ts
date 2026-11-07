@@ -30,6 +30,8 @@ export interface SendEmailParams {
   metadata?: Record<string, unknown>;
   /** Resolved per-company identity (provided by the integrations layer). */
   from?: { email: string; name: string; apiKey: string };
+  /** Where a reply lands (a company owner's inbox when the platform sends on a company's behalf). */
+  replyTo?: string;
 }
 
 export interface SendEmailResult {
@@ -75,6 +77,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     const [response] = await sgMail.send({
       to: recipient,
       from: { email: identity.email, name: identity.name },
+      replyTo: params.replyTo || undefined,
       subject: params.subject,
       html: params.html,
       text: params.text ?? params.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),

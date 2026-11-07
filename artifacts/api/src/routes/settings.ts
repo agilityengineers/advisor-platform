@@ -9,6 +9,10 @@ import { invalidateTenantCache } from "../lib/tenant";
 import { disconnectIntegration, integrationViews, saveIntegration } from "../lib/integrations";
 import { audit } from "../lib/audit";
 import { env } from "../env";
+import jwt from "jsonwebtoken";
+import { registerCalendlyWebhook } from "../lib/calendly";
+import { connectAuthorizeUrl, exchangeConnectCode } from "../lib/stripe";
+import { companiesTable } from "@workspace/db";
 
 const router: IRouter = Router();
 const owner = [authMiddleware, requireCompany, requireRole("admin", "super_admin")] as const;
@@ -206,3 +210,60 @@ router.post("/companies/:companyId/settings/integrations/:provider/disconnect", 
 });
 
 export default router;
+
+// ---------------------------------------------------------------------------
+// Calendly webhook subscription + Stripe Connect (OAuth for Standard accounts)
+// ---------------------------------------------------------------------------
+
+router.post("/companies/:companyId/settings/integrations/calendly/webhook", ...owner, requireFeature("calendly"), async (req, res) => {
+  const company = req.company!;
+  const r = await registerCalendlyWebhook(company);
+  if (!r.ok) {
+    res.status(400).json({ error: r.error });
+    return;
+  }
+  await audit(req, { action: "calendly_webhook_registered", resourceType: "company_integration", details: { subscriptionUri: r.subscriptionUri } });
+  res.json({ ok: true, subscriptionUri: r.subscriptionUri, integrations: await integrationViews(company.id) });
+});
+
+/** Where "Connect with Stripe" sends the owner. Null when the platform has no Connect client id (paste an acct_ id instead). */
+router.get("/companies/:companyId/settings/integrations/stripe/connect-url", ...owner, requireFeature("stripe_checkout"), async (req, res) => {
+  const company = req.company!;
+  const state = jwt.sign({ purpose: "stripe_connect", companyId: company.id, userId: req.user!.userId }, env.sessionSecret, { expiresIn: "15m" });
+  const url = connectAuthorizeUrl(state, `${env.appUrl}/api/stripe/connect/callback`, company.ownerEmail);
+  res.json({ url, available: Boolean(url) });
+});
+
+router.get("/stripe/connect/callback", async (req, res) => {
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  const back = (q: string) => res.redirect(`${env.appUrl}/app?${q}#settings`);
+  let claims: { purpose?: string; companyId?: number; userId?: number };
+  try {
+    claims = jwt.verify(state, env.sessionSecret) as typeof claims;
+  } catch {
+    back("stripe=invalid_state");
+    return;
+  }
+  if (claims.purpose !== "stripe_connect" || !claims.companyId) {
+    back("stripe=invalid_state");
+    return;
+  }
+  if (typeof req.query.error === "string") {
+    back(`stripe=denied`);
+    return;
+  }
+  const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, claims.companyId)).limit(1);
+  if (!company || !code) {
+    back("stripe=invalid_state");
+    return;
+  }
+  try {
+    const accountId = await exchangeConnectCode(code);
+    await saveIntegration(company, "stripe", { config: { accountId, mode: "live" }, secrets: {} });
+    back("stripe=connected");
+  } catch (err) {
+    req.log?.warn({ err }, "Stripe Connect exchange failed");
+    back("stripe=failed");
+  }
+});

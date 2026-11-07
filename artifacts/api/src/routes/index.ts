@@ -13,6 +13,10 @@ import rubricRouter from "./rubric";
 import settingsRouter from "./settings";
 import publicSiteRouter from "./publicSite";
 import platformLeadsRouter from "./platformLeads";
+import checkoutRouter from "./checkout";
+import webhooksRouter from "./webhooks";
+import portalRouter from "./portal";
+import clientsRouter from "./clients";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -29,5 +33,9 @@ router.use(rubricRouter);
 router.use(settingsRouter);
 router.use(publicSiteRouter);
 router.use(platformLeadsRouter);
+router.use(checkoutRouter);
+router.use(webhooksRouter);
+router.use(portalRouter);
+router.use(clientsRouter);
 
 export default router;

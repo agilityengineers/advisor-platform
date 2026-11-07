@@ -3,9 +3,20 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
+/** Development only: let Vite's hot-reload socket through the SPA's CSP. Production keeps `connect-src 'self'` plus the named providers. */
+function devCsp() {
+  return {
+    name: "dev-csp",
+    apply: "serve" as const,
+    transformIndexHtml(html: string) {
+      return html.replace("connect-src 'self'", "connect-src 'self' ws: wss:");
+    },
+  };
+}
+
 export default defineConfig({
   root: path.resolve(import.meta.dirname),
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), devCsp()],
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "src") },
     dedupe: ["react", "react-dom"],

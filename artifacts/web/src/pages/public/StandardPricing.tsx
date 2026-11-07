@@ -23,7 +23,7 @@ function StandardBody({ site }: { site: PublicSiteResponse }) {
   const calendly = site.calendlyUrl;
   const bookHref = calendly ?? "/";
   const bookTarget = calendly ? "_blank" : undefined;
-  const canCheckout = site.company.publicFeatures.stripe_checkout;
+  const canCheckout = site.company.checkout.ready;
   const authorityDesk = site.company.publicFeatures.authority_desk && brand.authorityDeskUrl;
   useDocumentMeta({ title: `Standard pricing — ${company}`, robots: "noindex, nofollow, noarchive" });
   const fill = (s: string) => s.replace(/\{ownerFirst\}/g, first);

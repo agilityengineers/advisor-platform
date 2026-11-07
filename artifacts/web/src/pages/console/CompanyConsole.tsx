@@ -8,6 +8,8 @@ import { Alert, Button, KpiTile, Spinner } from "@/components/ui";
 import { ConsoleLayout, type ConsoleNavItem } from "./ConsoleLayout";
 import { LeadsPanel } from "./LeadsPanel";
 import { LeadDrawer } from "./LeadDrawer";
+import { ClientsPanel } from "./ClientsPanel";
+import { ClientDrawer } from "./ClientDrawer";
 import { CmsPanel } from "./CmsPanel";
 import { ReviewsPanel } from "./ReviewsPanel";
 import { RubricPanel } from "./RubricPanel";
@@ -31,6 +33,8 @@ export function CompanyConsole() {
   const search = new URLSearchParams(useSearch());
   const leadParam = search.get("lead");
   const selectedLead = leadParam ? Number(leadParam) : null;
+  const clientParam = search.get("client");
+  const selectedClient = clientParam ? Number(clientParam) : null;
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "board">("list");
   const [section, setSection] = useState("leads");
@@ -42,6 +46,8 @@ export function CompanyConsole() {
   // `~` = absolute: this component renders inside the nested /app router, where relative paths would re-prefix the base.
   const openLead = (id: number) => navigate(`~${window.location.pathname}?lead=${id}`);
   const closeLead = () => navigate(`~${window.location.pathname}`, { replace: true });
+  const openClient = (id: number) => navigate(`~${window.location.pathname}?client=${id}`);
+  const closeClient = () => navigate(`~${window.location.pathname}`, { replace: true });
 
   const scrollTo = (id: string) => {
     setSection(id);
@@ -49,7 +55,7 @@ export function CompanyConsole() {
   };
 
   useEffect(() => {
-    const ids = ["leads", "website", "reviews", "grader", "settings", "outreach"];
+    const ids = ["leads", "clients", "website", "reviews", "grader", "settings", "outreach"];
     const obs = new IntersectionObserver(
       (entries) => {
         const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
@@ -91,9 +97,11 @@ export function CompanyConsole() {
   const canSeeSite = can("website", "read") && has("website_cms");
   const canEditSite = can("website", "write") && isOwner;
   const canReviews = can("reviews", "read") && has("reviews");
+  const kpis = leads.data?.kpis;
   const nav: ConsoleNavItem[] = [
     { id: "leads", label: "Leads", count: s.counts.leads, active: section === "leads" && view === "list", onClick: () => { setView("list"); scrollTo("leads"); } },
     ...(has("pipeline_board") && can("pipeline", "read") ? [{ id: "pipeline", label: "Pipeline", active: section === "leads" && view === "board", onClick: () => { setView("board"); scrollTo("leads"); } }] : []),
+    ...(can("clients", "read") ? [{ id: "clients", label: "Clients", count: kpis?.clients ?? null, active: section === "clients", onClick: () => scrollTo("clients") }] : []),
     { id: "outreach", label: "Outreach templates", active: section === "outreach", onClick: () => scrollTo("outreach") },
     ...(canSeeSite ? [{ id: "website", label: "Website (CMS)", badge: s.counts.hasDraft ? "DRAFT" : null, active: section === "website", onClick: () => scrollTo("website") }] : []),
     ...(canReviews ? [{ id: "reviews", label: "Reviews", count: s.counts.reviewsLive, active: section === "reviews", onClick: () => scrollTo("reviews") }] : []),
@@ -101,7 +109,6 @@ export function CompanyConsole() {
     ...(isOwner ? [{ id: "settings", label: "Company settings", active: section === "settings", onClick: () => scrollTo("settings") }] : []),
     { id: "landing", label: "Landing page ↗", href: s.publicUrl },
   ];
-  const kpis = leads.data?.kpis;
 
   return (
     <ConsoleLayout summary={s} nav={nav}>
@@ -145,6 +152,8 @@ export function CompanyConsole() {
           <Alert tone="info">You don't have access to leads. Ask your Admin for the Leads & clients permission.</Alert>
         )}
 
+        {can("clients", "read") && <ClientsPanel companyId={companyId} query={query} publicUrl={s.publicUrl} onOpen={openClient} />}
+
         {canSeeSite && <CmsPanel companyId={companyId} companyName={s.company.name} canEdit={canEditSite} hasVideoFeature={has("hero_video")} />}
         {canReviews && <ReviewsPanel companyId={companyId} canWrite={can("reviews", "write")} />}
 
@@ -163,6 +172,9 @@ export function CompanyConsole() {
         <SideCards summary={s} />
       </div>
 
+      {selectedClient && (
+        <ClientDrawer companyId={companyId} clientId={selectedClient} canWrite={can("clients", "write")} canBilling={can("billing", "write")} onClose={closeClient} onOpenLead={openLead} />
+      )}
       {selectedLead && leads.data && (
         <LeadDrawer companyId={companyId} leadId={selectedLead} stages={leads.data.stages} rubricVersion={rubric.data?.published.version ?? null} canMoveStages={can("pipeline", "write")} canEmail={can("clients", "write") && has("sendgrid")} sendgridConnected={s.integrations.sendgrid === "connected" || s.integrations.sendgrid === "pending"} onClose={closeLead} />
       )}

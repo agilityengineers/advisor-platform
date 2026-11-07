@@ -45,7 +45,10 @@ pnpm db:studio                    # drizzle studio
 | `APP_URL` | no | Public base URL for emails when no tenant host applies. |
 | `SENDGRID_API_KEY`, `PLATFORM_FROM_EMAIL`, `PLATFORM_FROM_NAME` | for email | Platform sender (`partner@…`) used for invites, resets, magic links. Without a key nothing is sent; in development the action link is logged and returned as `devLink`. |
 | `BRIGHTDATA_API_KEY` | Phase 6 | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`). |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Phase 5 | Platform Stripe account (plan billing, Connect application fees). Company checkout uses each company's connected account. |
+| `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | checkout | Platform Stripe account. Company checkouts are **direct charges on each company's connected account** (`stripeAccount` header); the publishable key initialises Stripe.js for the embedded Checkout. Unset outside production = **demo checkout** (orders are marked paid by a demo button, nothing is charged). |
+| `STRIPE_WEBHOOK_SECRET` | checkout | Signing secret of a **Connect** webhook endpoint ("events on connected accounts") pointed at `/api/webhooks/stripe`: `checkout.session.completed`, `payment_intent.succeeded` / `payment_failed` (installments), `charge.refunded`. |
+| `STRIPE_CONNECT_CLIENT_ID` | optional | OAuth client id (`ca_…`) behind "Connect with Stripe" (Standard accounts, redirect `/api/stripe/connect/callback`). Without it owners paste their `acct_` id. |
+| `CHECKOUT_DEMO` | optional | Force demo checkout (`true`). Never set in production. |
 | `MTC_ADMIN_PASSWORD` | dev only | Gives the seeded MTC admin (Brian) a password locally. In production Brian sets his password via the invite / "Forgot password" link. |
 | `SEED_DEMO` | dev only | `true` seeds the prototype's demo companies (Northstar Advisory, Career Pro Guider) and MTC's demo team. |
 | `CORS_ALLOWED_ORIGINS` | prod | Comma list of allowed browser origins for `/api`. Unset = reflect all. |
@@ -104,6 +107,7 @@ One long page with anchored panels, all under `/api/companies/:companyId/*` (`re
 - **Reviews** — add / edit / hide / remove / reorder; hidden reviews never reach the public payload.
 - **Profile Grader** — rubric editor (weights must total 100, check shares, tiers, grade thresholds), Reset to platform default, **Publish as vN** (published versions are immutable rows so reports can stamp the version that graded them).
 - **Company settings** — Branding (colours injected as CSS variables; without `white_label` the public site falls back to platform defaults), Domain (platform subdomain always on; custom domain → generated TXT/CNAME/apex records with provider steps, Verify, 48h auto-recheck), Integrations (BYO SendGrid / Twilio / Stripe Connect / Calendly; secrets AES-256-GCM in `company_secrets`, API returns last-4 only; credentials are checked against the provider), Team (invite managers/advisors, per-area read/write grid).
+- **Clients** — every paying client with tracker progress, current stage, intake / booking flags, money paid and outstanding. The drawer sets each of the seven stages (Done emails the client and moves the next stage to Current), adds files as links (optionally emailing the client), settles installments (charge the saved card in live mode, mark paid for money taken elsewhere, or cancel — `billing:write`), shows intake answers and bookings, and sends a fresh portal link.
 - "Not in your plan" lock banner lists every gated feature with the plan name; nothing disappears silently.
 
 ## Public pages
@@ -117,10 +121,21 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 - **Advisor Platform landing** — rendered from `GET /api/platform-content`; the demo/trial form posts to `POST /api/public/platform-leads` (platform hosts only, honeypot, rate-limited) and lands in Platform Admin → Requests; the success state offers the founder's Calendly, prefilled.
 - **Drafts never leak**: `?preview=1` only returns a draft to signed-in staff of that company (or the super admin) and shows a "Draft preview" banner. Brand colours are injected as `--brand-*` CSS variables (`use-tenant.tsx`); the design's exact derived shades are used for the default blue, other brands derive theirs. Everything works at 360px with a collapsing menu.
 
+## Buying flow (pricing → Stripe → portal)
+
+`lib/stripe.ts`, `lib/orders.ts`, `lib/portal.ts`, `lib/calendly.ts`; routes `checkout.ts`, `webhooks.ts`, `portal.ts`, `clients.ts`. Recreated from `Buying Flow.dc.html`.
+
+1. **Checkout (`/buy?offer=&plan=`)** — order summary, pay-in-full / 2× · 3× plan, order bumps (banner +$150, 72-hour rush +30%), buyer details → `POST /api/public/checkout` creates a pending `orders` row and, in live mode, an **embedded Checkout Session on the company's connected account** (bumps and plan lock once the session exists). Prices live in `lib/shared/src/offers.ts` (`priceOrder`), the same catalogue the pricing pages render. A company without `stripe_checkout` or without a connected account gets a 409 and the pricing CTAs fall back to Calendly (`company.checkout.ready` on the public payload).
+2. **Fulfilment** (`fulfillOrder`, idempotent; called by the return page via `session_id` and by the webhook) — lead found or created and moved to the **won** stage; `clients` row + portal login (role `client`, magic-link only); the seven `client_stages`; an empty `intakes` row; `order_installments` every 30 days for plans (charged off-session with the card saved at checkout — `setup_future_usage`); welcome + receipt email to the buyer and an alert to the owner. Company mail goes out on the company's SendGrid when connected, otherwise from the platform key **with the company's name and the owner as Reply-To** (`lib/companyMail.ts`), so a firm mid-setup still reaches its buyers.
+3. **Thank-you (`/thanks?order=`)** — confirms the charge (polls while Stripe's redirect beats the webhook) and lays out the three next steps. **Book (`/book?order=`)** — Calendly inline widget prefilled with name, email and LinkedIn, `utm_content=<order id>`; the browser's `calendly.event_scheduled` records a provisional booking, the **Calendly webhook** (`invitee.created` / `invitee.canceled`, HMAC-signed per company, registered from Company settings → Integrations) confirms it with the start time. **Intake (`/intake?order=`)** — the four questions and the publishing choice; marks the stage done, updates the lead, alerts the owner.
+4. **Portal (`/portal`, clients only, magic link)** — stage tracker with actions, payments and schedule, files, the owner's card. `GET /api/portal` serves only the signed-in client's own record.
+5. **Lifecycle** (`startCommerceScheduler`, hourly, not under tests): due installments are charged (live mode only — demo installments are settled from the console), an intake reminder goes out at +48h, interview prep 24h before a booking; stage completions and new files email the client when staff tick "notify". **Autoscale note:** the scheduler runs in-process; if the deployment scales to zero for long stretches, a Replit Scheduled Deployment hitting any page keeps it ticking, or settle installments from the console.
+6. Webhooks are idempotent on `webhook_events (provider, event_id)` and written before processing; signatures are verified over the raw body (`express.raw` is mounted on `/api/webhooks` before `express.json()`).
+
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
-2. Add Secrets: `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_*`).
+2. Add Secrets: `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID`). In the Stripe dashboard add a **Connect** webhook endpoint for `https://<platform host>/api/webhooks/stripe` and, for OAuth, the redirect `https://<platform host>/api/stripe/connect/callback`.
 3. **Run** uses `pnpm dev` (port 5000). **Deploy** (autoscale) builds with `pnpm install --frozen-lockfile && pnpm build` and runs `pnpm start`; both are in `.replit`.
 4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.findabusinesspro.com`).
 5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.findabusinesspro.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.
@@ -133,6 +148,6 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 | 2 | Platform Admin (companies, plans, feature registry + overrides, templates, settings, platform landing CMS) | done |
 | 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, rubric editor, settings) | done |
 | 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing, platform requests pipeline) | done |
-| 5 | Buying flow (Stripe Connect, Calendly, intake, SendGrid, portal) | next |
-| 6 | Profile Grader (Bright Data, rubric versions, gated report) | |
+| 5 | Buying flow (Stripe Connect checkout, installments, Calendly booking + webhook, intake, SendGrid lifecycle mail, client portal, Clients console) | done |
+| 6 | Profile Grader (Bright Data, rubric versions, gated report) | next |
 | 7 | Twilio, hardened webhooks, empty states, responsive QA, audit log | |
