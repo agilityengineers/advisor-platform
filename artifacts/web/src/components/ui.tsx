@@ -109,3 +109,97 @@ export function Card({ className, children }: { className?: string; children: Re
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cn("text-[11.5px] font-bold uppercase tracking-[0.1em] text-muted-2", className)}>{children}</div>;
 }
+
+// ---------------------------------------------------------------------------
+// Console primitives (Platform Admin / company console)
+// ---------------------------------------------------------------------------
+
+export function Pill({ children, tone = "blue", className }: { children: ReactNode; tone?: "blue" | "green" | "amber" | "grey" | "red" | "navy"; className?: string }) {
+  const tones = {
+    blue: "bg-pale text-blue-hover",
+    green: "bg-[#EDF7F1] text-success-deep",
+    amber: "bg-[#FFF8F0] text-warn-deep",
+    grey: "bg-[#F1F4F8] text-muted",
+    red: "bg-[#FDECE9] text-danger",
+    navy: "bg-navy text-white",
+  };
+  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-pill px-2.5 py-[5px] text-[12px] font-bold", tones[tone], className)}>{children}</span>;
+}
+
+export function KpiTile({ label, value, dark, sub }: { label: string; value: ReactNode; dark?: boolean; sub?: string }) {
+  return (
+    <div className={cn("rounded-card border p-[18px]", dark ? "border-navy bg-navy text-white" : "border-line bg-white")}>
+      <div className={cn("text-[11.5px] font-bold tracking-[0.1em]", dark ? "text-[#7FB6FF]" : "text-muted-2")}>{label}</div>
+      <div className="mt-2 font-display text-[28px] font-bold leading-none">{value}</div>
+      {sub && <div className={cn("mt-2 text-[12px] font-semibold", dark ? "text-white/60" : "text-muted")}>{sub}</div>}
+    </div>
+  );
+}
+
+export function PageTitle({ title, sub, action }: { title: string; sub?: string; action?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3.5">
+      <div>
+        <h1 className="m-0 font-display text-[22px] font-bold tracking-[-0.02em] text-navy">{title}</h1>
+        {sub && <div className="mt-[3px] text-[13.5px] font-semibold text-muted">{sub}</div>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+export function Modal({ title, onClose, children, width = 540, labelledBy }: { title: string; onClose: () => void; children: ReactNode; width?: number; labelledBy?: string }) {
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-5">
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-navy/50" />
+      <div role="dialog" aria-modal="true" aria-label={labelledBy ? undefined : title} className="relative max-h-[92vh] w-full overflow-y-auto rounded-[20px] bg-white p-7 shadow-[0_30px_80px_rgba(10,22,38,0.3)]" style={{ maxWidth: width }}>
+        <div className="flex items-center justify-between">
+          <h3 className="m-0 font-display text-[20px] font-bold text-navy">{title}</h3>
+          <button type="button" onClick={onClose} aria-label="Close" className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-line bg-page text-[15px] font-bold text-body-2 hover:bg-pale">
+            ×
+          </button>
+        </div>
+        <div className="mt-3.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+export function Drawer({ onClose, children, width = 560, label }: { onClose: () => void; children: ReactNode; width?: number; label: string }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-navy/45" />
+      <div role="dialog" aria-modal="true" aria-label={label} className="relative h-full max-w-[96vw] overflow-y-auto bg-white shadow-[-24px_0_60px_rgba(10,22,38,0.25)]" style={{ width }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function Segmented<T extends string>({ value, options, onChange, ariaLabel }: { value: T; options: { value: T; label: string; activeClass?: string }[]; onChange: (v: T) => void; ariaLabel: string }) {
+  return (
+    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex rounded-pill border border-line bg-page p-[2px]">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={cn("rounded-pill px-[9px] py-[5px] text-[11px] font-bold transition-colors", value === o.value ? (o.activeClass ?? "bg-navy text-white") : "text-body-2 hover:text-navy")}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SectionLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2.5">
+      <div className="text-[11.5px] font-bold tracking-[0.1em] text-muted-2">{children}</div>
+      {right}
+    </div>
+  );
+}

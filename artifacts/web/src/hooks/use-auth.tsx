@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (session: SessionResponse, next?: string | null) => {
       setToken(session.token);
       queryClient.setQueryData(ME_KEY, session.user);
-      navigate(isSafeNext(next) ? next : homeFor(session.user));
+      navigate(isSafeNext(next) ? `~${next}` : homeFor(session.user));
     },
     [navigate, queryClient],
   );

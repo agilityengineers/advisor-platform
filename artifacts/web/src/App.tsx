@@ -12,7 +12,10 @@ import { StaffSignIn } from "@/pages/auth/StaffSignIn";
 import { ClientSignIn, ClientVerify } from "@/pages/auth/ClientSignIn";
 import { ForgotPassword, ResetPassword } from "@/pages/auth/Password";
 import { AcceptInvite } from "@/pages/auth/AcceptInvite";
-import { PlatformAdminPlaceholder, CompanyConsolePlaceholder, ClientPortalPlaceholder } from "@/pages/Placeholders";
+import { ClientPortalPlaceholder } from "@/pages/Placeholders";
+import { PlatformAdmin } from "@/pages/admin";
+import { ConsoleEntry } from "@/pages/console/ConsoleEntry";
+import { ToastProvider } from "@/hooks/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1 } },
@@ -48,6 +51,7 @@ export default function App() {
         <Router base={routeBase()}>
           <TenantProvider>
             <AuthProvider>
+              <ToastProvider>
               <Switch>
                 <Route path="/" component={Home} />
                 <Route path="/login" component={SignInChooser} />
@@ -57,14 +61,19 @@ export default function App() {
                 <Route path="/forgot-password" component={ForgotPassword} />
                 <Route path="/reset-password" component={ResetPassword} />
                 <Route path="/accept-invite" component={AcceptInvite} />
+                <Route path="/admin/companies/:companyId/console">
+                  <ProtectedRoute roles={["super_admin"]}>
+                    <ConsoleEntry />
+                  </ProtectedRoute>
+                </Route>
                 <Route path="/admin" nest>
                   <ProtectedRoute roles={["super_admin"]}>
-                    <PlatformAdminPlaceholder />
+                    <PlatformAdmin />
                   </ProtectedRoute>
                 </Route>
                 <Route path="/app" nest>
                   <ProtectedRoute roles={["super_admin", "admin", "manager", "advisor"]}>
-                    <CompanyConsolePlaceholder />
+                    <ConsoleEntry />
                   </ProtectedRoute>
                 </Route>
                 <Route path="/portal" nest>
@@ -74,6 +83,7 @@ export default function App() {
                 </Route>
                 <Route component={NotFound} />
               </Switch>
+              </ToastProvider>
             </AuthProvider>
           </TenantProvider>
         </Router>

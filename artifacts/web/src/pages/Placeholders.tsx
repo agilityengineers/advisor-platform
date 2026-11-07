@@ -29,6 +29,4 @@ function Shell({ eyebrow, title, body }: { eyebrow: string; title: string; body:
   );
 }
 
-export const PlatformAdminPlaceholder = () => <Shell eyebrow="Platform Admin" title="Advisor Platform console" body="Companies, plans, feature registry, templates, platform settings and the platform landing CMS arrive in Phase 2." />;
-export const CompanyConsolePlaceholder = () => <Shell eyebrow="Company console" title="Your dashboard is on its way" body="Leads, pipeline, website CMS, reviews, Profile Grader and company settings arrive in Phase 3." />;
 export const ClientPortalPlaceholder = () => <Shell eyebrow="Client portal" title="Your portal is on its way" body="Your 7-stage tracker, payments, files and team arrive in Phase 5." />;
