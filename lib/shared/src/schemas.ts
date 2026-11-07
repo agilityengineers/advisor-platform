@@ -193,3 +193,9 @@ export const ClientFileBody = z.object({
 export const InstallmentActionBody = z.object({
   action: z.enum(["charge", "mark_paid", "cancel"]),
 });
+
+/** Run the Profile Grader on a lead; `linkedin` overrides the lead's stored URL. */
+export const GradeRunBody = z.object({
+  notify: z.boolean().default(true),
+  linkedin: z.string().trim().max(300).default(""),
+});

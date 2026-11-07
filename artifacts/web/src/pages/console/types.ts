@@ -52,11 +52,34 @@ export interface LeadsResponse {
   calendlyUrl: string | null;
 }
 
+export interface AssessmentView {
+  id: number;
+  publicId: string;
+  linkedinUrl: string;
+  status: "pending" | "fetching" | "retrying" | "scored" | "failed" | string;
+  attempt: number;
+  errorMessage: string | null;
+  grade: string | null;
+  pctTotal: number | null;
+  total: number | null;
+  maxTotal: number | null;
+  strongest: string | null;
+  biggestGap: string | null;
+  rubricVersion: number | null;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  source: string | null;
+  reportUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LeadDetail {
   lead: LeadView;
   activity: { id: number; type: string; body: string; meta: Record<string, unknown>; actorUserId: number | null; createdAt: string }[];
   booking: { id: number; startAt: string | null; status: string; eventUri: string } | null;
-  assessments: { id: number; publicId: string; grade: string | null; status: string; rubricVersion: number | null; unlocked: boolean; createdAt: string }[];
+  assessments: AssessmentView[];
+  grader: { mode: "live" | "demo" | "off"; rubricVersion: number; canRun: boolean };
   calendly: { connected: boolean; prefillUrl: string | null };
   templates: { key: string; label: string; timing: string; subject: string }[];
 }

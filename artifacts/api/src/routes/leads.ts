@@ -9,6 +9,9 @@ import { calendlyUrlFor, companySender } from "../lib/integrations";
 import { sendEmail, renderEmail, escapeHtml } from "../lib/email";
 import { letterheadFor } from "../lib/letterhead";
 import { audit } from "../lib/audit";
+import { GraderError, assessmentView, graderMode, rescoreAssessment, reportUrlFor, sendGradeEmail, startAssessment, unlockAssessment } from "../lib/grader";
+import { publishedRubric } from "./rubric";
+import { GradeRunBody } from "@workspace/shared";
 
 const router: IRouter = Router();
 const base = [authMiddleware, requireCompany] as const;
@@ -90,20 +93,23 @@ router.get("/companies/:companyId/leads/:leadId", ...base, requirePermission("cl
     res.status(404).json({ error: "Lead not found" });
     return;
   }
-  const [stages, activity, bookings, assessments, calendlyUrl] = await Promise.all([
+  const [stages, activity, bookings, assessments, calendlyUrl, rubric] = await Promise.all([
     stagesFor(company.id),
     leadActivity(lead.id),
     db.select().from(bookingsTable).where(eq(bookingsTable.leadId, lead.id)).orderBy(desc(bookingsTable.createdAt)),
-    db.select({ id: profileAssessmentsTable.id, publicId: profileAssessmentsTable.publicId, grade: profileAssessmentsTable.grade, status: profileAssessmentsTable.status, rubricVersion: profileAssessmentsTable.rubricVersion, unlocked: profileAssessmentsTable.unlocked, createdAt: profileAssessmentsTable.createdAt }).from(profileAssessmentsTable).where(eq(profileAssessmentsTable.leadId, lead.id)).orderBy(desc(profileAssessmentsTable.createdAt)),
+    db.select().from(profileAssessmentsTable).where(eq(profileAssessmentsTable.leadId, lead.id)).orderBy(desc(profileAssessmentsTable.createdAt)),
     calendlyUrlFor(company.id),
+    publishedRubric(company.id),
   ]);
+  const reportBase = assessments.length ? await reportUrlFor(company, { publicId: "" }) : "";
   const booking = bookings.find((b) => b.status === "scheduled") ?? bookings[0] ?? null;
   const prefill = calendlyUrl ? `${calendlyUrl}${calendlyUrl.includes("?") ? "&" : "?"}name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&utm_source=advisor_platform&utm_content=${encodeURIComponent(lead.publicId)}` : null;
   res.json({
     lead: leadView(lead, stages, { booked: booking?.startAt ?? null, grade: assessments[0]?.grade ?? null }),
     activity: activity.map((a) => ({ id: a.id, type: a.type, body: a.body, meta: a.meta, actorUserId: a.actorUserId, createdAt: a.createdAt.toISOString() })),
     booking: booking ? { id: booking.id, startAt: booking.startAt?.toISOString() ?? null, status: booking.status, eventUri: booking.eventUri } : null,
-    assessments: assessments.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() })),
+    assessments: assessments.map((a) => assessmentView(a, `${reportBase}${encodeURIComponent(a.publicId)}`)),
+    grader: { mode: graderMode(), rubricVersion: rubric.version, canRun: true },
     calendly: { connected: Boolean(calendlyUrl), prefillUrl: prefill },
     templates: OUTREACH_TEMPLATES.map((t) => ({ key: t.key, label: t.label, timing: t.timing, subject: fillOutreach(t.subject, { name: lead.name, company: company.name, owner: company.ownerName }) })),
   });
@@ -217,6 +223,103 @@ router.post("/companies/:companyId/leads/:leadId/email", ...base, requirePermiss
   }
   await logActivity(lead, "email_sent", `Email sent: ${template.label}`, { actorUserId: req.user!.userId, meta: { templateKey: template.key, emailLogId: result.emailLogId } });
   res.json({ ok: true, subject });
+});
+
+// ---------------------------------------------------------------------------
+// Profile Grader (per lead)
+// ---------------------------------------------------------------------------
+
+async function loadAssessment(companyId: number, id: string) {
+  const assessmentId = Number(id);
+  if (!Number.isInteger(assessmentId)) return null;
+  const [row] = await db.select().from(profileAssessmentsTable).where(and(eq(profileAssessmentsTable.companyId, companyId), eq(profileAssessmentsTable.id, assessmentId))).limit(1);
+  return row ?? null;
+}
+
+/** Run (or re-run) the audit on a lead's LinkedIn profile. Optionally emails the summary when it lands. */
+router.post("/companies/:companyId/leads/:leadId/grade", ...base, requirePermission("clients", "write"), async (req, res) => {
+  const company = req.company!;
+  const lead = await loadLead(company.id, Number(req.params.leadId));
+  if (!lead) {
+    res.status(404).json({ error: "Lead not found" });
+    return;
+  }
+  const parsed = GradeRunBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid request" });
+    return;
+  }
+  try {
+    if (parsed.data.linkedin && parsed.data.linkedin !== lead.linkedin) await db.update(leadsTable).set({ linkedin: parsed.data.linkedin.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/+$/, ""), updatedAt: new Date() }).where(eq(leadsTable.id, lead.id));
+    const existing = await db.select({ id: profileAssessmentsTable.id }).from(profileAssessmentsTable).where(eq(profileAssessmentsTable.leadId, lead.id)).limit(1);
+    const row = await startAssessment(company, lead, { trigger: existing.length ? "rerun" : "staff", actorUserId: req.user!.userId, notify: parsed.data.notify, linkedinUrl: parsed.data.linkedin || undefined });
+    await audit(req, { action: "profile_grade_run", resourceType: "lead", resourceId: lead.id, details: { assessmentId: row.id, notify: parsed.data.notify } });
+    res.status(202).json({ assessment: assessmentView(row, await reportUrlFor(company, row)), mode: graderMode() });
+  } catch (err) {
+    if (err instanceof GraderError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+router.post("/companies/:companyId/assessments/:assessmentId/rescore", ...base, requirePermission("clients", "write"), async (req, res) => {
+  const company = req.company!;
+  const row = await loadAssessment(company.id, String(req.params.assessmentId));
+  if (!row) {
+    res.status(404).json({ error: "Assessment not found" });
+    return;
+  }
+  try {
+    const updated = await rescoreAssessment(row);
+    await audit(req, { action: "profile_grade_rescored", resourceType: "lead", resourceId: row.leadId, details: { assessmentId: row.id, rubricVersion: updated.rubricVersion } });
+    res.json({ assessment: assessmentView(updated, await reportUrlFor(company, updated)) });
+  } catch (err) {
+    if (err instanceof GraderError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+router.post("/companies/:companyId/assessments/:assessmentId/unlock", ...base, requirePermission("clients", "write"), async (req, res) => {
+  const company = req.company!;
+  const row = await loadAssessment(company.id, String(req.params.assessmentId));
+  if (!row) {
+    res.status(404).json({ error: "Assessment not found" });
+    return;
+  }
+  const updated = await unlockAssessment(row, "unlocked by staff", req.user!.userId);
+  await audit(req, { action: "profile_grade_unlocked", resourceType: "lead", resourceId: row.leadId, details: { assessmentId: row.id } });
+  res.json({ assessment: assessmentView(updated, await reportUrlFor(company, updated)) });
+});
+
+/** Email (or re-email) the lead their summary and report link. */
+router.post("/companies/:companyId/assessments/:assessmentId/send", ...base, requirePermission("clients", "write"), async (req, res) => {
+  const company = req.company!;
+  const row = await loadAssessment(company.id, String(req.params.assessmentId));
+  if (!row) {
+    res.status(404).json({ error: "Assessment not found" });
+    return;
+  }
+  const lead = row.leadId ? await loadLead(company.id, row.leadId) : null;
+  if (!lead) {
+    res.status(409).json({ error: "This assessment has no lead to email" });
+    return;
+  }
+  if (row.status !== "scored") {
+    res.status(409).json({ error: "The grade hasn't landed yet" });
+    return;
+  }
+  const r = await sendGradeEmail(company, lead, row);
+  await audit(req, { action: "profile_grade_sent", resourceType: "lead", resourceId: lead.id, details: { assessmentId: row.id, success: r.success } });
+  if (!r.success) {
+    res.status(502).json({ error: r.error ?? "Email could not be sent", code: "email_failed" });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------

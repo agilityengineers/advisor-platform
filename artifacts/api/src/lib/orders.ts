@@ -9,6 +9,7 @@ import { button, escapeHtml, heading, paragraph } from "./email";
 import { companyBaseUrl } from "./urls";
 import { checkoutMode, companyStripeAccount, chargeOffSession } from "./stripe";
 import { newPublicId } from "./tokens";
+import { unlockForLead, failStaleAssessments } from "./grader";
 import { logger } from "./logger";
 import { env } from "../env";
 
@@ -146,6 +147,8 @@ export async function fulfillOrder(orderId: number, payment: PaymentFacts): Prom
       );
     }
   }
+
+  await unlockForLead(lead.id, `purchased ${pricing.offer.name}`).catch((err) => logger.warn({ err, leadId: lead.id }, "Could not unlock reports"));
 
   await logActivity(lead, "order", `${pricing.offer.name} purchased · ${cents(order.amountCents)}${pricing.split ? ` (1 of ${pricing.installments})` : ""} · ${payment.source}`, { meta: { orderId: order.id, orderPublicId: order.publicId, source: payment.source } });
 
@@ -399,7 +402,8 @@ export function startCommerceScheduler(): void {
     try {
       const charged = await runDueInstallments();
       const r = await runLifecycleReminders();
-      if (charged || r.intakeReminders || r.prepNotes) logger.info({ charged, ...r }, "Commerce scheduler tick");
+      const stale = await failStaleAssessments();
+      if (charged || r.intakeReminders || r.prepNotes || stale) logger.info({ charged, ...r, staleAssessments: stale }, "Commerce scheduler tick");
     } catch (err) {
       logger.error({ err }, "Commerce scheduler failed");
     }

@@ -44,6 +44,8 @@ export const env = {
   platformFromEmail: process.env.PLATFORM_FROM_EMAIL ?? "partner@advisor-platform.findabusinesspro.com",
   platformFromName: process.env.PLATFORM_FROM_NAME ?? "Advisor Platform",
   brightDataApiKey: process.env.BRIGHTDATA_API_KEY ?? "",
+  /** Grade with deterministic sample profiles instead of Bright Data (automatic outside production without a key). */
+  graderDemo: process.env.GRADER_DEMO === "true" || (!isProduction && !process.env.BRIGHTDATA_API_KEY),
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",

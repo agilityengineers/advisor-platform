@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, errorMessage } from "@/lib/api";
 import { initials } from "@/lib/utils";
-import { Alert, Button, Drawer, Select, Spinner, Textarea } from "@/components/ui";
+import { Alert, Button, Drawer, Input, Select, Spinner, Textarea } from "@/components/ui";
 import { useToast } from "@/hooks/use-toast";
 import { fmtWhen, type LeadDetail, type StageView } from "./types";
 
@@ -82,16 +82,7 @@ export function LeadDrawer({ companyId, leadId, stages, rubricVersion, canMoveSt
               <div className="text-[11.5px] font-bold tracking-[0.08em] text-muted-2">PRIMARY GOAL</div>
               <p className="mt-[9px] text-[15px] leading-[1.62] text-body">{d.lead.goal || "No goal given."}</p>
             </div>
-            <div className="flex items-center justify-between gap-3 rounded-[12px] bg-navy p-[15px] text-white">
-              <div className="min-w-0">
-                <div className="text-[11.5px] font-bold tracking-[0.08em] text-[#7FB6FF]">PROFILE GRADE</div>
-                <div className="mt-[5px] truncate text-[14.5px] font-bold">{d.assessments[0]?.grade ? `Graded ${d.assessments[0].grade} · rubric v${d.assessments[0].rubricVersion}` : d.lead.linkedin ? `Run the audit on ${d.lead.linkedin}` : "Add a LinkedIn URL to grade"}</div>
-                <div className="mt-[2px] text-[12px] font-semibold text-[#B9CBE0]">Fetches the profile, scores it on rubric v{rubricVersion ?? 1}, and emails the summary.</div>
-              </div>
-              <Button size="sm" className="shrink-0" onClick={() => toast("The Bright Data fetch and report arrive in Phase 6.", "info")}>
-                Open grade →
-              </Button>
-            </div>
+            <GradeCard companyId={companyId} leadId={leadId} detail={d} canWrite={canEmail || canMoveStages} rubricVersion={rubricVersion} onChanged={refresh} />
             <div className="rounded-[12px] border border-line-soft bg-[#F7FBFF] p-[15px]">
               <div className="text-[11.5px] font-bold tracking-[0.08em] text-muted-2">CALENDLY</div>
               <div className="mt-1.5 text-[14.5px] font-bold text-[#16283D]">{d.booking?.startAt ? `Intro call booked — ${fmtWhen(d.booking.startAt)}` : "No call booked yet"}</div>
@@ -159,6 +150,108 @@ export function LeadDrawer({ companyId, leadId, stages, rubricVersion, canMoveSt
         </>
       )}
     </Drawer>
+  );
+}
+
+const GRADE_STATUS: Record<string, string> = { pending: "Queued", fetching: "Fetching the profile…", retrying: "Retrying the fetch…", scored: "Scored", failed: "Failed" };
+
+/** The Profile Grade card: run / re-run the audit, open the report, email it, unlock it, re-score on a newer rubric. */
+function GradeCard({ companyId, leadId, detail, canWrite, rubricVersion, onChanged }: { companyId: number; leadId: number; detail: LeadDetail; canWrite: boolean; rubricVersion: number | null; onChanged: () => void }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const latest = detail.assessments[0] ?? null;
+  const [linkedin, setLinkedin] = useState("");
+  const [notify, setNotify] = useState(true);
+  const running = latest && (latest.status === "pending" || latest.status === "fetching" || latest.status === "retrying");
+  const currentRubric = detail.grader.rubricVersion ?? rubricVersion ?? 1;
+  const key = ["company", companyId, "lead", leadId];
+
+  // While a fetch is in flight, keep the drawer fresh.
+  useEffect(() => {
+    if (!running) return;
+    const t = window.setInterval(() => void qc.invalidateQueries({ queryKey: key }), 2500);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, companyId, leadId]);
+
+  const run = useMutation({
+    mutationFn: () => api<{ assessment: { status: string } }>(`/companies/${companyId}/leads/${leadId}/grade`, { method: "POST", json: { notify, linkedin: linkedin.trim() || undefined } }),
+    onSuccess: (r) => {
+      onChanged();
+      toast(r.assessment.status === "scored" ? "Graded" : "Audit started — the grade lands in a minute or two", "info");
+    },
+    onError: (e) => toast(errorMessage(e), "error"),
+  });
+  const act = useMutation({
+    mutationFn: ({ id, action }: { id: number; action: "rescore" | "unlock" | "send" }) => api(`/companies/${companyId}/assessments/${id}/${action}`, { method: "POST" }),
+    onSuccess: (_r, v) => {
+      onChanged();
+      toast(v.action === "send" ? "Report emailed to the lead" : v.action === "unlock" ? "Full report unlocked for the lead" : "Re-scored on the current rubric");
+    },
+    onError: (e) => toast(errorMessage(e), "error"),
+  });
+
+  const needsUrl = !detail.lead.linkedin && !linkedin.trim();
+  return (
+    <div className="rounded-[12px] bg-navy p-[15px] text-white">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11.5px] font-bold tracking-[0.08em] text-[#7FB6FF]">PROFILE GRADE{detail.grader.mode === "demo" ? " · DEMO DATA" : ""}</div>
+          {latest ? (
+            <>
+              <div className="mt-[5px] text-[14.5px] font-bold">
+                {latest.status === "scored" ? `Graded ${latest.grade} · ${latest.pctTotal}% · rubric v${latest.rubricVersion}` : GRADE_STATUS[latest.status] ?? latest.status}
+                {latest.status === "scored" && latest.rubricVersion !== null && latest.rubricVersion < currentRubric && <span className="ml-2 rounded-pill bg-[#FFF8F0] px-2 py-[2px] text-[10.5px] font-bold tracking-[0.06em] text-warn-deep">RUBRIC v{currentRubric} AVAILABLE</span>}
+              </div>
+              <div className="mt-[2px] text-[12px] font-semibold text-[#B9CBE0]">
+                {latest.status === "scored" ? `Strongest: ${latest.strongest ?? "—"} · Biggest gap: ${latest.biggestGap ?? "—"} · ${latest.unlocked ? "Full report unlocked" : "Lead sees the summary"}` : latest.status === "failed" ? (latest.errorMessage ?? "The fetch failed") : `Attempt ${latest.attempt} · Bright Data`}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-[5px] truncate text-[14.5px] font-bold">{detail.lead.linkedin ? `Run the audit on ${detail.lead.linkedin}` : "Add a LinkedIn URL to grade"}</div>
+              <div className="mt-[2px] text-[12px] font-semibold text-[#B9CBE0]">Fetches the profile, scores it on rubric v{currentRubric}, and can email the summary.</div>
+            </>
+          )}
+        </div>
+        {latest?.status === "scored" && latest.reportUrl && (
+          <a href={latest.reportUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-pill bg-white px-3.5 py-2 text-[13px] font-bold text-navy hover:bg-pale">
+            Open report ↗
+          </a>
+        )}
+      </div>
+      {canWrite && (
+        <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
+          {!detail.lead.linkedin && <Input className="h-9 border-white/20 bg-white/10 text-[13px] text-white placeholder:text-[#8FA6BF]" placeholder="linkedin.com/in/…" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" disabled={Boolean(running) || needsUrl} loading={run.isPending} onClick={() => run.mutate()}>
+              {latest ? "Re-run audit" : "Run audit"}
+            </Button>
+            {latest?.status === "scored" && (
+              <>
+                <Button size="sm" variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" loading={act.isPending} onClick={() => act.mutate({ id: latest.id, action: "send" })}>
+                  Email report
+                </Button>
+                {!latest.unlocked && (
+                  <Button size="sm" variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" loading={act.isPending} onClick={() => window.confirm("Unlock every finding and the plan for this lead?") && act.mutate({ id: latest.id, action: "unlock" })}>
+                    Unlock for lead
+                  </Button>
+                )}
+                {latest.rubricVersion !== null && latest.rubricVersion < currentRubric && (
+                  <Button size="sm" variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" loading={act.isPending} onClick={() => act.mutate({ id: latest.id, action: "rescore" })}>
+                    Re-score on v{currentRubric}
+                  </Button>
+                )}
+              </>
+            )}
+            <label className="ml-auto flex items-center gap-1.5 text-[12px] font-semibold text-[#DCE7F4]">
+              <input type="checkbox" className="accent-blue" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the lead when graded
+            </label>
+          </div>
+          {detail.grader.mode === "off" && <div className="text-[12px] font-bold text-warn">Bright Data isn't configured on the platform — grading is unavailable.</div>}
+        </div>
+      )}
+    </div>
   );
 }
 

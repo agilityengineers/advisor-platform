@@ -44,7 +44,7 @@ pnpm db:studio                    # drizzle studio
 | `PLATFORM_HOSTS` | no | Comma list of hosts that resolve to the platform (not a company). Defaults to the three platform domains; localhost and `*.replit.dev/app` always count as platform. |
 | `APP_URL` | no | Public base URL for emails when no tenant host applies. |
 | `SENDGRID_API_KEY`, `PLATFORM_FROM_EMAIL`, `PLATFORM_FROM_NAME` | for email | Platform sender (`partner@…`) used for invites, resets, magic links. Without a key nothing is sent; in development the action link is logged and returned as `devLink`. |
-| `BRIGHTDATA_API_KEY` | Phase 6 | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`). |
+| `BRIGHTDATA_API_KEY` | grader | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`), never per company. Unset outside production = **demo grading** with deterministic sample profiles; unset in production = grading off (the drawer says so). `GRADER_DEMO=true` forces demo mode. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | checkout | Platform Stripe account. Company checkouts are **direct charges on each company's connected account** (`stripeAccount` header); the publishable key initialises Stripe.js for the embedded Checkout. Unset outside production = **demo checkout** (orders are marked paid by a demo button, nothing is charged). |
 | `STRIPE_WEBHOOK_SECRET` | checkout | Signing secret of a **Connect** webhook endpoint ("events on connected accounts") pointed at `/api/webhooks/stripe`: `checkout.session.completed`, `payment_intent.succeeded` / `payment_failed` (installments), `charge.refunded`. |
 | `STRIPE_CONNECT_CLIENT_ID` | optional | OAuth client id (`ca_…`) behind "Connect with Stripe" (Standard accounts, redirect `/api/stripe/connect/callback`). Without it owners paste their `acct_` id. |
@@ -132,6 +132,16 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 5. **Lifecycle** (`startCommerceScheduler`, hourly, not under tests): due installments are charged (live mode only — demo installments are settled from the console), an intake reminder goes out at +48h, interview prep 24h before a booking; stage completions and new files email the client when staff tick "notify". **Autoscale note:** the scheduler runs in-process; if the deployment scales to zero for long stretches, a Replit Scheduled Deployment hitting any page keeps it ticking, or settle installments from the console.
 6. Webhooks are idempotent on `webhook_events (provider, event_id)` and written before processing; signatures are verified over the raw body (`express.raw` is mounted on `/api/webhooks` before `express.json()`).
 
+## Profile Grader (Bright Data → rubric → gated report)
+
+`lib/grader.ts` (API), `lib/shared/src/brightData.ts` (normaliser), `routes/leads.ts` (actions), `routes/publicSite.ts` (`GET /api/public/grade/:publicId`). The scoring engine itself is `lib/shared/src/grader.ts` (Phase 1).
+
+- **Fetch** — the port of LinkedIn-Profile-Grader's `fetchLinkedInProfile`: trigger the dataset job (`discover_new=true`), poll the snapshot every 2 s for 60 s, retry the whole fetch once, record a clear failure message otherwise. `normalizeBrightDataProfile` keeps the source's field fallbacks, counting rules and activity buckets, and derives the Value & Service inputs from headline + About.
+- **When it runs** — automatically when a landing-form lead arrives with a LinkedIn URL (the journey's "Get your Profile Grade" step), **without emailing anyone**: the owner reviews the grade in the lead drawer first. Staff run or re-run it from the drawer (`POST /companies/:id/leads/:leadId/grade`, optionally supplying the URL) with an "email the lead when graded" tick.
+- **Versioned** — every `profile_assessments` row stamps the published rubric version that scored it; the report footer shows it. When a newer rubric is published the drawer offers **Re-score on vN** (same stored profile, no refetch), so before/after comparisons stay honest.
+- **Gated** — a lead's report (`/grade/:publicId`, unguessable id) shows scores, quick wins and locked findings; staff always see the full report (and can preview the lead's view with `?view=summary`). **Unlock** happens when the lead buys (`fulfillOrder` → `unlockForLead`) or when staff click Unlock. "Email report" sends the summary with the link (`sendGradeEmail`, company letterhead), and says so plainly when email is not configured.
+- Jobs are run in-process and awaited under tests; anything still `pending`/`fetching` after 15 minutes is marked failed by the hourly scheduler so a dead process never leaves a lead waiting silently.
+
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
@@ -149,5 +159,5 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 | 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, rubric editor, settings) | done |
 | 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing, platform requests pipeline) | done |
 | 5 | Buying flow (Stripe Connect checkout, installments, Calendly booking + webhook, intake, SendGrid lifecycle mail, client portal, Clients console) | done |
-| 6 | Profile Grader (Bright Data, rubric versions, gated report) | next |
-| 7 | Twilio, hardened webhooks, empty states, responsive QA, audit log | |
+| 6 | Profile Grader (Bright Data fetch + normaliser, auto-grade on lead form, staff run/re-run/re-score/unlock/email, gated report) | done |
+| 7 | Twilio, hardened webhooks, empty states, responsive QA, audit log | next |
