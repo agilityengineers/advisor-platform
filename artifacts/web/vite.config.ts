@@ -1,0 +1,25 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
+
+export default defineConfig({
+  root: path.resolve(import.meta.dirname),
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: { "@": path.resolve(import.meta.dirname, "src") },
+    dedupe: ["react", "react-dom"],
+  },
+  build: {
+    outDir: path.resolve(import.meta.dirname, "dist"),
+    emptyOutDir: true,
+    sourcemap: false,
+  },
+  server: {
+    port: Number(process.env.WEB_PORT ?? 5173),
+    host: "0.0.0.0",
+    allowedHosts: true,
+    proxy: { "/api": { target: `http://localhost:${process.env.PORT ?? 5000}`, changeOrigin: false } },
+    fs: { strict: true, deny: ["**/.*"] },
+  },
+});

@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /pricing
+Disallow: /commercial-pricing
+Disallow: /admin
+Disallow: /app
+Disallow: /portal

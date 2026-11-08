@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advisor Platform</title>
+    <meta name="description" content="White-label LinkedIn advisory platform: branded landing page, lead-to-close pipeline, Brand Voice capture, Profile Grader, checkout and client portal." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!--
+      Content-Security-Policy. Auth tokens live in localStorage, so script-src is
+      the line that matters: this origin plus Stripe and Calendly, no inline, no eval.
+      Tenant branding is applied as CSS custom properties via inline styles, hence
+      style-src 'unsafe-inline'. frame-ancestors cannot be set from a meta tag; the
+      API sets it as a header.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' https://js.stripe.com https://assets.calendly.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com;
+        font-src 'self' data: https://fonts.gstatic.com;
+        img-src 'self' data: blob: https:;
+        media-src 'self' blob: https:;
+        connect-src 'self' https://api.stripe.com https://calendly.com https://api.calendly.com;
+        frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://calendly.com https://www.youtube-nocookie.com https://player.vimeo.com;
+        worker-src 'self' blob:;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+      "
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
