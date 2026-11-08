@@ -12,6 +12,7 @@ import { SITE_CONTENT_DEFAULTS, GRADER_SAMPLE, mergeContent, scoreProfile, type 
 import { eq, and } from "drizzle-orm";
 import { db, profileAssessmentsTable } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { graderMode, startAssessment } from "../lib/grader";
 
 const router: IRouter = Router();
 
@@ -77,6 +78,11 @@ router.post("/public/leads", publicFormLimiter, async (req, res) => {
   }
   const { website: _hp, ...fields } = parsed.data;
   const lead = await createLead(tenant.company, { ...fields, source: "landing_form", meta: { ip: req.ip ?? null, userAgent: String(req.headers["user-agent"] ?? "").slice(0, 300) } });
+  // The grade the journey promises starts now; the owner reviews it before anything is sent.
+  if (lead.linkedin && graderMode() !== "off") {
+    const graded = startAssessment(tenant.company, lead, { trigger: "lead_form", notify: false }).catch((err) => logger.warn({ err, leadId: lead.id }, "Auto-grade did not start"));
+    if (process.env.NODE_ENV === "test") await graded;
+  }
   const calendlyUrl = await calendlyUrlFor(tenant.company.id);
   const prefill = calendlyUrl ? `${calendlyUrl}${calendlyUrl.includes("?") ? "&" : "?"}name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&utm_source=advisor_platform&utm_content=${encodeURIComponent(lead.publicId)}${lead.linkedin ? `&a1=${encodeURIComponent(lead.linkedin)}` : ""}` : null;
   logger.info({ companyId: tenant.company.id, leadId: lead.id, source: "landing_form" }, "Lead created from landing form");
@@ -134,17 +140,22 @@ router.get("/public/grade/:publicId", optionalAuth, async (req, res) => {
   res.setHeader("Cache-Control", "private, no-store");
   const result = assessment.scores ?? null;
   const rubric = await publishedRubric(company.id);
+  const staff = Boolean(req.user && (req.user.role === "super_admin" || (req.user.companyId === company.id && req.user.role !== "client")));
+  // Staff always see the full report; a lead sees it once unlocked (or, for staff previewing the lead's view, with ?view=summary).
+  const unlocked = staff ? req.query.view !== "summary" : assessment.unlocked;
   res.json({
     ...base,
     sample: false,
     profileName: assessment.profile?.name ?? "",
     linkedinUrl: assessment.linkedinUrl,
-    unlocked: assessment.unlocked,
-    canToggle: false,
+    unlocked,
+    leadUnlocked: assessment.unlocked,
+    canToggle: staff,
     rubricVersion: assessment.rubricVersion ?? rubric.version,
     categoryCount: rubric.rubric.categories.length,
     status: assessment.status,
-    result: result ? (assessment.unlocked ? result : summarizeResult(result)) : null,
+    result: result ? (unlocked ? result : summarizeResult(result)) : null,
+    errorMessage: staff ? assessment.errorMessage : null,
     createdAt: assessment.createdAt.toISOString(),
   });
 });

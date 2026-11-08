@@ -33,11 +33,13 @@ export interface GradeResponse {
   profileName: string;
   linkedinUrl: string;
   unlocked: boolean;
+  leadUnlocked?: boolean;
   canToggle: boolean;
   rubricVersion: number;
   categoryCount: number;
   status: string;
   result: GraderResult | null;
+  errorMessage?: string | null;
   createdAt: string | null;
 }
 

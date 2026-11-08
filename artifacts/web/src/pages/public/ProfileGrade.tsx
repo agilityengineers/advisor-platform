@@ -31,9 +31,10 @@ export function ProfileGrade() {
   const view = new URLSearchParams(window.location.search).get("view");
   const q = useQuery<GradeResponse>({
     queryKey: ["public-grade", params.publicId, view, user?.id ?? 0],
-    queryFn: () => api(`/public/grade/${encodeURIComponent(params.publicId)}${view === "full" ? "?view=full" : ""}`),
+    queryFn: () => api(`/public/grade/${encodeURIComponent(params.publicId)}${view ? `?view=${encodeURIComponent(view)}` : ""}`),
     enabled: tenant.kind === "company",
     retry: false,
+    refetchInterval: (query) => (query.state.data && !query.state.data.result && query.state.data.status !== "failed" ? 3000 : false),
   });
   useDocumentMeta({ title: q.data ? `Profile Grade · ${q.data.profileName || "Report"} — ${q.data.company.branding.companyName}` : "Profile Grade", robots: "noindex, nofollow" });
 
@@ -80,7 +81,7 @@ export function ProfileGrade() {
                 <label htmlFor="pg-view" style={{ fontSize: 12, fontWeight: 700, color: "#6A809A" }}>
                   View as
                 </label>
-                <select id="pg-view" className="cs-select" value={isFull ? "full" : "summary"} onChange={(e) => navigate(`/grade/${encodeURIComponent(params.publicId)}${e.target.value === "full" ? "?view=full" : ""}`, { replace: true })}>
+                <select id="pg-view" className="cs-select" value={isFull ? "full" : "summary"} onChange={(e) => navigate(`/grade/${encodeURIComponent(params.publicId)}${d.sample ? (e.target.value === "full" ? "?view=full" : "") : e.target.value === "summary" ? "?view=summary" : ""}`, { replace: true })}>
                   <option value="summary">Lead · quick summary</option>
                   <option value="full">Unlocked · full report</option>
                 </select>
@@ -90,6 +91,7 @@ export function ProfileGrade() {
               </>
             )}
             {d.sample && <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.08em", color: "#8A6320", background: "#FFF8F0", border: "1px solid #F6E4CC", padding: "6px 10px", borderRadius: 999 }}>SAMPLE PROFILE</span>}
+            {!d.sample && d.canToggle && <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.08em", color: d.leadUnlocked ? "#1E7A4C" : "#8A6320", background: d.leadUnlocked ? "#EDF7F1" : "#FFF8F0", border: `1px solid ${d.leadUnlocked ? "#CDEBD9" : "#F6E4CC"}`, padding: "6px 10px", borderRadius: 999 }}>{d.leadUnlocked ? "UNLOCKED FOR LEAD" : "LEAD SEES SUMMARY"}</span>}
           </div>
         </div>
       </header>
@@ -100,7 +102,8 @@ export function ProfileGrade() {
             <div className="cs-display" style={{ fontWeight: 700, fontSize: 22, color: "var(--navy)" }}>
               {d.status === "failed" ? "We couldn't read this profile" : "Your grade is being prepared"}
             </div>
-            <p style={{ fontSize: 15.5, lineHeight: 1.6, color: "#425973", margin: "10px 0 0" }}>{d.status === "failed" ? `${ownerFirst} has been notified and will review it by hand.` : "This page updates when the score is ready — usually within a few minutes."}</p>
+            <p style={{ fontSize: 15.5, lineHeight: 1.6, color: "#425973", margin: "10px 0 0" }}>{d.status === "failed" ? `${ownerFirst} has been notified and will review it by hand.` : "This page updates when the score is ready — usually within a couple of minutes."}</p>
+            {d.errorMessage && <p style={{ fontSize: 13, lineHeight: 1.5, color: "#8A6320", margin: "12px auto 0", maxWidth: 560 }}>Staff only · {d.errorMessage}</p>}
           </section>
         ) : (
           <>
