@@ -7,6 +7,10 @@ import { fulfillOrder, markRefunded } from "../lib/orders";
 import { companiesWithCalendlyWebhooks, parseInviteePayload, verifyCalendlySignature } from "../lib/calendly";
 import { setStageStatus } from "../lib/portal";
 import { logActivity } from "../lib/leads";
+import { companyForTwilioNumber, parseForm, recordInboundSms, verifyTwilioSignature } from "../lib/twilio";
+import { applySendGridEvents, sendGridVerificationKeys, verifySendGridSignature, type SendGridEvent } from "../lib/sendgridEvents";
+import { smsLogsTable } from "@workspace/db";
+import { env } from "../env";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -172,6 +176,105 @@ router.post("/webhooks/calendly", async (req, res) => {
   } catch (err) {
     logger.error({ err }, "Calendly webhook processing failed");
     await finishEvent(claim, err instanceof Error ? err.message : String(err));
+    res.status(500).json({ error: "Processing failed" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Twilio (inbound SMS + delivery receipts), signed with the company's auth token
+// ---------------------------------------------------------------------------
+
+function twilioRequestUrl(req: import("express").Request): string {
+  // Twilio signs the exact URL it called. Behind the Replit proxy the public origin is APP_URL.
+  return `${env.appUrl}${req.originalUrl}`;
+}
+
+async function twilioContext(req: import("express").Request, res: import("express").Response) {
+  const params = parseForm(req.body as Buffer);
+  const number = params.To || params.From || "";
+  const match = await companyForTwilioNumber(params.To ?? "") ?? (params.From ? await companyForTwilioNumber(params.From) : null);
+  if (!match) {
+    logger.warn({ number }, "Twilio webhook for an unknown number");
+    res.status(404).type("text/xml").send("<Response></Response>");
+    return null;
+  }
+  if (!verifyTwilioSignature(match.cfg.authToken, twilioRequestUrl(req), params, req.headers["x-twilio-signature"] as string | undefined)) {
+    logger.warn({ companyId: match.company.id }, "Twilio webhook rejected (bad signature)");
+    res.status(403).type("text/xml").send("<Response></Response>");
+    return null;
+  }
+  return { params, ...match };
+}
+
+router.post("/webhooks/twilio", async (req, res) => {
+  const ctx = await twilioContext(req, res);
+  if (!ctx) return;
+  const { params, company } = ctx;
+  const sid = params.MessageSid || params.SmsSid || "";
+  const claim = sid ? await claimEvent("twilio", `inbound:${sid}`, "message.received", company.id, params) : null;
+  if (sid && !claim) {
+    res.type("text/xml").send("<Response></Response>");
+    return;
+  }
+  try {
+    await recordInboundSms(company, params.From ?? "", params.To ?? "", params.Body ?? "", sid);
+    if (claim) await finishEvent(claim, null);
+  } catch (err) {
+    logger.error({ err }, "Inbound SMS processing failed");
+    if (claim) await finishEvent(claim, err instanceof Error ? err.message : String(err));
+  }
+  res.type("text/xml").send("<Response></Response>");
+});
+
+router.post("/webhooks/twilio/status", async (req, res) => {
+  const ctx = await twilioContext(req, res);
+  if (!ctx) return;
+  const { params } = ctx;
+  const sid = params.MessageSid || params.SmsSid;
+  const status = params.MessageStatus || params.SmsStatus;
+  if (sid && status) {
+    await db.update(smsLogsTable).set({ status, errorMessage: params.ErrorCode ? `Twilio error ${params.ErrorCode}` : null }).where(eq(smsLogsTable.providerSid, sid));
+  }
+  res.type("text/xml").send("<Response></Response>");
+});
+
+// ---------------------------------------------------------------------------
+// SendGrid Event Webhook (ECDSA-signed; platform key or a company's own key)
+// ---------------------------------------------------------------------------
+
+router.post("/webhooks/sendgrid", async (req, res) => {
+  const keys = await sendGridVerificationKeys();
+  if (keys.length === 0) {
+    // An endpoint that would record bounces and complaints on anybody's say-so is worse than one switched off.
+    res.status(503).json({ error: "No Event Webhook verification key is configured" });
+    return;
+  }
+  const raw = req.body as Buffer;
+  const signature = req.headers["x-twilio-email-event-webhook-signature"] as string | undefined;
+  const timestamp = req.headers["x-twilio-email-event-webhook-timestamp"] as string | undefined;
+  const match = keys.find((k) => verifySendGridSignature(k.key, raw, signature, timestamp));
+  if (!match) {
+    logger.warn({ candidates: keys.length }, "SendGrid webhook rejected (no matching key)");
+    res.status(401).json({ error: "Invalid signature" });
+    return;
+  }
+  let events: SendGridEvent[];
+  try {
+    const parsed = JSON.parse(raw.toString("utf8")) as unknown;
+    events = Array.isArray(parsed) ? (parsed as SendGridEvent[]) : [];
+  } catch {
+    res.status(400).json({ error: "Invalid JSON" });
+    return;
+  }
+  const batchId = events.map((e) => e.sg_event_id).filter(Boolean).join(",").slice(0, 200) || `batch:${timestamp}`;
+  const claim = await claimEvent("sendgrid", batchId, "events", match.companyId, { count: events.length });
+  try {
+    const r = await applySendGridEvents(events, match.companyId);
+    if (claim) await finishEvent(claim, null);
+    res.json({ received: true, ...r });
+  } catch (err) {
+    logger.error({ err }, "SendGrid events failed");
+    if (claim) await finishEvent(claim, err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: "Processing failed" });
   }
 });

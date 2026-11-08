@@ -1,7 +1,9 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { eq as eqOp, and, count } from "drizzle-orm";
-import { db, companyBrandingTable, companyIntegrationsTable, customDomainsTable, leadsTable, reviewsTable, siteContentTable } from "@workspace/db";
+import { db, companyBrandingTable, companyIntegrationsTable, customDomainsTable, leadsTable, reviewsTable, siteContentTable, auditLogsTable } from "@workspace/db";
+import { desc, gt } from "drizzle-orm";
+import { audit } from "../lib/audit";
 import { calendlyUrlFor } from "../lib/integrations";
 import { authMiddleware, requireCompany } from "../lib/auth";
 import { companyFeatureDetail, getPlan } from "../lib/features";
@@ -12,6 +14,17 @@ const router: IRouter = Router();
 /** Shell data for the company console: identity, plan, features (with sources), integrations status, domain. */
 router.get("/companies/:companyId/summary", authMiddleware, requireCompany, async (req, res) => {
   const company = req.company!;
+  // The super admin stepping into a company is an audited act (once per hour per company, so the trail stays readable).
+  if (req.user!.role === "super_admin") {
+    const since = new Date(Date.now() - 3600_000);
+    const [recent] = await db
+      .select({ id: auditLogsTable.id })
+      .from(auditLogsTable)
+      .where(and(eqOp(auditLogsTable.userId, req.user!.userId), eqOp(auditLogsTable.companyId, company.id), eqOp(auditLogsTable.action, "impersonation"), gt(auditLogsTable.createdAt, since)))
+      .orderBy(desc(auditLogsTable.createdAt))
+      .limit(1);
+    if (!recent) await audit(req, { action: "impersonation", resourceType: "company", resourceId: company.id, companyId: company.id, details: { via: "company_console" } });
+  }
   const [branding] = await db.select().from(companyBrandingTable).where(eq(companyBrandingTable.companyId, company.id)).limit(1);
   const plan = await getPlan(company.plan);
   const features = await companyFeatureDetail(company);

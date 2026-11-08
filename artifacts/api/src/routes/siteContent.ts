@@ -6,6 +6,8 @@ import { authMiddleware, requireCompany, requirePermission } from "../lib/auth";
 import { companyFeatures, requireFeature } from "../lib/features";
 import { audit } from "../lib/audit";
 import { companyBaseUrl } from "../lib/urls";
+import { companyBrandingTable } from "@workspace/db";
+import { desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 const base = [authMiddleware, requireCompany, requireFeature("website_cms")] as const;
@@ -96,3 +98,28 @@ router.post("/companies/:companyId/site-content/discard", ...base, requirePermis
 });
 
 export default router;
+
+/** Templates a company can start from (the page the super admin curates in Platform Admin → Templates). */
+router.get("/companies/:companyId/templates", ...base, requirePermission("website", "read"), async (_req, res) => {
+  const templates = await db.select({ id: landingTemplatesTable.id, slug: landingTemplatesTable.slug, name: landingTemplatesTable.name, source: landingTemplatesTable.source, audience: landingTemplatesTable.audience, summary: landingTemplatesTable.summary, isDefault: landingTemplatesTable.isDefault }).from(landingTemplatesTable).orderBy(desc(landingTemplatesTable.isDefault), landingTemplatesTable.createdAt);
+  res.json({ templates });
+});
+
+/** Start the draft from a template, tokens filled with this company's names. Replaces the current draft; the live page is untouched until Publish. */
+router.post("/companies/:companyId/site-content/apply-template", ...base, requirePermission("website", "write"), async (req, res) => {
+  const company = req.company!;
+  const templateId = Number((req.body ?? {}).templateId);
+  const [template] = Number.isInteger(templateId) ? await db.select().from(landingTemplatesTable).where(eq(landingTemplatesTable.id, templateId)).limit(1) : [];
+  if (!template) {
+    res.status(404).json({ error: "Template not found" });
+    return;
+  }
+  const [branding] = await db.select().from(companyBrandingTable).where(eq(companyBrandingTable.companyId, company.id)).limit(1);
+  const filled = fillTemplate(template.content, { name: company.name, owner: company.ownerName, branding: branding ? { companyName: branding.companyName, logoUrl: branding.logoUrl } : null });
+  const { draft, published } = await contentRows(company.id);
+  const version = (published?.version ?? 0) + 1;
+  if (draft) await db.update(siteContentTable).set({ content: filled, version, updatedBy: req.user!.userId, updatedAt: new Date() }).where(eq(siteContentTable.id, draft.id));
+  else await db.insert(siteContentTable).values({ companyId: company.id, status: "draft", content: filled, version, updatedBy: req.user!.userId });
+  await audit(req, { action: "template_applied", resourceType: "landing_template", resourceId: template.id, details: { templateSlug: template.slug, by: "company" } });
+  res.json({ ok: true, templateName: template.name });
+});

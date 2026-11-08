@@ -80,8 +80,8 @@ describe("platform admin", () => {
     expect(reactivated.body.company.status).toBe("active");
     expect((await server.api("/api/auth/login", { method: "POST", body: JSON.stringify({ identifier: MTC_ADMIN_EMAIL, password: process.env.MTC_ADMIN_PASSWORD }) })).status).toBe(200);
 
-    const audit = await server.api<{ action: string }[]>("/api/admin/audit?limit=20", { token: superToken });
-    const actions = audit.body.map((a) => a.action);
+    const audit = await server.api<{ entries: { action: string }[] }>("/api/admin/audit?limit=20", { token: superToken });
+    const actions = audit.body.entries.map((a) => a.action);
     expect(actions).toContain("feature_override_off");
     expect(actions).toContain("company_suspended");
     expect(actions).toContain("company_reactivated");

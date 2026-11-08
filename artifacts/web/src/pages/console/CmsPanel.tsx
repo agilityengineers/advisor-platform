@@ -102,6 +102,7 @@ export function CmsPanel({ companyId, companyName, canEdit, hasVideoFeature }: P
   }
 
   const meta = data.meta.find((m) => m.key === section) ?? data.meta[0];
+  const showTemplatePrompt = data.status === "defaults" && canEdit && !dirty;
   const hasDraft = Boolean(data.draft) || dirty;
   const status = dirty ? "Unpublished changes — saving draft…" : data.status === "draft" ? "Unpublished changes — visitors still see the live version." : data.status === "published" ? `Published · live content for this company (v${data.published?.version}).` : "Using template defaults — nothing customized yet.";
   const setField = (sec: CmsSectionKey, field: string, value: string | boolean) => {
@@ -179,6 +180,7 @@ export function CmsPanel({ companyId, companyName, canEdit, hasVideoFeature }: P
           <span className="text-[15px]">🔒</span>Read-only — only the company Admin or a Super admin can change website content.
         </div>
       )}
+      {showTemplatePrompt && <TemplatePrompt companyId={companyId} companyName={companyName} onApplied={() => void qc.invalidateQueries({ queryKey: ["company", companyId] })} />}
       <div className="grid grid-cols-[220px_minmax(0,1fr)] max-[1180px]:grid-cols-1">
         <div className="flex flex-col gap-1 border-r border-line-soft bg-[#F7FBFF] p-3 max-[1180px]:flex-row max-[1180px]:flex-wrap max-[1180px]:border-b max-[1180px]:border-r-0">
           {data.meta.map((m) => {
@@ -283,3 +285,52 @@ export function CmsPanel({ companyId, companyName, canEdit, hasVideoFeature }: P
 }
 
 export { SITE_CONTENT_DEFAULTS };
+
+
+interface TemplateOption {
+  id: number;
+  slug: string;
+  name: string;
+  source: string;
+  audience: string;
+  summary: string;
+  isDefault: boolean;
+}
+
+/** New company, nothing customised: offer the curated templates so the first draft is one click, not a blank form. */
+function TemplatePrompt({ companyId, companyName, onApplied }: { companyId: number; companyName: string; onApplied: () => void }) {
+  const { toast } = useToast();
+  const q = useQuery<{ templates: TemplateOption[] }>({ queryKey: ["company", companyId, "templates"], queryFn: () => api(`/companies/${companyId}/templates`) });
+  const apply = useMutation({
+    mutationFn: (templateId: number) => api<{ templateName: string }>(`/companies/${companyId}/site-content/apply-template`, { method: "POST", json: { templateId } }),
+    onSuccess: (r) => {
+      onApplied();
+      toast(`${r.templateName} applied as a draft — edit, preview, then publish`);
+    },
+    onError: (e) => toast(errorMessage(e), "error"),
+  });
+  if (!q.data || q.data.templates.length === 0) return null;
+  return (
+    <div className="mx-6 mt-5 rounded-[14px] border border-dashed border-[#B9D2F4] bg-[#F7FBFF] p-5">
+      <div className="text-[12px] font-bold tracking-[0.1em] text-blue-hover">START FROM A TEMPLATE</div>
+      <div className="mt-1 text-[14px] text-body">
+        {companyName} is showing the default page. Pick a template and we'll fill in your names as a draft — nothing goes live until you publish.
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2.5">
+        {q.data.templates.map((t) => (
+          <div key={t.id} className="flex min-w-[240px] flex-1 basis-[260px] flex-col gap-1.5 rounded-[12px] border border-line bg-white p-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[14px] font-bold text-navy">{t.name}</div>
+              {t.isDefault && <span className="rounded-pill bg-pale px-2 py-[2px] text-[10.5px] font-bold text-blue-hover">DEFAULT</span>}
+            </div>
+            <div className="text-[12.5px] font-semibold text-muted">{t.audience}</div>
+            <div className="text-[12.5px] text-body">{t.summary}</div>
+            <Button size="sm" className="mt-1 self-start" loading={apply.isPending} onClick={() => apply.mutate(t.id)}>
+              Use this template
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -19,6 +19,7 @@ const NAV: { href: string; label: string; count?: (o: Overview) => number }[] = 
   { href: "/plans", label: "Plans", count: (o) => o.counts.plans },
   { href: "/landing", label: "Platform landing" },
   { href: "/settings", label: "Platform settings" },
+  { href: "/audit", label: "Audit log" },
 ];
 
 const isActive = (href: string, location: string) => (href === "/" ? location === "/" || location === "" : location.startsWith(href));

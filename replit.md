@@ -43,6 +43,7 @@ pnpm db:studio                    # drizzle studio
 | `PLATFORM_SUBDOMAIN_BASE` | no | Company subdomains hang off this (default `advisor-platform.findabusinesspro.com`). |
 | `PLATFORM_HOSTS` | no | Comma list of hosts that resolve to the platform (not a company). Defaults to the three platform domains; localhost and `*.replit.dev/app` always count as platform. |
 | `APP_URL` | no | Public base URL for emails when no tenant host applies. |
+| `SENDGRID_WEBHOOK_PUBLIC_KEY` | optional | Verification key of the platform SendGrid account's signed Event Webhook (`/api/webhooks/sendgrid`). Without any key (platform or company) the endpoint answers 503 rather than recording bounces on anybody's say-so. |
 | `SENDGRID_API_KEY`, `PLATFORM_FROM_EMAIL`, `PLATFORM_FROM_NAME` | for email | Platform sender (`partner@…`) used for invites, resets, magic links. Without a key nothing is sent; in development the action link is logged and returned as `devLink`. |
 | `BRIGHTDATA_API_KEY` | grader | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`), never per company. Unset outside production = **demo grading** with deterministic sample profiles; unset in production = grading off (the drawer says so). `GRADER_DEMO=true` forces demo mode. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | checkout | Platform Stripe account. Company checkouts are **direct charges on each company's connected account** (`stripeAccount` header); the publishable key initialises Stripe.js for the embedded Checkout. Unset outside production = **demo checkout** (orders are marked paid by a demo button, nothing is charged). |
@@ -142,6 +143,15 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 - **Gated** — a lead's report (`/grade/:publicId`, unguessable id) shows scores, quick wins and locked findings; staff always see the full report (and can preview the lead's view with `?view=summary`). **Unlock** happens when the lead buys (`fulfillOrder` → `unlockForLead`) or when staff click Unlock. "Email report" sends the summary with the link (`sendGradeEmail`, company letterhead), and says so plainly when email is not configured.
 - Jobs are run in-process and awaited under tests; anything still `pending`/`fetching` after 15 minutes is marked failed by the hourly scheduler so a dead process never leaves a lead waiting silently.
 
+## Hardening (Phase 7): Twilio, webhooks, audit, empty states, responsive
+
+- **Twilio** (`lib/twilio.ts`) — per company (SID, auth token, number, alert number; toggles *Text clients reminders* and *Text me when a new lead arrives*). A landing-form lead texts the owner; the intake reminder and the 24h interview prep also go by SMS when the client has a phone. Every message is an `sms_logs` row. **Inbound** texts hit `/api/webhooks/twilio` (form-encoded, `X-Twilio-Signature` = HMAC-SHA1 of the called URL + sorted params with the company's auth token, company found by the `To` number), are logged and attached to the lead with that phone as an `sms_received` activity; delivery receipts (`/api/webhooks/twilio/status`) update the row.
+- **SendGrid Event Webhook** (`lib/sendgridEvents.ts`, `/api/webhooks/sendgrid`) — ECDSA-signed deliveries verified against the platform key or any company's pasted key; `delivered` / `bounce` / `dropped` / `spamreport` / `deferred` move `email_logs.status`, opens and clicks are recorded in `email_events`; idempotent on `sg_event_id`; **503 when no key is configured anywhere**.
+- **Every webhook** (`routes/webhooks.ts`) verifies its signature over the raw body, writes `webhook_events (provider, event_id)` first, and treats a repeat delivery as a no-op.
+- **Audit log** — `GET /api/admin/audit` with `companyId` / `action` / `userId` / `before` filters, actor and company joined, paged; the Platform Admin → **Audit log** page. Logged: company create / plan / status (suspend, reactivate), feature overrides, **impersonation** (the super admin opening a company console, once per hour per company), template apply/save/delete, plan edits, platform content publish, requests, and company-level acts (stages, branding, integrations, grades, installments).
+- **Empty states** — no leads ("your form is live at …" + test lead), no clients, no reviews (CTA), CMS on defaults shows **Start from a template** (company-side `GET /companies/:id/templates` + `POST …/site-content/apply-template`, draft only), default pipeline stages, platform rubric v1, integrations `not_connected` with SendGrid flagged required, domain = subdomain only.
+- **Responsive** — public pages work at 360px; the company console and Platform Admin are desktop-first with a "best on desktop" notice under 1024px while leads, the lead drawer and the compact nav stay usable.
+
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
@@ -160,4 +170,4 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 | 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing, platform requests pipeline) | done |
 | 5 | Buying flow (Stripe Connect checkout, installments, Calendly booking + webhook, intake, SendGrid lifecycle mail, client portal, Clients console) | done |
 | 6 | Profile Grader (Bright Data fetch + normaliser, auto-grade on lead form, staff run/re-run/re-score/unlock/email, gated report) | done |
-| 7 | Twilio, hardened webhooks, empty states, responsive QA, audit log | next |
+| 7 | Twilio (alerts, reminders, inbound), SendGrid events, hardened idempotent webhooks, audit log UI, template prompt, responsive QA | done |

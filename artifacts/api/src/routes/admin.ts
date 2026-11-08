@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod/v4";
-import { and, eq } from "drizzle-orm";
+import { and, eq, like, lt } from "drizzle-orm";
 import { db, companiesTable, companyBrandingTable, plansTable, landingTemplatesTable, siteContentTable, usersTable, auditLogsTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
 import {
@@ -379,10 +379,47 @@ router.get("/admin/settings", ...guard, async (_req, res) => {
   });
 });
 
+/**
+ * Super-admin audit trail. Filters: `companyId`, `action` (prefix match, e.g. "company_" or "feature_override"),
+ * `userId`, `before` (ISO cursor for paging). Actor and company names are joined so the screen needs no lookups.
+ */
 router.get("/admin/audit", ...guard, async (req, res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query.limit ?? 50)));
-  const rows = await db.select().from(auditLogsTable).orderBy(desc(auditLogsTable.createdAt)).limit(limit);
-  res.json(rows);
+  const conditions = [];
+  const companyId = Number(req.query.companyId);
+  if (Number.isInteger(companyId) && companyId > 0) conditions.push(eq(auditLogsTable.companyId, companyId));
+  const userId = Number(req.query.userId);
+  if (Number.isInteger(userId) && userId > 0) conditions.push(eq(auditLogsTable.userId, userId));
+  const action = typeof req.query.action === "string" ? req.query.action.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, "") : "";
+  if (action) conditions.push(like(auditLogsTable.action, `${action}%`));
+  const before = typeof req.query.before === "string" && !Number.isNaN(Date.parse(req.query.before)) ? new Date(req.query.before) : null;
+  if (before) conditions.push(lt(auditLogsTable.createdAt, before));
+  const rows = await db
+    .select({ entry: auditLogsTable, actorName: usersTable.name, actorEmail: usersTable.email, companyName: companiesTable.name })
+    .from(auditLogsTable)
+    .leftJoin(usersTable, eq(usersTable.id, auditLogsTable.userId))
+    .leftJoin(companiesTable, eq(companiesTable.id, auditLogsTable.companyId))
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(auditLogsTable.createdAt), desc(auditLogsTable.id))
+    .limit(limit + 1);
+  const page = rows.slice(0, limit);
+  const actions = await db.selectDistinct({ action: auditLogsTable.action }).from(auditLogsTable).orderBy(auditLogsTable.action);
+  res.json({
+    entries: page.map((r) => ({
+      id: r.entry.id,
+      action: r.entry.action,
+      resourceType: r.entry.resourceType,
+      resourceId: r.entry.resourceId,
+      details: r.entry.details,
+      ipAddress: r.entry.ipAddress,
+      createdAt: r.entry.createdAt.toISOString(),
+      actor: r.entry.userId ? { id: r.entry.userId, name: r.actorName ?? "Deleted user", email: r.actorEmail ?? "" } : null,
+      company: r.entry.companyId ? { id: r.entry.companyId, name: r.companyName ?? "Deleted company" } : null,
+    })),
+    hasMore: rows.length > limit,
+    nextBefore: rows.length > limit ? page[page.length - 1].entry.createdAt.toISOString() : null,
+    actions: actions.map((a) => a.action),
+  });
 });
 
 export default router;
