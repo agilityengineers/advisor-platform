@@ -13,6 +13,7 @@ import { eq, and } from "drizzle-orm";
 import { db, profileAssessmentsTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 import { graderMode, startAssessment } from "../lib/grader";
+import { companyTwilio, sendSms } from "../lib/twilio";
 
 const router: IRouter = Router();
 
@@ -83,6 +84,12 @@ router.post("/public/leads", publicFormLimiter, async (req, res) => {
     const graded = startAssessment(tenant.company, lead, { trigger: "lead_form", notify: false }).catch((err) => logger.warn({ err, leadId: lead.id }, "Auto-grade did not start"));
     if (process.env.NODE_ENV === "test") await graded;
   }
+  // Text the owner when they asked for it (Integrations → Twilio → "Text me when a new lead arrives").
+  const alert = (async () => {
+    const tw = await companyTwilio(tenant.company.id);
+    if (tw?.leadAlerts && tw.alertTo) await sendSms(tenant.company, { to: tw.alertTo, body: `New lead: ${lead.name}${lead.category ? ` · ${lead.category}` : ""}${lead.phone ? ` · ${lead.phone}` : ""}${lead.goal ? ` · ${lead.goal.slice(0, 90)}` : ""}`, purpose: "lead_alert", leadId: lead.id });
+  })().catch((err) => logger.warn({ err }, "Lead alert SMS failed"));
+  if (process.env.NODE_ENV === "test") await alert;
   const calendlyUrl = await calendlyUrlFor(tenant.company.id);
   const prefill = calendlyUrl ? `${calendlyUrl}${calendlyUrl.includes("?") ? "&" : "?"}name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&utm_source=advisor_platform&utm_content=${encodeURIComponent(lead.publicId)}${lead.linkedin ? `&a1=${encodeURIComponent(lead.linkedin)}` : ""}` : null;
   logger.info({ companyId: tenant.company.id, leadId: lead.id, source: "landing_form" }, "Lead created from landing form");

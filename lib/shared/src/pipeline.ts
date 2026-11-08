@@ -42,5 +42,5 @@ export type LeadCategory = (typeof LEAD_CATEGORIES)[number];
 export const LEAD_SOURCES = ["landing_form", "platform_form", "grader", "checkout", "manual", "import", "test"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
-export const ACTIVITY_TYPES = ["form_submitted", "created", "stage_changed", "note", "email_sent", "sms_sent", "booking", "grade", "order", "system"] as const;
+export const ACTIVITY_TYPES = ["form_submitted", "created", "stage_changed", "note", "email_sent", "sms_sent", "sms_received", "booking", "grade", "order", "system"] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];

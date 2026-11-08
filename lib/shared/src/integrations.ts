@@ -35,6 +35,7 @@ export const INTEGRATION_DEFS: readonly IntegrationDef[] = [
       { key: "fromName", label: "From name", type: "text", required: true },
       { key: "fromAddress", label: "From address", type: "email", placeholder: "you@yourcompany.com", required: true },
       { key: "sendingDomain", label: "Sending domain", type: "text", placeholder: "mail.yourcompany.com" },
+      { key: "eventWebhookPublicKey", label: "Event Webhook verification key (SendGrid → Mail Settings → Event Webhook → Signed)", type: "text", placeholder: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE…" },
     ],
     toggles: [],
     connectLabel: "Save & verify domain",

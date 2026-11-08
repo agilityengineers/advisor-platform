@@ -7,6 +7,7 @@ import { PlansPage } from "./Plans";
 import { SettingsPage } from "./Settings";
 import { PlatformCmsPage } from "./PlatformCms";
 import { RequestsPage } from "./Requests";
+import { AuditPage } from "./Audit";
 import { NotFound } from "@/pages/NotFound";
 
 export function PlatformAdmin() {
@@ -20,6 +21,7 @@ export function PlatformAdmin() {
         <Route path="/plans" component={PlansPage} />
         <Route path="/landing" component={PlatformCmsPage} />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/audit" component={AuditPage} />
         <Route component={NotFound} />
       </Switch>
     </AdminLayout>

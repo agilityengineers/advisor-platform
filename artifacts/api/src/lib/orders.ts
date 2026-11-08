@@ -10,6 +10,8 @@ import { companyBaseUrl } from "./urls";
 import { checkoutMode, companyStripeAccount, chargeOffSession } from "./stripe";
 import { newPublicId } from "./tokens";
 import { unlockForLead, failStaleAssessments } from "./grader";
+import { companyTwilio, sendSms } from "./twilio";
+import { clientsTable } from "@workspace/db";
 import { logger } from "./logger";
 import { env } from "../env";
 
@@ -369,6 +371,8 @@ export async function runLifecycleReminders(): Promise<{ intakeReminders: number
       actionUrl: links.intake,
       metadata: { orderId: order.id },
     });
+    const tw = await companyTwilio(company.id);
+    if (tw?.reminders && order.customerPhone) await sendSms(company, { to: order.customerPhone, body: `${company.name}: your 3-minute intake for ${owner} is still open — ${links.intake}`, purpose: "intake_reminder", leadId: order.leadId, clientId: order.clientId });
     intakeReminders++;
   }
   const soon = new Date(Date.now() + 25 * 3600_000);
@@ -389,6 +393,11 @@ export async function runLifecycleReminders(): Promise<{ intakeReminders: number
         paragraph("Have handy: two or three clients you loved working with, the result you are proudest of, and the question buyers always ask you first."),
       metadata: { bookingId: b.id },
     });
+    const tw = await companyTwilio(company.id);
+    if (tw?.reminders) {
+      const [client] = await db.select().from(clientsTable).where(and(eq(clientsTable.companyId, company.id), eq(clientsTable.email, b.inviteeEmail.toLowerCase()))).limit(1);
+      if (client?.phone) await sendSms(company, { to: client.phone, body: `${company.name}: reminder — your Brand Voice Interview with ${owner} is ${b.startAt.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. The Zoom link is in your calendar invite.`, purpose: "interview_prep", clientId: client.id, leadId: b.leadId });
+    }
     prepNotes++;
   }
   return { intakeReminders, prepNotes };
