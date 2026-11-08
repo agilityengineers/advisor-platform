@@ -84,6 +84,15 @@ The SPA asks `GET /api/tenant` first, then injects the company's colours as CSS 
 - Invitations (`team_invites`, hashed tokens, 7 days) → `/accept-invite?token=…` sets name + password. Password reset: `/forgot-password` → `/reset-password?token=…` (single-use, 60 minutes, enumeration-safe).
 - Company routes live under `/api/companies/:companyId/*`; `requireCompany` lets the super admin enter any company, everyone else only their own; `requirePermission(area, level)` enforces the granular grid for managers/advisors; `requireFeature(key)` returns `403 { error: "Not in your plan", requiredPlanName }` so the UI can show the lock.
 
+## Platform Admin (`/admin`, super admin only)
+
+- **Companies** — KPIs (total, active, trial, MRR), table, drawer. The drawer changes plan and status (suspend / reactivate), sets per-feature overrides (**Plan / On / Off**; the source label says "Included in <plan>", "Not in <plan>", "Forced on/off by super admin"), shows integrations (read-only; owned by the company Admin) and the team, and opens the company console at `/admin/companies/:id/console` with the "Viewing company: X" banner.
+- **New company** creates the company, its branding row, default stages, integration rows, rubric v1, a CMS **draft** seeded from the default template, and emails the first Admin an invitation from the platform sender.
+- **Templates** — apply a template to a company (writes that company's CMS draft; the Admin publishes it), remove non-default templates; "Save page as template" in the drawer snapshots a company's published page with logo/photos/testimonials stripped and `{company}` / `{owner}` / `{ownerFirst}` tokens restored.
+- **Feature registry** — features × plans tick matrix (edits `plans.feature_keys`). **Plans** — cards with name/price/description editing.
+- **Platform landing** — CMS for every text block on the Advisor Platform landing page (`platform_content`, draft → publish). `GET /api/platform-content` serves the published copy; `?preview=1` returns the draft to the super admin only.
+- All super-admin actions write `audit_logs` (`GET /api/admin/audit`).
+
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
@@ -97,8 +106,8 @@ The SPA asks `GET /api/tenant` first, then injects the company's colours as CSS 
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Workspace, DB + migrations, seed, auth (all roles, invites, reset, magic link), tenant resolver | done |
-| 2 | Platform Admin (companies, plans, feature registry + overrides, templates, settings, platform landing CMS) | next |
-| 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, settings) | |
+| 2 | Platform Admin (companies, plans, feature registry + overrides, templates, settings, platform landing CMS) | done |
+| 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, settings) | next |
 | 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing) | |
 | 5 | Buying flow (Stripe Connect, Calendly, intake, SendGrid, portal) | |
 | 6 | Profile Grader (Bright Data, rubric versions, gated report) | |

@@ -1,0 +1,1 @@
+ALTER TABLE "platform_content" ALTER COLUMN "content" DROP DEFAULT;

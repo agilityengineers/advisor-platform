@@ -1,5 +1,5 @@
 import { pgTable, serial, integer, text, boolean, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
-import type { SiteContentOverrides } from "@workspace/shared";
+import type { PlatformContent, SiteContentOverrides } from "@workspace/shared";
 import { companiesTable } from "./companies";
 
 export type ContentStatus = "draft" | "published";
@@ -21,7 +21,7 @@ export type SiteContentRow = typeof siteContentTable.$inferSelect;
 export const platformContentTable = pgTable("platform_content", {
   id: serial("id").primaryKey(),
   status: text("status").$type<ContentStatus>().notNull().unique(),
-  content: jsonb("content").$type<Record<string, unknown>>().notNull().default({}),
+  content: jsonb("content").$type<PlatformContent>().notNull(),
   version: integer("version").notNull().default(1),
   publishedAt: timestamp("published_at"),
   updatedBy: integer("updated_by"),
