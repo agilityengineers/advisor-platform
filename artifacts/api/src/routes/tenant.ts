@@ -10,6 +10,8 @@ const router: IRouter = Router();
 export async function publicCompanyPayload(company: Company) {
   const [branding] = await db.select().from(companyBrandingTable).where(eq(companyBrandingTable.companyId, company.id)).limit(1);
   const features = await companyFeatures(company);
+  // Without the White label feature, logo and colours fall back to the platform defaults on public surfaces.
+  const whiteLabel = features.white_label;
   return {
     id: company.id,
     name: company.name,
@@ -19,9 +21,9 @@ export async function publicCompanyPayload(company: Company) {
     branding: {
       companyName: branding?.companyName || company.name,
       tagline: branding?.tagline ?? "",
-      logoUrl: branding?.logoUrl ?? "",
-      primaryColor: branding?.primaryColor ?? "#1668F0",
-      accentColor: branding?.accentColor ?? "#0A1626",
+      logoUrl: whiteLabel ? (branding?.logoUrl ?? "") : "",
+      primaryColor: whiteLabel ? (branding?.primaryColor ?? "#1668F0") : "#1668F0",
+      accentColor: whiteLabel ? (branding?.accentColor ?? "#0A1626") : "#0A1626",
     },
     // Only the flags public pages need; nothing about the plan itself.
     publicFeatures: {

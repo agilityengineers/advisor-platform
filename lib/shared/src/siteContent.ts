@@ -6,7 +6,9 @@
  * page renders `mergeContent(defaults, overrides)`.
  */
 
-export type HeroMedia = { kind: "audit_card" } | { kind: "video"; url: string };
+export type HeroMedia = { kind: "audit_card" } | { kind: "video"; url: string; title?: string; caption?: string };
+
+export const HERO_VIDEO_DEFAULTS = { title: "A 90-second walkthrough", caption: "What a 22-section audit actually looks at" } as const;
 
 export interface SiteContent {
   brand: {
@@ -320,7 +322,9 @@ export function sanitizeOverrides(input: unknown): SiteContentOverrides {
     if (key === "heroMedia") {
       const hm = section as Record<string, unknown>;
       if (hm.kind === "audit_card") out[key] = { kind: "audit_card" };
-      else if (hm.kind === "video" && typeof hm.url === "string") out[key] = { kind: "video", url: hm.url.slice(0, 2000) };
+      else if (hm.kind === "video" && typeof hm.url === "string") {
+        out[key] = { kind: "video", url: hm.url.slice(0, 2000), title: typeof hm.title === "string" ? hm.title.slice(0, 200) : undefined, caption: typeof hm.caption === "string" ? hm.caption.slice(0, 300) : undefined };
+      }
       continue;
     }
     const allowed = SITE_CONTENT_DEFAULTS[key] as Record<string, unknown>;

@@ -93,6 +93,18 @@ The SPA asks `GET /api/tenant` first, then injects the company's colours as CSS 
 - **Platform landing** — CMS for every text block on the Advisor Platform landing page (`platform_content`, draft → publish). `GET /api/platform-content` serves the published copy; `?preview=1` returns the draft to the super admin only.
 - All super-admin actions write `audit_logs` (`GET /api/admin/audit`).
 
+## Company console (`/app` for company staff, `/admin/companies/:id/console` for the super admin)
+
+One long page with anchored panels, all under `/api/companies/:companyId/*` (`requireCompany` + granular `requirePermission` + `requireFeature`):
+
+- **Leads** — KPI tiles, List (stage chips, search) or **Pipeline** Kanban (drag-drop = stage change, logged as activity). **Manage columns** (admins/managers): rename, reorder, add, remove, Open/Won/Lost kind; leads in a removed column fall back to the first open stage. Public form `POST /api/public/leads` (tenant from host, rate-limited, honeypot) lands in the first open stage.
+- **Lead drawer** — contact facts (click-to-call), goal, Profile Grade card (Phase 6), Calendly booking state + prefilled link (`utm_content=<lead publicId>` for webhook matching), status select, activity timeline, SendGrid composer (three outreach templates + personal note) sent from the **company's own** SendGrid; a clear 409 when it isn't connected.
+- **Website (CMS)** — section rail, fields, Show-on-site toggles, hero **Audit card / Video** (video gated by `hero_video`), Preview draft / View live / Discard / Publish; read-only banner for managers. `GET /api/public/site` serves the published merge; `?preview=1` returns the draft to that company's staff or the super admin only. A company that never published renders the default template filled with its own name, never MTC's copy.
+- **Reviews** — add / edit / hide / remove / reorder; hidden reviews never reach the public payload.
+- **Profile Grader** — rubric editor (weights must total 100, check shares, tiers, grade thresholds), Reset to platform default, **Publish as vN** (published versions are immutable rows so reports can stamp the version that graded them).
+- **Company settings** — Branding (colours injected as CSS variables; without `white_label` the public site falls back to platform defaults), Domain (platform subdomain always on; custom domain → generated TXT/CNAME/apex records with provider steps, Verify, 48h auto-recheck), Integrations (BYO SendGrid / Twilio / Stripe Connect / Calendly; secrets AES-256-GCM in `company_secrets`, API returns last-4 only; credentials are checked against the provider), Team (invite managers/advisors, per-area read/write grid).
+- "Not in your plan" lock banner lists every gated feature with the plan name; nothing disappears silently.
+
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
@@ -107,8 +119,8 @@ The SPA asks `GET /api/tenant` first, then injects the company's colours as CSS 
 |---|---|---|
 | 1 | Workspace, DB + migrations, seed, auth (all roles, invites, reset, magic link), tenant resolver | done |
 | 2 | Platform Admin (companies, plans, feature registry + overrides, templates, settings, platform landing CMS) | done |
-| 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, settings) | next |
-| 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing) | |
+| 3 | Company console (leads, pipeline, lead drawer, Website CMS, Reviews, rubric editor, settings) | done |
+| 4 | Public pages (landing, About, pricing ×2, Profile Grade, Advisor Platform landing) | next |
 | 5 | Buying flow (Stripe Connect, Calendly, intake, SendGrid, portal) | |
 | 6 | Profile Grader (Bright Data, rubric versions, gated report) | |
 | 7 | Twilio, hardened webhooks, empty states, responsive QA, audit log | |
