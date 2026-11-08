@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { companiesTable } from "./companies";
 import { leadsTable } from "./crm";
 import { usersTable } from "./users";
@@ -49,9 +49,11 @@ export const ordersTable = pgTable("orders", {
   intakeReminderAt: timestamp("intake_reminder_at"),
   paidAt: timestamp("paid_at"),
   refundedAt: timestamp("refunded_at"),
+  /** Cumulative amount refunded at Stripe on the first charge (partial refunds keep the order "paid"). */
+  refundedCents: integer("refunded_cents").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (t) => [index("idx_orders_company").on(t.companyId), index("idx_orders_stripe_session").on(t.stripeSessionId)]);
+}, (t) => [index("idx_orders_company").on(t.companyId), index("idx_orders_stripe_session").on(t.stripeSessionId), index("idx_orders_stripe_pi").on(t.stripePaymentIntentId)]);
 export type Order = typeof ordersTable.$inferSelect;
 
 export const orderInstallmentsTable = pgTable("order_installments", {
@@ -60,13 +62,16 @@ export const orderInstallmentsTable = pgTable("order_installments", {
   seq: integer("seq").notNull(),
   amountCents: integer("amount_cents").notNull(),
   dueAt: timestamp("due_at"),
+  /** scheduled → processing (claimed by one charger) → paid | failed; also canceled, refunded. */
   status: text("status").notNull().default("scheduled"),
   stripeInvoiceId: text("stripe_invoice_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   attempts: integer("attempts").notNull().default(0),
   lastError: text("last_error"),
   paidAt: timestamp("paid_at"),
-}, (t) => [index("idx_order_installments_order").on(t.orderId)]);
+  refundedCents: integer("refunded_cents").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [index("idx_order_installments_order").on(t.orderId), uniqueIndex("uq_order_installments_order_seq").on(t.orderId, t.seq), index("idx_order_installments_pi").on(t.stripePaymentIntentId)]);
 export type OrderInstallment = typeof orderInstallmentsTable.$inferSelect;
 
 export const intakesTable = pgTable("intakes", {

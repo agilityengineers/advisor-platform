@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod/v4";
-import { and, eq, like, lt } from "drizzle-orm";
-import { db, companiesTable, companyBrandingTable, plansTable, landingTemplatesTable, siteContentTable, usersTable, auditLogsTable } from "@workspace/db";
+import { and, eq, gte, inArray, like, lt, sql } from "drizzle-orm";
+import { db, companiesTable, companyIntegrationsTable, webhookEventsTable, companyBrandingTable, plansTable, landingTemplatesTable, siteContentTable, usersTable, auditLogsTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
 import {
   COMPANY_STATUSES,
@@ -19,7 +19,8 @@ import {
   type SiteContentOverrides,
 } from "@workspace/shared";
 import { authMiddleware, requireSuperAdmin } from "../lib/auth";
-import { getPlans, invalidatePlanCache } from "../lib/features";
+import { companyFeatures, getPlans, invalidatePlanCache } from "../lib/features";
+import { checkoutReady, stripeConfig, STRIPE_WEBHOOK_EVENTS } from "../lib/stripe";
 import { listCompanyRows, companyDetail } from "../lib/companyOverview";
 import { provisionCompanyDefaults } from "../lib/seed";
 import { createInvite } from "./team";
@@ -419,6 +420,43 @@ router.get("/admin/audit", ...guard, async (req, res) => {
     hasMore: rows.length > limit,
     nextBefore: rows.length > limit ? page[page.length - 1].entry.createdAt.toISOString() : null,
     actions: actions.map((a) => a.action),
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Payments readiness: is it safe to take money, and is Stripe talking to us?
+// ---------------------------------------------------------------------------
+
+router.get("/admin/payments/readiness", ...guard, async (_req, res) => {
+  const platform = stripeConfig();
+  const companies = await db.select().from(companiesTable).orderBy(companiesTable.name);
+  const integrations = await db.select().from(companyIntegrationsTable).where(eq(companyIntegrationsTable.provider, "stripe"));
+  const rows = await Promise.all(
+    companies.map(async (c) => {
+      const features = await companyFeatures(c);
+      const integ = integrations.find((i) => i.companyId === c.id) ?? null;
+      const cfg = (integ?.config ?? {}) as Record<string, unknown>;
+      const ready = await checkoutReady(c.id, features.stripe_checkout);
+      return { id: c.id, name: c.name, slug: c.slug, status: c.status, stripeCheckoutInPlan: features.stripe_checkout, integrationStatus: integ?.status ?? "not_connected", accountId: typeof cfg.accountId === "string" ? cfg.accountId : null, chargesEnabled: typeof cfg.chargesEnabled === "boolean" ? cfg.chargesEnabled : null, checkoutReady: ready.ready, reason: ready.reason };
+    }),
+  );
+  const since = new Date(Date.now() - 7 * 86_400_000);
+  const events = await db
+    .select({ type: webhookEventsTable.eventType, status: webhookEventsTable.status, count: sql<number>`count(*)::int`, last: sql<string>`max(${webhookEventsTable.receivedAt})` })
+    .from(webhookEventsTable)
+    .where(and(eq(webhookEventsTable.provider, "stripe"), gte(webhookEventsTable.receivedAt, since)))
+    .groupBy(webhookEventsTable.eventType, webhookEventsTable.status);
+  const recentProblems = await db
+    .select({ eventId: webhookEventsTable.eventId, type: webhookEventsTable.eventType, status: webhookEventsTable.status, error: webhookEventsTable.error, receivedAt: webhookEventsTable.receivedAt })
+    .from(webhookEventsTable)
+    .where(and(eq(webhookEventsTable.provider, "stripe"), inArray(webhookEventsTable.status, ["failed", "ignored"]), gte(webhookEventsTable.receivedAt, since)))
+    .orderBy(desc(webhookEventsTable.receivedAt))
+    .limit(20);
+  res.setHeader("Cache-Control", "private, no-store");
+  res.json({
+    platform: { ...platform, webhookUrl: `${env.appUrl}/api/webhooks/stripe`, connectRedirectUrl: `${env.appUrl}/api/stripe/connect/callback`, requiredEvents: STRIPE_WEBHOOK_EVENTS },
+    companies: rows,
+    webhooks: { since: since.toISOString(), byTypeAndStatus: events, recentProblems },
   });
 });
 

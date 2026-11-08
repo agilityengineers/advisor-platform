@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { db, companiesTable, ordersTable, orderInstallmentsTable, intakesTable, leadsTable, bookingsTable, type Company, type Order, type OrderInstallment, type Lead } from "@workspace/db";
 import { OFFERS, priceOrder, cents, isOfferKey, ownerFirstName, SITE_CONTENT_DEFAULTS, type OrderPricing, type PaymentPlan, type BumpSelection } from "@workspace/shared";
 import { createLead, logActivity, stagesFor } from "./leads";
@@ -93,15 +93,50 @@ export interface Fulfilled {
   alreadyPaid: boolean;
 }
 
+/** A fulfilment claim older than this is presumed dead (crashed process) and may be taken over. */
+const FULFIL_CLAIM_TTL_MS = 5 * 60_000;
+
 /**
  * Money arrived: the order becomes a client with a portal, the lead is won,
  * installments are scheduled and the welcome/receipt goes out. Safe to call
- * twice (return page and webhook both do).
+ * twice — and concurrently: the return page and the webhook routinely arrive
+ * together (on different autoscale instances, even). The order row is claimed
+ * first (pending → fulfilling) in one UPDATE; whoever loses waits briefly for
+ * the winner and returns the paid order. Every step below is re-runnable, so a
+ * claim abandoned by a crashed process is simply taken over after five minutes.
  */
 export async function fulfillOrder(orderId: number, payment: PaymentFacts): Promise<Fulfilled> {
-  const [fresh] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId)).limit(1);
-  if (!fresh) throw new Error(`Order ${orderId} not found`);
-  if (fresh.status === "paid") return { order: fresh, alreadyPaid: true };
+  const staleBefore = new Date(Date.now() - FULFIL_CLAIM_TTL_MS);
+  const [fresh] = await db
+    .update(ordersTable)
+    .set({ status: "fulfilling", updatedAt: new Date() })
+    .where(and(eq(ordersTable.id, orderId), or(eq(ordersTable.status, "pending"), and(eq(ordersTable.status, "fulfilling"), lt(ordersTable.updatedAt, staleBefore)))))
+    .returning();
+  if (!fresh) return waitForFulfilment(orderId, payment.source);
+  try {
+    return await fulfillClaimed(fresh, payment);
+  } catch (err) {
+    // Hand the order back so the next confirmation (webhook retry, return-page poll) can finish it.
+    await db.update(ordersTable).set({ status: "pending", updatedAt: new Date() }).where(and(eq(ordersTable.id, orderId), eq(ordersTable.status, "fulfilling")));
+    throw err;
+  }
+}
+
+async function waitForFulfilment(orderId: number, source: PaymentFacts["source"]): Promise<Fulfilled> {
+  for (let i = 0; i < 40; i++) {
+    const [o] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId)).limit(1);
+    if (!o) throw new Error(`Order ${orderId} not found`);
+    if (o.status !== "fulfilling") {
+      if (o.status !== "paid") logger.warn({ orderId, status: o.status, source }, "Payment confirmation for an order that is not pending — ignored");
+      return { order: o, alreadyPaid: true };
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  // Still claimed by someone else: fail loudly so the webhook is retried (and can take over a dead claim).
+  throw new Error(`Order ${orderId} is still being fulfilled by another request`);
+}
+
+async function fulfillClaimed(fresh: Order, payment: PaymentFacts): Promise<Fulfilled> {
   const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, fresh.companyId)).limit(1);
   if (!company) throw new Error("Company missing for order");
   const pricing = pricingFor(fresh);
@@ -144,9 +179,10 @@ export async function fulfillOrder(orderId: number, payment: PaymentFacts): Prom
   if (pricing.split && pricing.installments > 1) {
     const existing = await installmentsFor(order.id);
     if (existing.length === 0) {
-      await db.insert(orderInstallmentsTable).values(
-        Array.from({ length: pricing.installments - 1 }, (_, i) => ({ orderId: order.id, seq: i + 2, amountCents: pricing.laterCents, dueAt: new Date(now.getTime() + (i + 1) * INSTALLMENT_INTERVAL_DAYS * 86_400_000), status: "scheduled" })),
-      );
+      await db
+        .insert(orderInstallmentsTable)
+        .values(Array.from({ length: pricing.installments - 1 }, (_, i) => ({ orderId: order.id, seq: i + 2, amountCents: pricing.laterCents, dueAt: new Date(now.getTime() + (i + 1) * INSTALLMENT_INTERVAL_DAYS * 86_400_000), status: "scheduled" })))
+        .onConflictDoNothing();
     }
   }
 
@@ -260,40 +296,126 @@ async function notifyOwnerOfOrder(company: Company, order: Order, pricing: Order
 // Installments
 // ---------------------------------------------------------------------------
 
-export async function chargeInstallment(installment: OrderInstallment, opts: { manual?: boolean } = {}): Promise<{ ok: boolean; error: string | null; installment: OrderInstallment }> {
+/** Statuses an installment can be (re)claimed from for collection. */
+const COLLECTABLE = ["scheduled", "failed"];
+
+/**
+ * Collect one installment: charge the saved card off-session (live), or record money taken
+ * elsewhere (`manual` — never touches the card), or settle it in demo mode.
+ *
+ * The row is claimed first (scheduled|failed → processing, attempts + 1) in one UPDATE, so two
+ * schedulers on two autoscale instances, or a scheduler tick racing a console click, can never
+ * both charge it. The Stripe idempotency key is tied to that attempt number.
+ */
+export async function chargeInstallment(installment: OrderInstallment, opts: { manual?: boolean } = {}): Promise<{ ok: boolean; pending?: boolean; error: string | null; installment: OrderInstallment }> {
   const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, installment.orderId)).limit(1);
   if (!order) return { ok: false, error: "Order not found", installment };
-  if (installment.status === "paid") return { ok: true, error: null, installment };
+  const [current] = await db.select().from(orderInstallmentsTable).where(eq(orderInstallmentsTable.id, installment.id)).limit(1);
+  if (!current) return { ok: false, error: "Installment not found", installment };
+  if (current.status === "paid") return { ok: true, error: null, installment: current };
+  if (!COLLECTABLE.includes(current.status)) return { ok: false, error: current.status === "processing" ? "This payment is already being processed" : `This installment is ${current.status}`, installment: current };
+  if (order.status !== "paid") return { ok: false, error: `The order is ${order.status}`, installment: current };
+
   const mode = checkoutMode();
-  const now = new Date();
-  if (mode === "live" && order.stripeCustomerId && order.stripePaymentMethodId) {
-    const account = order.stripeAccountId ?? (await companyStripeAccount(order.companyId));
-    if (!account) return { ok: false, error: "No connected Stripe account", installment };
-    const r = await chargeOffSession(account, {
-      amountCents: installment.amountCents,
-      currency: order.currency,
-      customerId: order.stripeCustomerId,
-      paymentMethodId: order.stripePaymentMethodId,
-      description: `${order.offerName} · payment ${installment.seq} of ${order.installments} · ${order.publicId}`,
-      metadata: { orderPublicId: order.publicId, installmentSeq: String(installment.seq), companyId: String(order.companyId) },
-      idempotencyKey: `inst-${installment.id}-${installment.attempts + 1}`,
-    });
-    const [updated] = await db
-      .update(orderInstallmentsTable)
-      .set({ attempts: installment.attempts + 1, stripePaymentIntentId: r.paymentIntentId ?? installment.stripePaymentIntentId, status: r.ok ? "paid" : "failed", paidAt: r.ok ? now : null, lastError: r.error })
-      .where(eq(orderInstallmentsTable.id, installment.id))
-      .returning();
-    if (r.ok) await afterInstallmentPaid(order, updated);
-    return { ok: r.ok, error: r.error, installment: updated };
+  const useCard = mode === "live" && !opts.manual;
+  if (useCard && !(order.stripeCustomerId && order.stripePaymentMethodId)) {
+    const [updated] = await db.update(orderInstallmentsTable).set({ attempts: current.attempts + 1, status: "failed", lastError: "No saved card on this order", updatedAt: new Date() }).where(and(eq(orderInstallmentsTable.id, current.id), inArray(orderInstallmentsTable.status, COLLECTABLE))).returning();
+    return { ok: false, error: "No saved card on this order", installment: updated ?? current };
   }
-  if (mode === "live" && !opts.manual) {
-    const [updated] = await db.update(orderInstallmentsTable).set({ attempts: installment.attempts + 1, status: "failed", lastError: "No saved card on this order" }).where(eq(orderInstallmentsTable.id, installment.id)).returning();
-    return { ok: false, error: "No saved card on this order", installment: updated };
+
+  const [claimed] = await db
+    .update(orderInstallmentsTable)
+    .set({ status: "processing", attempts: sql`${orderInstallmentsTable.attempts} + 1`, lastError: null, updatedAt: new Date() })
+    .where(and(eq(orderInstallmentsTable.id, current.id), inArray(orderInstallmentsTable.status, COLLECTABLE)))
+    .returning();
+  if (!claimed) {
+    const [now] = await db.select().from(orderInstallmentsTable).where(eq(orderInstallmentsTable.id, current.id)).limit(1);
+    return { ok: now?.status === "paid", error: now?.status === "paid" ? null : "This payment is already being processed", installment: now ?? current };
   }
-  // Demo mode, or a manual "mark paid" for money taken outside Stripe.
-  const [updated] = await db.update(orderInstallmentsTable).set({ attempts: installment.attempts + 1, status: "paid", paidAt: now, lastError: null }).where(eq(orderInstallmentsTable.id, installment.id)).returning();
-  await afterInstallmentPaid(order, updated);
-  return { ok: true, error: null, installment: updated };
+
+  if (!useCard) {
+    // Demo mode, or a manual "mark paid" for money taken outside Stripe.
+    const updated = await settleInstallmentPaid(claimed.id, null);
+    if (updated) await afterInstallmentPaid(order, updated);
+    return { ok: true, error: null, installment: updated ?? claimed };
+  }
+
+  const account = order.stripeAccountId ?? (await companyStripeAccount(order.companyId));
+  if (!account) {
+    const [updated] = await db.update(orderInstallmentsTable).set({ status: "failed", lastError: "No connected Stripe account", updatedAt: new Date() }).where(eq(orderInstallmentsTable.id, claimed.id)).returning();
+    return { ok: false, error: "No connected Stripe account", installment: updated };
+  }
+  const r = await chargeOffSession(account, {
+    amountCents: claimed.amountCents,
+    currency: order.currency,
+    customerId: order.stripeCustomerId!,
+    paymentMethodId: order.stripePaymentMethodId!,
+    description: `${order.offerName} · payment ${claimed.seq} of ${order.installments} · ${order.publicId}`,
+    metadata: { orderPublicId: order.publicId, installmentSeq: String(claimed.seq), companyId: String(order.companyId) },
+    idempotencyKey: `inst-${claimed.id}-${claimed.attempts}`,
+  });
+  if (r.ok) {
+    const updated = await settleInstallmentPaid(claimed.id, r.paymentIntentId);
+    if (updated) await afterInstallmentPaid(order, updated);
+    const [final] = updated ? [updated] : await db.select().from(orderInstallmentsTable).where(eq(orderInstallmentsTable.id, claimed.id));
+    return { ok: true, error: null, installment: final };
+  }
+  if (r.pending) {
+    // Stays "processing"; payment_intent.succeeded / payment_failed settles it.
+    const [updated] = await db.update(orderInstallmentsTable).set({ stripePaymentIntentId: r.paymentIntentId, updatedAt: new Date() }).where(eq(orderInstallmentsTable.id, claimed.id)).returning();
+    return { ok: false, pending: true, error: "Stripe is still processing this payment", installment: updated };
+  }
+  const [updated] = await db
+    .update(orderInstallmentsTable)
+    .set({ status: "failed", lastError: r.error, stripePaymentIntentId: r.paymentIntentId ?? claimed.stripePaymentIntentId, updatedAt: new Date() })
+    .where(and(eq(orderInstallmentsTable.id, claimed.id), eq(orderInstallmentsTable.status, "processing")))
+    .returning();
+  return { ok: false, error: r.error, installment: updated ?? claimed };
+}
+
+/** processing|scheduled|failed → paid, exactly once. Returns the row only for the caller that made the transition. */
+async function settleInstallmentPaid(installmentId: number, paymentIntentId: string | null): Promise<OrderInstallment | null> {
+  const [row] = await db
+    .update(orderInstallmentsTable)
+    .set({ status: "paid", paidAt: new Date(), lastError: null, updatedAt: new Date(), ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}) })
+    .where(and(eq(orderInstallmentsTable.id, installmentId), inArray(orderInstallmentsTable.status, ["processing", "scheduled", "failed"])))
+    .returning();
+  return row ?? null;
+}
+
+/** The order an installment PaymentIntent belongs to, only if it came from that order's connected account. */
+async function installmentForIntent(pi: { id: string; metadata: Record<string, string> | null | undefined }, accountId: string | null): Promise<{ order: Order; installment: OrderInstallment } | null> {
+  const publicId = pi.metadata?.orderPublicId;
+  const seq = Number(pi.metadata?.installmentSeq);
+  if (!publicId || !Number.isInteger(seq)) return null;
+  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.publicId, publicId)).limit(1);
+  if (!order) return null;
+  if (!order.stripeAccountId || order.stripeAccountId !== accountId) {
+    logger.warn({ orderId: order.id, accountId, expected: order.stripeAccountId, pi: pi.id }, "Installment event from an account that does not own the order — ignored");
+    return null;
+  }
+  const [installment] = await db.select().from(orderInstallmentsTable).where(and(eq(orderInstallmentsTable.orderId, order.id), eq(orderInstallmentsTable.seq, seq))).limit(1);
+  return installment ? { order, installment } : null;
+}
+
+/** payment_intent.succeeded for an installment (e.g. one that was still "processing" when charged). */
+export async function applyInstallmentSucceeded(pi: { id: string; amount: number; currency: string; metadata: Record<string, string> | null | undefined }, accountId: string | null): Promise<string | null> {
+  const found = await installmentForIntent(pi, accountId);
+  if (!found) return null;
+  if (pi.amount !== found.installment.amountCents || pi.currency.toLowerCase() !== found.order.currency.toLowerCase()) return `amount ${pi.amount} ${pi.currency} does not match installment ${found.installment.amountCents} ${found.order.currency}`;
+  const updated = await settleInstallmentPaid(found.installment.id, pi.id);
+  if (updated) await afterInstallmentPaid(found.order, updated);
+  return null;
+}
+
+/** payment_intent.payment_failed for an installment. Never downgrades a paid (or canceled/refunded) one; ignores stale attempts. */
+export async function applyInstallmentFailed(pi: { id: string; metadata: Record<string, string> | null | undefined; last_payment_error?: { message?: string } | null }, accountId: string | null): Promise<void> {
+  const found = await installmentForIntent(pi, accountId);
+  if (!found) return;
+  await db
+    .update(orderInstallmentsTable)
+    .set({ status: "failed", lastError: pi.last_payment_error?.message ?? "Payment failed", stripePaymentIntentId: pi.id, updatedAt: new Date() })
+    .where(and(eq(orderInstallmentsTable.id, found.installment.id), inArray(orderInstallmentsTable.status, ["processing", "scheduled", "failed"]), or(isNull(orderInstallmentsTable.stripePaymentIntentId), eq(orderInstallmentsTable.stripePaymentIntentId, pi.id))));
 }
 
 async function afterInstallmentPaid(order: Order, installment: OrderInstallment): Promise<void> {
@@ -316,32 +438,94 @@ async function afterInstallmentPaid(order: Order, installment: OrderInstallment)
   }
 }
 
+/**
+ * An installment left "processing" with no PaymentIntent for an hour means the process died between
+ * claiming it and hearing back from Stripe. We cannot know whether the card was charged, so it is
+ * surfaced as failed with a note to check Stripe — never retried automatically.
+ */
+export async function releaseStuckInstallments(olderThanMs = 60 * 60_000): Promise<number> {
+  const rows = await db
+    .update(orderInstallmentsTable)
+    .set({ status: "failed", lastError: "Interrupted while charging — check the Stripe dashboard for this payment before retrying", updatedAt: new Date() })
+    .where(and(eq(orderInstallmentsTable.status, "processing"), isNull(orderInstallmentsTable.stripePaymentIntentId), lt(orderInstallmentsTable.updatedAt, new Date(Date.now() - olderThanMs))))
+    .returning({ id: orderInstallmentsTable.id });
+  if (rows.length) logger.warn({ installmentIds: rows.map((r) => r.id) }, "Released installments stuck in processing");
+  return rows.length;
+}
+
 /** Charge every installment that is due and not yet paid (hourly). */
 export async function runDueInstallments(): Promise<number> {
+  await releaseStuckInstallments();
   const due = await db
     .select()
     .from(orderInstallmentsTable)
     .where(and(eq(orderInstallmentsTable.status, "scheduled"), or(isNull(orderInstallmentsTable.dueAt), lte(orderInstallmentsTable.dueAt, new Date()))))
     .limit(50);
   let charged = 0;
+  if (checkoutMode() !== "live") return 0; // demo installments are settled from the console, never silently
   for (const inst of due) {
-    if (checkoutMode() !== "live") continue; // demo installments are settled from the console, never silently
     const r = await chargeInstallment(inst);
     if (r.ok) charged++;
   }
   return charged;
 }
 
-/** Refund seen at Stripe (full or partial): the order says so; nothing else is undone automatically. */
-export async function markRefunded(paymentIntentId: string, chargeId: string | null): Promise<Order | null> {
-  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.stripePaymentIntentId, paymentIntentId)).limit(1);
-  if (!order) return null;
-  const [updated] = await db.update(ordersTable).set({ status: "refunded", refundedAt: new Date(), updatedAt: new Date() }).where(eq(ordersTable.id, order.id)).returning();
-  if (order.leadId) {
-    const [lead] = await db.select().from(leadsTable).where(eq(leadsTable.id, order.leadId)).limit(1);
-    if (lead) await logActivity(lead, "order", `Refund recorded · ${order.offerName}${chargeId ? ` · ${chargeId}` : ""}`, { meta: { orderId: order.id } });
+export interface RefundFacts {
+  paymentIntentId: string;
+  chargeId: string | null;
+  /** Cumulative refunded on this charge (Stripe's charge.amount_refunded), so replays and reordering are harmless. */
+  amountRefundedCents: number;
+  /** charge.refunded: the whole charge is refunded. */
+  fully: boolean;
+  accountId: string | null;
+}
+
+/**
+ * Refund seen at Stripe. Matches the checkout charge (order) or an installment charge, only on the
+ * account that owns the order. A full refund of the checkout charge marks the order refunded; a partial
+ * one keeps it paid and records the amount. Nothing else (portal, stages) is undone automatically.
+ */
+export async function recordRefund(f: RefundFacts): Promise<{ order: Order; target: "order" | "installment" } | null> {
+  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.stripePaymentIntentId, f.paymentIntentId)).limit(1);
+  let target: "order" | "installment" = "order";
+  let owner = order ?? null;
+  let installment: OrderInstallment | null = null;
+  if (!owner) {
+    [installment] = await db.select().from(orderInstallmentsTable).where(eq(orderInstallmentsTable.stripePaymentIntentId, f.paymentIntentId)).limit(1);
+    if (!installment) return null;
+    [owner] = await db.select().from(ordersTable).where(eq(ordersTable.id, installment.orderId)).limit(1);
+    if (!owner) return null;
+    target = "installment";
   }
-  return updated;
+  if (!owner.stripeAccountId || owner.stripeAccountId !== f.accountId) {
+    logger.warn({ orderId: owner.id, accountId: f.accountId, expected: owner.stripeAccountId }, "Refund event from an account that does not own the order — ignored");
+    return null;
+  }
+  const now = new Date();
+  let updated: Order = owner;
+  let changed = false;
+  if (target === "order") {
+    const amount = Math.max(owner.refundedCents, f.amountRefundedCents);
+    const fully = f.fully || amount >= owner.amountCents;
+    const [row] = await db
+      .update(ordersTable)
+      .set({ refundedCents: amount, ...(fully ? { status: "refunded", refundedAt: owner.refundedAt ?? now } : {}), updatedAt: now })
+      .where(eq(ordersTable.id, owner.id))
+      .returning();
+    updated = row;
+    changed = amount !== owner.refundedCents || (fully && owner.status !== "refunded");
+  } else if (installment) {
+    const amount = Math.max(installment.refundedCents, f.amountRefundedCents);
+    const fully = f.fully || amount >= installment.amountCents;
+    await db.update(orderInstallmentsTable).set({ refundedCents: amount, ...(fully ? { status: "refunded" } : {}), updatedAt: now }).where(eq(orderInstallmentsTable.id, installment.id));
+    changed = amount !== installment.refundedCents || (fully && installment.status !== "refunded");
+  }
+  if (changed && owner.leadId) {
+    const [lead] = await db.select().from(leadsTable).where(eq(leadsTable.id, owner.leadId)).limit(1);
+    const what = target === "installment" && installment ? `payment ${installment.seq} of ${owner.installments}` : owner.offerName;
+    if (lead) await logActivity(lead, "order", `Refund recorded · ${what} · ${cents(f.amountRefundedCents)}${f.fully ? " (full)" : " (partial)"}${f.chargeId ? ` · ${f.chargeId}` : ""}`, { meta: { orderId: owner.id, installmentId: installment?.id ?? null } });
+  }
+  return { order: updated, target };
 }
 
 // ---------------------------------------------------------------------------

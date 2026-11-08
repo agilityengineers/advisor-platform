@@ -8,6 +8,7 @@ import { runBootSeed } from "./lib/seed";
 import { mountSpa } from "./lib/spa";
 import { startDomainRecheckScheduler } from "./lib/domains";
 import { startCommerceScheduler } from "./lib/orders";
+import { stripeConfig } from "./lib/stripe";
 
 async function bootstrap(): Promise<void> {
   if (process.env.SKIP_MIGRATIONS === "true") {
@@ -21,6 +22,11 @@ async function bootstrap(): Promise<void> {
   const keySource = await initEncryptionKey();
   logger.info({ keySource }, "Encryption key ready");
   await runBootSeed();
+
+  // Payments: say plainly why checkout is off rather than let buyers find out.
+  const stripeCfg = stripeConfig();
+  if (stripeCfg.problems.length) logger.warn({ checkout: stripeCfg.mode, problems: stripeCfg.problems }, "Stripe checkout is OFF until the platform keys are fixed");
+  else logger.info({ checkout: stripeCfg.mode, keyMode: stripeCfg.keyMode, connectOAuth: stripeCfg.connectClientId }, stripeCfg.keyMode === "test" ? "Stripe checkout in TEST mode (no real charges)" : stripeCfg.keyMode === "live" ? "Stripe checkout LIVE — real charges" : "Stripe checkout in demo mode");
 
   const app = createApp();
   await mountSpa(app);

@@ -206,9 +206,9 @@ export function ClientDrawer({ companyId, clientId, canWrite, canBilling, onClos
                   <div key={i.id} className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-2 text-[12.5px]">
                     <div className="font-bold text-body">
                       Payment {i.seq} of {o.installmentsCount} · {cents(i.amountCents)}
-                      <span className={`ml-2 font-bold ${i.status === "paid" ? "text-success-deep" : i.status === "failed" ? "text-danger" : i.status === "canceled" ? "text-muted" : "text-warn-deep"}`}>{i.status === "paid" ? `paid ${fmtDay(i.paidAt)}` : i.status === "failed" ? `failed${i.lastError ? ` · ${i.lastError}` : ""}` : i.status === "canceled" ? "canceled" : `due ${fmtDay(i.dueAt)}`}</span>
+                      <span className={`ml-2 font-bold ${i.status === "paid" ? "text-success-deep" : i.status === "failed" ? "text-danger" : i.status === "canceled" || i.status === "refunded" ? "text-muted" : "text-warn-deep"}`}>{i.status === "paid" ? `paid ${fmtDay(i.paidAt)}` : i.status === "failed" ? `failed${i.lastError ? ` · ${i.lastError}` : ""}` : i.status === "canceled" ? "canceled" : i.status === "refunded" ? "refunded" : i.status === "processing" ? "processing at Stripe…" : `due ${fmtDay(i.dueAt)}`}</span>
                     </div>
-                    {canBilling && i.status !== "paid" && i.status !== "canceled" && (
+                    {canBilling && (i.status === "scheduled" || i.status === "failed") && (
                       <div className="flex gap-1.5">
                         {d.checkoutMode === "live" && (
                           <Button size="sm" className="h-8 px-3 text-[12px]" loading={settle.isPending} onClick={() => settle.mutate({ orderId: o.id, installmentId: i.id, action: "charge" })}>

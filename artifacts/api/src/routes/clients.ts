@@ -57,7 +57,7 @@ router.get("/companies/:companyId/clients", ...base, requirePermission("clients"
       const booking = c.leadId ? bookings.find((b) => b.leadId === c.leadId) ?? null : null;
       const done = mine.filter((s) => s.status === "done" || (s.key === "interview" && booking)).length;
       const current = mine.find((s) => s.status === "current") ?? mine.find((s) => s.status !== "done") ?? null;
-      const outstanding = installments.filter((i) => myOrders.some((o) => o.id === i.orderId) && i.status !== "paid" && i.status !== "canceled");
+      const outstanding = installments.filter((i) => myOrders.some((o) => o.id === i.orderId) && i.status !== "paid" && i.status !== "canceled" && i.status !== "refunded");
       return {
         id: c.id,
         publicId: c.publicId,
@@ -69,7 +69,8 @@ router.get("/companies/:companyId/clients", ...base, requirePermission("clients"
         createdAt: c.createdAt.toISOString(),
         offerName: paid?.offerName ?? null,
         orderStatus: paid?.status ?? null,
-        paidCents: myOrders.filter((o) => o.status === "paid").reduce((s, o) => s + o.amountCents, 0) + installments.filter((i) => myOrders.some((o) => o.id === i.orderId) && i.status === "paid").reduce((s, i) => s + i.amountCents, 0),
+        // Net of partial refunds; fully refunded charges drop out by status.
+        paidCents: myOrders.filter((o) => o.status === "paid").reduce((s, o) => s + o.amountCents - o.refundedCents, 0) + installments.filter((i) => myOrders.some((o) => o.id === i.orderId) && i.status === "paid").reduce((s, i) => s + i.amountCents - i.refundedCents, 0),
         outstandingCents: outstanding.reduce((s, i) => s + i.amountCents, 0),
         failedInstallments: outstanding.filter((i) => i.status === "failed").length,
         progress: { done, total: mine.length, pct: mine.length ? Math.round((done / mine.length) * 100) : 0 },
@@ -101,7 +102,7 @@ router.get("/companies/:companyId/clients/:clientId", ...base, requirePermission
     stages,
     progress: progressOf(stages),
     files: bundle.files.map((f) => ({ id: f.id, name: f.name, url: f.url, stageKey: f.stageKey, createdAt: f.createdAt.toISOString() })),
-    orders: bundle.orders.map((o) => ({ id: o.id, publicId: o.publicId, offerKey: o.offerKey, offerName: o.offerName, status: o.status, plan: o.paymentMode, installmentsCount: o.installments, amountCents: o.amountCents, bumps: o.bumps, paidAt: o.paidAt?.toISOString() ?? null, refundedAt: o.refundedAt?.toISOString() ?? null, stripePaymentIntentId: o.stripePaymentIntentId, createdAt: o.createdAt.toISOString(), installments: o.schedule.map(installmentView) })),
+    orders: bundle.orders.map((o) => ({ id: o.id, publicId: o.publicId, offerKey: o.offerKey, offerName: o.offerName, status: o.status, plan: o.paymentMode, installmentsCount: o.installments, amountCents: o.amountCents, bumps: o.bumps, paidAt: o.paidAt?.toISOString() ?? null, refundedAt: o.refundedAt?.toISOString() ?? null, refundedCents: o.refundedCents, stripePaymentIntentId: o.stripePaymentIntentId, createdAt: o.createdAt.toISOString(), installments: o.schedule.map(installmentView) })),
     bookings: bundle.bookings.map((b) => ({ id: b.id, startAt: b.startAt?.toISOString() ?? null, status: b.status, confirmed: b.confirmed, eventUri: b.eventUri })),
     intake: bundle.intake ? { completedAt: bundle.intake.completedAt?.toISOString() ?? null, data: bundle.intake.data } : null,
     login: bundle.login,
@@ -226,7 +227,12 @@ router.post("/companies/:companyId/orders/:orderId/installments/:installmentId",
     return;
   }
   if (parsed.data.action === "cancel") {
-    const [updated] = await db.update(orderInstallmentsTable).set({ status: "canceled" }).where(eq(orderInstallmentsTable.id, inst.id)).returning();
+    // Only an installment nobody is collecting right now can be canceled (a "processing" one may already be charged).
+    const [updated] = await db.update(orderInstallmentsTable).set({ status: "canceled", updatedAt: new Date() }).where(and(eq(orderInstallmentsTable.id, inst.id), inArray(orderInstallmentsTable.status, ["scheduled", "failed"]))).returning();
+    if (!updated) {
+      res.status(409).json({ error: `This installment is ${inst.status} and can't be canceled` });
+      return;
+    }
     await audit(req, { action: "installment_canceled", resourceType: "order", resourceId: order.id, companyId: company.id, details: { seq: inst.seq } });
     res.json({ ok: true, installment: installmentView(updated) });
     return;
@@ -234,7 +240,7 @@ router.post("/companies/:companyId/orders/:orderId/installments/:installmentId",
   const r = await chargeInstallment(inst, { manual: parsed.data.action === "mark_paid" });
   await audit(req, { action: parsed.data.action === "charge" ? "installment_charged" : "installment_marked_paid", resourceType: "order", resourceId: order.id, companyId: company.id, details: { seq: inst.seq, ok: r.ok, error: r.error, amount: cents(inst.amountCents) } });
   if (!r.ok) {
-    res.status(402).json({ error: r.error ?? "Charge failed", installment: installmentView(r.installment) });
+    res.status(r.pending ? 202 : r.error?.includes("already being processed") ? 409 : 402).json({ error: r.error ?? "Charge failed", pending: Boolean(r.pending), installment: installmentView(r.installment) });
     return;
   }
   res.json({ ok: true, installment: installmentView(r.installment) });
