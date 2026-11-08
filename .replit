@@ -1,4 +1,4 @@
-modules = ["nodejs-22", "postgresql-16"]
+modules = ["nodejs-20", "web"]
 run = "pnpm dev"
 entrypoint = "artifacts/api/src/index.ts"
 hidden = [".config", "node_modules", "dist", ".cache", ".local"]
