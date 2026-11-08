@@ -35,3 +35,7 @@ mode = "sequential"
 task = "shell.exec"
 args = "pnpm dev"
 waitForPort = 5000
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000

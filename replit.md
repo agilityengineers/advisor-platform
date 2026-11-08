@@ -19,6 +19,12 @@ pnpm workspace (Node 22, TypeScript 5.9):
 
 ## Commands
 
+After task merges, Replit runs `scripts/post-merge.sh` to install locked
+dependencies, apply pending development database migrations, and build the app.
+It then reconciles the running workflow automatically. The hook fails fast,
+requires no input, and refuses to run with `NODE_ENV=production`.
+Tests are not part of this hook because they require a separate scratch database.
+
 ### Running the imported project on Replit
 
 Use the **Run** button (the `Dev server` workflow), or run `pnpm dev`.
