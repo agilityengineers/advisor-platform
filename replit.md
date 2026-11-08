@@ -19,6 +19,29 @@ pnpm workspace (Node 22, TypeScript 5.9):
 
 ## Commands
 
+### Running the imported project on Replit
+
+Use the **Run** button (the `Dev server` workflow), or run `pnpm dev`.
+The existing Express server serves both the API and Vite client on port 5000.
+Replit is configured with Node 22, matching the package's minimum version.
+Run `pnpm install --frozen-lockfile` after importing or changing dependencies.
+The workspace uses Replit's installed pnpm 10; automatic package-manager
+version switching is disabled in `.npmrc`.
+The development watcher excludes Vite's generated client config and build output
+so starting Vite does not repeatedly restart the server.
+Vite hot reload shares the main HTTP server, so preview only needs port 5000.
+
+`DATABASE_URL` is supplied by Replit and `SESSION_SECRET` is already configured.
+The normal boot process applies migrations and seeds the initial company and
+super-admin account. The built-in development password is for local preview only;
+set `SUPER_ADMIN_PASSWORD` in Secrets before publishing. Without provider
+credentials, profile grading and checkout use the existing development demo
+modes, and email is not delivered.
+
+API tests mutate their database (including seeded passwords and CMS content).
+Use a separate scratch database for `DATABASE_URL` when running `pnpm test`;
+do not point tests at the running preview's database.
+
 ```bash
 pnpm install                      # pnpm only (preinstall hook blocks npm/yarn)
 pnpm dev                          # API + Vite middleware on $PORT (5000)

@@ -30,8 +30,8 @@ async function bootstrap(): Promise<void> {
   if (env.isProduction && process.env.GRADER_DEMO === "true") logger.warn("GRADER_DEMO=true is ignored in production");
 
   const app = createApp();
-  await mountSpa(app);
   const server = createServer(app);
+  await mountSpa(app, server);
 
   server.listen(env.port, "0.0.0.0", () => {
     logger.info({ port: env.port, env: process.env.NODE_ENV }, "Advisor Platform listening");

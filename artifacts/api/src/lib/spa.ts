@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import type { Server } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
@@ -29,7 +30,7 @@ function isApiOrAsset(req: Request): boolean {
   return req.path.startsWith("/api/") || req.path === "/api";
 }
 
-export async function mountSpa(app: Express): Promise<void> {
+export async function mountSpa(app: Express, server?: Server): Promise<void> {
   if (env.isProduction || env.isTest) {
     if (!existsSync(path.join(WEB_DIST, "index.html"))) {
       logger.warn({ WEB_DIST }, "Client build not found — API only. Run `pnpm --filter @workspace/web run build`.");
@@ -51,7 +52,7 @@ export async function mountSpa(app: Express): Promise<void> {
   const vite = await createServer({
     root: WEB_ROOT,
     configFile: path.join(WEB_ROOT, "vite.config.ts"),
-    server: { middlewareMode: true, hmr: { port: env.port + 1 }, allowedHosts: true },
+    server: { middlewareMode: true, hmr: server ? { server } : false, allowedHosts: true },
     appType: "custom",
   });
   app.use(vite.middlewares);
