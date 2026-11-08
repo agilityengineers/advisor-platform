@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db, companyIntegrationsTable, companySecretsTable, type Company } from "@workspace/db";
-import { integrationDef, type IntegrationProvider, type IntegrationStatus } from "@workspace/shared";
+import { integrationDef, resolveSenders, type IntegrationProvider, type IntegrationStatus, type SenderConfig, type SenderKind } from "@workspace/shared";
 import { decrypt, encrypt, last4 } from "./encryption";
 import { env } from "../env";
 import { logger } from "./logger";
@@ -189,14 +189,19 @@ export async function disconnectIntegration(companyId: number, provider: Integra
     .onConflictDoUpdate({ target: [companyIntegrationsTable.companyId, companyIntegrationsTable.provider], set: { status: "not_connected", config: {}, lastError: null, connectedAt: null, updatedAt: new Date() } });
 }
 
-/** The company's own SendGrid identity, if connected — used for mail the company sends to its leads and clients. */
-export async function companySender(company: Company): Promise<{ email: string; name: string; apiKey: string } | null> {
+/**
+ * One of the company's own SendGrid identities, if connected. `personal` is the
+ * owner / admin (replies reach them); `system` is the no-reply address used for
+ * account mail — resets, sign-in links, invites, receipts and alerts.
+ */
+export async function companySender(company: Company, kind: SenderKind = "personal"): Promise<{ email: string; name: string; apiKey: string } | null> {
   const [row] = await db.select().from(companyIntegrationsTable).where(and(eq(companyIntegrationsTable.companyId, company.id), eq(companyIntegrationsTable.provider, "sendgrid"))).limit(1);
   if (!row || (row.status !== "connected" && row.status !== "pending")) return null;
-  const cfg = row.config as Record<string, string>;
+  const identity = resolveSenders(row.config as SenderConfig, company)[kind];
+  if (!identity) return null;
   const apiKey = await getSecret(company.id, "sendgrid", "apiKey");
-  if (!apiKey || !cfg.fromAddress) return null;
-  return { email: cfg.fromAddress, name: cfg.fromName || company.name, apiKey };
+  if (!apiKey) return null;
+  return { ...identity, apiKey };
 }
 
 export async function calendlyUrlFor(companyId: number): Promise<string | null> {
