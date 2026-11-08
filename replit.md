@@ -4,6 +4,13 @@ White-label SaaS for LinkedIn advisory professionals. Each **company** (an Admin
 
 Production runs on **Replit**: Replit Deployments (autoscale), Replit Postgres (`DATABASE_URL`), Replit Secrets, Replit Object Storage for uploads.
 
+### Public domain assignments
+
+- `advisor-platform.com` is the platform's primary website and platform account-link origin.
+- `mytargetclient.com` belongs to the My Target Client white-label company, not the platform.
+- Both websites are intended to be publicly accessible at the hosting layer. Staff, admin, and client account access must still use the application's authentication and tenant permissions.
+- Attaching a domain in Replit does not replace the application's company-domain ownership verification. Do not bypass that verification or map My Target Client's domain as a platform host.
+
 ## Layout
 
 pnpm workspace (Node 22, TypeScript 5.9):

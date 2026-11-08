@@ -39,3 +39,9 @@ waitForPort = 5000
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 180000
+
+[userenv]
+
+[userenv.shared]
+APP_URL = "https://advisor-platform.com"
+PLATFORM_PRIMARY_DOMAIN = "advisor-platform.com"
