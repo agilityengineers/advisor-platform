@@ -13,6 +13,7 @@ export const useOverview = () => useQuery<Overview>({ queryKey: OVERVIEW_KEY, qu
 // Paths are relative to the nested /admin router (wouter `nest`).
 const NAV: { href: string; label: string; count?: (o: Overview) => number }[] = [
   { href: "/", label: "Companies", count: (o) => o.counts.companies },
+  { href: "/requests", label: "Requests", count: (o) => o.counts.newRequests },
   { href: "/templates", label: "Templates", count: (o) => o.counts.templates },
   { href: "/registry", label: "Feature registry", count: (o) => o.counts.features },
   { href: "/plans", label: "Plans", count: (o) => o.counts.plans },

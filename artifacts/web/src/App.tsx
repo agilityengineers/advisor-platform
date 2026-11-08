@@ -14,6 +14,11 @@ import { ForgotPassword, ResetPassword } from "@/pages/auth/Password";
 import { AcceptInvite } from "@/pages/auth/AcceptInvite";
 import { ClientPortalPlaceholder } from "@/pages/Placeholders";
 import { PlatformAdmin } from "@/pages/admin";
+import { AboutPage } from "@/pages/public/AboutPage";
+import { StandardPricing } from "@/pages/public/StandardPricing";
+import { CommercialPricing } from "@/pages/public/CommercialPricing";
+import { ProfileGrade } from "@/pages/public/ProfileGrade";
+import { BuyPlaceholder } from "@/pages/public/BuyPlaceholder";
 import { CompanyConsole } from "@/pages/console/CompanyConsole";
 import { ToastProvider } from "@/hooks/use-toast";
 
@@ -54,6 +59,11 @@ export default function App() {
               <ToastProvider>
               <Switch>
                 <Route path="/" component={Home} />
+                <Route path="/about" component={AboutPage} />
+                <Route path="/pricing" component={StandardPricing} />
+                <Route path="/commercial-pricing" component={CommercialPricing} />
+                <Route path="/grade/:publicId" component={ProfileGrade} />
+                <Route path="/buy" component={BuyPlaceholder} />
                 <Route path="/login" component={SignInChooser} />
                 <Route path="/staff/login" component={StaffSignIn} />
                 <Route path="/client/login" component={ClientSignIn} />

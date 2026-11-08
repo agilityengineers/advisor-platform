@@ -45,3 +45,11 @@ export function prefersWhiteText(hex: string): boolean {
   const b = n & 255;
   return (r * 299 + g * 587 + b * 114) / 1000 < 150;
 }
+
+/** "#1668F0" → "22, 104, 240" for rgba(var(--x), a) patterns. */
+export function hexToRgbTriplet(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return "22, 104, 240";
+  const n = parseInt(m[1], 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+}

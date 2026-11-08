@@ -12,6 +12,7 @@ import reviewsRouter from "./reviews";
 import rubricRouter from "./rubric";
 import settingsRouter from "./settings";
 import publicSiteRouter from "./publicSite";
+import platformLeadsRouter from "./platformLeads";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -27,5 +28,6 @@ router.use(reviewsRouter);
 router.use(rubricRouter);
 router.use(settingsRouter);
 router.use(publicSiteRouter);
+router.use(platformLeadsRouter);
 
 export default router;

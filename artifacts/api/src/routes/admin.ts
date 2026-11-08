@@ -26,6 +26,7 @@ import { createInvite } from "./team";
 import { audit } from "../lib/audit";
 import { invalidateTenantCache } from "../lib/tenant";
 import { env } from "../env";
+import { newPlatformLeadCount } from "./platformLeads";
 
 const router: IRouter = Router();
 const guard = [authMiddleware, requireSuperAdmin] as const;
@@ -44,13 +45,13 @@ async function loadCompany(id: string | number) {
 // ---------------------------------------------------------------------------
 
 router.get("/admin/overview", ...guard, async (_req, res) => {
-  const [rows, plans, templates] = await Promise.all([listCompanyRows(), getPlans(), db.select({ id: landingTemplatesTable.id }).from(landingTemplatesTable)]);
+  const [rows, plans, templates, newRequests] = await Promise.all([listCompanyRows(), getPlans(), db.select({ id: landingTemplatesTable.id }).from(landingTemplatesTable), newPlatformLeadCount()]);
   const mrr = rows.filter((r) => r.status === "active").reduce((s, r) => s + (r.planPrice ?? 0), 0);
   res.json({
     kpis: { total: rows.length, active: rows.filter((r) => r.status === "active").length, trial: rows.filter((r) => r.status === "trial").length, comp: rows.filter((r) => r.status === "comp").length, suspended: rows.filter((r) => r.status === "suspended").length, mrr },
     companies: rows,
     plans: plans.map((p) => ({ key: p.key, name: p.name, price: p.price, desc: p.desc, featureKeys: p.featureKeys, sort: p.sort })),
-    counts: { companies: rows.length, templates: templates.length, features: FEATURE_REGISTRY.length, plans: plans.length },
+    counts: { companies: rows.length, templates: templates.length, features: FEATURE_REGISTRY.length, plans: plans.length, newRequests },
     platform: { name: PLATFORM.name, domains: PLATFORM.domains, primaryDomain: env.platformPrimaryDomain, subdomainBase: env.platformSubdomainBase, superAdmin: PLATFORM.superAdmin },
   });
 });
