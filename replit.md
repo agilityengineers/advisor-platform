@@ -160,6 +160,18 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.findabusinesspro.com`).
 5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.findabusinesspro.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.
 
+## Turning on platform email (SendGrid)
+
+Until `SENDGRID_API_KEY` is set, production sends **nothing**: invites, resets, magic links, lead outreach fallback, receipts and lifecycle mail are logged as `not_configured` (the boot log says so in red). To go live:
+
+1. **SendGrid → Settings → Sender Authentication → Authenticate Your Domain** for the domain in `PLATFORM_FROM_EMAIL` (default `advisor-platform.findabusinesspro.com`, or its parent `findabusinesspro.com`). Add the CNAMEs SendGrid lists at the DNS host, then press **Verify** in SendGrid. A verified single sender works as a stopgap but lands in spam more often.
+2. **SendGrid → Settings → API Keys → Create** a *Restricted* key with **Mail Send: Full** and **Mail Settings: Read** (the read scope lets the health check inspect the Event Webhook). Add it as the Replit Secret `SENDGRID_API_KEY`; set `PLATFORM_FROM_EMAIL` / `PLATFORM_FROM_NAME` if the defaults don't fit. Redeploy.
+3. **SendGrid → Settings → Mail Settings → Event Webhook**: URL `https://<platform host>/api/webhooks/sendgrid` (the exact URL is shown in Platform Admin → Settings → Platform email), events *Delivered, Dropped, Bounced, Deferred, Spam Reports* (opens/clicks optional), **Signature Verification on**. Copy the public key into the Replit Secret `SENDGRID_WEBHOOK_PUBLIC_KEY`, redeploy, then use SendGrid's **Test Your Integration** button.
+4. **Platform Admin → Settings → Platform email** (`GET /api/admin/email/status`) asks SendGrid, with the live key, whether the key is accepted and has `mail.send`, whether the From domain is authenticated, whether an Event Webhook points here with the right events, and whether its signing key matches the secret. "Ready" needs the first three green; the webhook rows are for delivery tracking.
+5. **Send test** (`POST /api/admin/email/test`, `{ to?, kind: plain|invite|password_reset|magic_link|receipt }`, audited) sends a sample of each message through the real path; the row lands in `email_logs` and moves to `delivered` / `bounced` when the webhook reports back. Then exercise the real flows once: invite a team member, request a reset at `/forgot-password`, request a client magic link, and run a demo checkout for a purchase receipt.
+
+Company mail (lead outreach, client lifecycle) uses the company's own SendGrid when connected in Company settings → Integrations, and otherwise falls back to this platform key with the company's name and the owner as Reply-To.
+
 ## Phase status
 
 | Phase | Scope | Status |
