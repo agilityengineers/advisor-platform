@@ -23,6 +23,7 @@ import { BookInterview } from "@/pages/public/BookInterview";
 import { IntakePage } from "@/pages/public/IntakePage";
 import { ClientPortal } from "@/pages/portal/ClientPortal";
 import { CompanyConsole } from "@/pages/console/CompanyConsole";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { ToastProvider } from "@/hooks/use-toast";
 
 const queryClient = new QueryClient({
@@ -99,6 +100,7 @@ export default function App() {
                 </Route>
                 <Route component={NotFound} />
               </Switch>
+              <ImpersonationBanner />
               </ToastProvider>
             </AuthProvider>
           </TenantProvider>
