@@ -1,4 +1,7 @@
 import { defineConfig } from "vitest/config";
+import { resolveTestDatabaseUrl } from "./src/test/databaseSafety";
+
+const testDatabaseUrl = resolveTestDatabaseUrl(process.env);
 
 export default defineConfig({
   test: {
@@ -9,6 +12,7 @@ export default defineConfig({
     hookTimeout: 60_000,
     env: {
       NODE_ENV: "test",
+      DATABASE_URL: testDatabaseUrl,
       RATE_LIMIT_STORE: "memory",
       SESSION_SECRET: process.env.SESSION_SECRET ?? "test-session-secret-0123456789abcdef",
       PLATFORM_ENCRYPTION_KEY: process.env.PLATFORM_ENCRYPTION_KEY ?? "test-encryption-key-0123456789abcdef",

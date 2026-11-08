@@ -39,14 +39,21 @@ credentials, profile grading and checkout use the existing development demo
 modes, and email is not delivered.
 
 API tests mutate their database (including seeded passwords and CMS content).
-Use a separate scratch database for `DATABASE_URL` when running `pnpm test`;
-do not point tests at the running preview's database.
+Configure `TEST_DATABASE_URL` with a separate scratch PostgreSQL database whose
+name ends in `_test` (the setup-tested name is `advisor_platform_test`). The
+test runner uses that URL for API tests and refuses to run in production, when
+it matches the active preview database, or when it is not clearly a test
+database. Never set it to a preview or production database.
+Tests keep their changes in this scratch database; the runner does not reset or
+delete existing data. Point `TEST_DATABASE_URL` at a fresh `_test` database
+when you need a clean baseline for another run.
 
 ```bash
 pnpm install                      # pnpm only (preinstall hook blocks npm/yarn)
 pnpm dev                          # API + Vite middleware on $PORT (5000)
 pnpm typecheck                    # tsc --build for libs, then each artifact
-pnpm test                         # vitest in lib/shared and artifacts/api (API tests need DATABASE_URL)
+pnpm test                         # safe tests; requires TEST_DATABASE_URL above
+pnpm test:scratch                 # same protected scratch-database test command
 pnpm build                        # typecheck → web build → api bundle
 pnpm start                        # production: node artifacts/api/dist/index.mjs
 pnpm db:generate                  # drizzle-kit generate: new SQL migration from schema changes
@@ -59,6 +66,7 @@ pnpm db:studio                    # drizzle studio
 | Variable | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | yes | Replit Postgres (set automatically when you add a database). |
+| `TEST_DATABASE_URL` | API tests only | Separate scratch PostgreSQL database ending in `_test`; never use a preview or production database. |
 | `SESSION_SECRET` | yes (prod) | JWT signing secret (7-day tokens). Dev generates a throwaway one and warns. |
 | `SUPER_ADMIN_PASSWORD` | yes (prod) | Password for `emailme@clarencewilliams.com` / `clarencewilliams`. **Re-synced on every boot** — rotate here, not in-app. Dev falls back to `Success2026` with a warning. |
 | `PLATFORM_ENCRYPTION_KEY` | recommended | AES-256-GCM key for per-company integration secrets (`company_secrets`). If unset, one is generated at first boot and stored in `platform_config`; put it in a password manager — a restored database without it is ciphertext. |
