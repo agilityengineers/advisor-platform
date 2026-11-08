@@ -10,7 +10,7 @@ let server: TestServer;
 let adminToken = "";
 let advisorToken = "";
 let mtcId = 0;
-const HOST = `${MTC_SLUG}.advisor-platform.findabusinesspro.com`;
+const HOST = `${MTC_SLUG}.advisor-platform.com`;
 
 type Login = { token: string };
 
@@ -186,7 +186,7 @@ describe("company settings", () => {
     expect(domain.body.custom.verified).toBe(false);
     expect(domain.body.custom.records.txt.host).toBe("_advisor-verify.mytargetclient.com");
     expect(domain.body.custom.records.txt.value).toMatch(/^advisor-verify-/);
-    expect(domain.body.custom.records.cname.value).toBe(`${MTC_SLUG}.advisor-platform.findabusinesspro.com`);
+    expect(domain.body.custom.records.cname.value).toBe(`${MTC_SLUG}.advisor-platform.com`);
     const verify = await server.api<{ verified: boolean }>(`/api/companies/${mtcId}/settings/domain/verify`, { method: "POST", token: adminToken });
     expect(verify.status).toBe(422);
     expect(verify.body.verified).toBe(false);

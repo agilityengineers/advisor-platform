@@ -48,7 +48,7 @@ export function AuthShell({ title, intro, children, footer }: { title: string; i
               </h2>
               <p className="mt-5 max-w-[440px] text-[16px] leading-relaxed text-[#F6F2EA]/75">Branded landing page, lead-to-close pipeline, Brand Voice capture, Profile Grader, checkout and client portal — on your own domain.</p>
             </div>
-            <div className="text-[12.5px] text-[#F6F2EA]/55">advisor-platform.com · advisor-platform.findabusinesspro.com · advisor-platform.authority-desk.com</div>
+            <div className="text-[12.5px] text-[#F6F2EA]/55">advisor-platform.com · advisor-platform.authority-desk.com</div>
           </aside>
           <main className="flex items-center justify-center px-6 py-12">
             <div className="w-full max-w-[420px]">
