@@ -83,3 +83,19 @@ describe("offer catalogue", () => {
     expect(COMMERCIAL_SECTIONS.flatMap((s) => s.rows).some((r) => r.featured)).toBe(true);
   });
 });
+
+describe("checkout pricing", () => {
+  it("matches the buying-flow prototype's arithmetic", async () => {
+    const { OFFERS, priceOrder, cents, bumpAmountCents } = await import("./offers");
+    const full = priceOrder(OFFERS.voice, "full");
+    expect(full).toMatchObject({ split: false, installments: 1, baseCents: 99700, bumpsCents: 0, totalCents: 99700, dueTodayCents: 99700, laterCents: 0 });
+    const split = priceOrder(OFFERS.voice, "split", { banner: true, rush: true });
+    expect(bumpAmountCents(OFFERS.voice, "rush")).toBe(29900);
+    expect(split.bumps.map((b) => b.amountCents)).toEqual([15000, 29900]);
+    expect(split).toMatchObject({ split: true, installments: 2, totalCents: 99700 + 15000 + 29900, dueTodayCents: 49900 + 15000 + 29900, laterCents: 49900 });
+    // A non-splittable offer asked for a plan is charged in full.
+    expect(priceOrder(OFFERS.audit, "split")).toMatchObject({ split: false, plan: "full", installments: 1, dueTodayCents: 19700 });
+    expect(cents(99700)).toBe("$997");
+    expect(cents(49950)).toBe("$499.50");
+  });
+});

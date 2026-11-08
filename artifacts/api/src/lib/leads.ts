@@ -54,6 +54,7 @@ export async function createLead(company: Pick<Company, "id">, input: NewLeadInp
     landing_form: "Form submitted via landing page",
     platform_form: "Demo / trial request submitted",
     grader: "Profile Grader request",
+    checkout: "Purchased from the pricing page",
     manual: "Added manually",
     import: "Imported",
     test: "Test lead created",

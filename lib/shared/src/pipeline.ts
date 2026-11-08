@@ -39,7 +39,7 @@ export const DEFAULT_STAGES: readonly StageDefinition[] = [
 export const LEAD_CATEGORIES = ["Consultant", "Author", "Professional writer", "Executive", "Coach", "Speaker", "Other"] as const;
 export type LeadCategory = (typeof LEAD_CATEGORIES)[number];
 
-export const LEAD_SOURCES = ["landing_form", "platform_form", "grader", "manual", "import", "test"] as const;
+export const LEAD_SOURCES = ["landing_form", "platform_form", "grader", "checkout", "manual", "import", "test"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
 export const ACTIVITY_TYPES = ["form_submitted", "created", "stage_changed", "note", "email_sent", "sms_sent", "booking", "grade", "order", "system"] as const;

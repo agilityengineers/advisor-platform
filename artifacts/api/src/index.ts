@@ -7,6 +7,7 @@ import { initEncryptionKey } from "./lib/encryption";
 import { runBootSeed } from "./lib/seed";
 import { mountSpa } from "./lib/spa";
 import { startDomainRecheckScheduler } from "./lib/domains";
+import { startCommerceScheduler } from "./lib/orders";
 
 async function bootstrap(): Promise<void> {
   if (process.env.SKIP_MIGRATIONS === "true") {
@@ -28,6 +29,7 @@ async function bootstrap(): Promise<void> {
   server.listen(env.port, "0.0.0.0", () => {
     logger.info({ port: env.port, env: process.env.NODE_ENV }, "Advisor Platform listening");
     startDomainRecheckScheduler();
+    startCommerceScheduler();
   });
 
   let shuttingDown = false;

@@ -100,6 +100,10 @@ async function fetchJson(url: string, init: RequestInit, timeoutMs = 8000): Prom
 export async function verifyIntegration(company: Company, provider: IntegrationProvider, config: Record<string, string | boolean>): Promise<VerifyResult> {
   if (env.isTest) {
     if (provider === "sendgrid") return { status: config.sendingDomain ? "pending" : "connected" };
+    if (provider === "calendly") {
+      const token = await getSecret(company.id, "calendly", "token");
+      return { status: "connected", config: token ? { ...config, webhooks: Boolean(config.webhooks), organizationUri: "https://api.calendly.com/organizations/test", userUri: "https://api.calendly.com/users/test" } : { ...config, webhooks: false } };
+    }
     return { status: "connected" };
   }
   try {

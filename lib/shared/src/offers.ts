@@ -156,3 +156,51 @@ export const COMMERCIAL_STATS = [
   { value: "1,000+", label: "clients served" },
   { value: "500+", label: "client testimonials" },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Checkout arithmetic (Buying Flow.dc.html)
+// ---------------------------------------------------------------------------
+
+export const BUMP_KEYS = ["banner", "rush"] as const;
+export type BumpKey = (typeof BUMP_KEYS)[number];
+export type BumpSelection = Partial<Record<BumpKey, boolean>>;
+
+export const BUMPS: Record<BumpKey, { label: string; body: string; /** Fixed cents, or a share of the offer price. */ cents?: number; share?: number }> = {
+  banner: { label: "Custom banner design", body: "Three header options on brand with your new headline. Most clients add this.", cents: 150_00 },
+  rush: { label: "72-hour rush", body: "Delivered within three business days of your interview.", share: 0.3 },
+};
+
+export interface OrderPricing {
+  offer: Offer;
+  plan: PaymentPlan;
+  /** The effective plan: "split" only when the offer allows it. */
+  split: boolean;
+  installments: number;
+  baseCents: number;
+  bumps: { key: BumpKey; label: string; amountCents: number }[];
+  bumpsCents: number;
+  totalCents: number;
+  /** Charged at checkout: the first installment plus every bump, or the whole total. */
+  dueTodayCents: number;
+  /** Each later installment (0 when paid in full). */
+  laterCents: number;
+}
+
+export function bumpAmountCents(offer: Offer, key: BumpKey): number {
+  const b = BUMPS[key];
+  return b.cents ?? Math.round(offer.price * (b.share ?? 0)) * 100;
+}
+
+export function priceOrder(offer: Offer, plan: PaymentPlan, selection: BumpSelection = {}): OrderPricing {
+  const split = plan === "split" && offer.splittable && Boolean(offer.split);
+  const installments = split && offer.split ? offer.split.n : 1;
+  const bumps = BUMP_KEYS.filter((k) => selection[k]).map((key) => ({ key, label: BUMPS[key].label, amountCents: bumpAmountCents(offer, key) }));
+  const bumpsCents = bumps.reduce((s, b) => s + b.amountCents, 0);
+  const baseCents = offer.price * 100;
+  const totalCents = baseCents + bumpsCents;
+  const laterCents = split && offer.split ? offer.split.each * 100 : 0;
+  const dueTodayCents = split && offer.split ? offer.split.each * 100 + bumpsCents : totalCents;
+  return { offer, plan: split ? "split" : "full", split, installments, baseCents, bumps, bumpsCents, totalCents, dueTodayCents, laterCents };
+}
+
+export const cents = (n: number): string => `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: n % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;

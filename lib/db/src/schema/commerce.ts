@@ -40,7 +40,13 @@ export const ordersTable = pgTable("orders", {
   stripeSessionId: text("stripe_session_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  /** Saved for off-session installment charges (payment plans). */
+  stripeCustomerId: text("stripe_customer_id"),
+  stripePaymentMethodId: text("stripe_payment_method_id"),
   status: text("status").notNull().default("pending"),
+  /** Lifecycle emails already sent, so the schedulers never repeat one. */
+  receiptSentAt: timestamp("receipt_sent_at"),
+  intakeReminderAt: timestamp("intake_reminder_at"),
   paidAt: timestamp("paid_at"),
   refundedAt: timestamp("refunded_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -56,8 +62,12 @@ export const orderInstallmentsTable = pgTable("order_installments", {
   dueAt: timestamp("due_at"),
   status: text("status").notNull().default("scheduled"),
   stripeInvoiceId: text("stripe_invoice_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
   paidAt: timestamp("paid_at"),
 }, (t) => [index("idx_order_installments_order").on(t.orderId)]);
+export type OrderInstallment = typeof orderInstallmentsTable.$inferSelect;
 
 export const intakesTable = pgTable("intakes", {
   id: serial("id").primaryKey(),
@@ -69,6 +79,7 @@ export const intakesTable = pgTable("intakes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [index("idx_intakes_client").on(t.clientId)]);
+export type Intake = typeof intakesTable.$inferSelect;
 
 /** Portal tracker: 7 stages per client (payment, intake, interview, blueprint, draft, revisions, published). */
 export const clientStagesTable = pgTable("client_stages", {
@@ -76,11 +87,12 @@ export const clientStagesTable = pgTable("client_stages", {
   clientId: integer("client_id").notNull().references(() => clientsTable.id, { onDelete: "cascade" }),
   key: text("key").notNull(),
   label: text("label").notNull(),
-  status: text("status").$type<"pending" | "current" | "done">().notNull().default("pending"),
+  status: text("status").$type<"pending" | "current" | "done" | "scheduled">().notNull().default("pending"),
   sort: integer("sort").notNull().default(0),
   note: text("note").notNull().default(""),
   completedAt: timestamp("completed_at"),
 }, (t) => [index("idx_client_stages_client").on(t.clientId)]);
+export type ClientStage = typeof clientStagesTable.$inferSelect;
 
 export const clientFilesTable = pgTable("client_files", {
   id: serial("id").primaryKey(),
@@ -93,3 +105,4 @@ export const clientFilesTable = pgTable("client_files", {
   uploadedBy: integer("uploaded_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => [index("idx_client_files_client").on(t.clientId)]);
+export type ClientFile = typeof clientFilesTable.$inferSelect;

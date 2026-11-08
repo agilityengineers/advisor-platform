@@ -45,6 +45,11 @@ export const env = {
   platformFromName: process.env.PLATFORM_FROM_NAME ?? "Advisor Platform",
   brightDataApiKey: process.env.BRIGHTDATA_API_KEY ?? "",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  /** Stripe Connect OAuth client id (ca_…) for "Connect with Stripe"; pasting an acct_ id still works without it. */
+  stripeConnectClientId: process.env.STRIPE_CONNECT_CLIENT_ID ?? "",
+  /** Lets the checkout run without Stripe outside production (orders are marked paid by a demo button). */
+  checkoutDemo: process.env.CHECKOUT_DEMO === "true" || (!isProduction && !process.env.STRIPE_SECRET_KEY),
   corsAllowedOrigins: list("CORS_ALLOWED_ORIGINS", []),
 };

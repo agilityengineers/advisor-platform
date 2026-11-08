@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^10.2.1",
     "@tanstack/react-query": "catalog:",
     "@workspace/shared": "workspace:*",
     "clsx": "catalog:",

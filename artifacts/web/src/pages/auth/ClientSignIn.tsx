@@ -9,7 +9,7 @@ import { rememberDoor } from "@/lib/session";
 
 export function ClientSignIn() {
   const tenant = useTenant();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get("email") ?? "");
   const [sent, setSent] = useState<{ message: string; devLink?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

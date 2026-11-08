@@ -256,6 +256,17 @@ function DomainTab({ companyId, data }: { companyId: number; data: SettingsRespo
 const FEATURE_FOR = { sendgrid: "sendgrid", twilio: "twilio_sms", stripe: "stripe_checkout", calendly: "calendly" } as const;
 
 function IntegrationsTab({ companyId, data }: { companyId: number; data: SettingsResponse }) {
+  const { toast } = useToast();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("stripe");
+    if (!result) return;
+    const msg: Record<string, [string, "success" | "error" | "info"]> = { connected: ["Stripe connected — checkout is live on your pricing page", "success"], denied: ["Stripe connection was cancelled", "info"], failed: ["Stripe couldn't complete the connection. Try again or paste your account id.", "error"], invalid_state: ["That Stripe link expired. Start again from Integrations.", "error"] };
+    const m = msg[result];
+    if (m) toast(m[0], m[1]);
+    params.delete("stripe");
+    window.history.replaceState(null, "", `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`);
+  }, [toast]);
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start gap-4 px-6 py-[22px]">
       {data.integrationDefs.map((def) => (
@@ -296,8 +307,25 @@ function IntegrationCard({ companyId, def, view, locked }: { companyId: number; 
       toast(`${def.name} disconnected`, "info");
     },
   });
+  const connectStripe = useMutation({
+    mutationFn: () => api<{ url: string | null; available: boolean }>(`/companies/${companyId}/settings/integrations/stripe/connect-url`),
+    onSuccess: (r) => {
+      if (r.url) window.location.assign(r.url);
+      else toast("Stripe Connect isn't configured on the platform yet — paste your account id (acct_…) instead.", "info");
+    },
+    onError: (e) => toast(errorMessage(e), "error"),
+  });
+  const registerWebhook = useMutation({
+    mutationFn: () => api<{ ok: boolean }>(`/companies/${companyId}/settings/integrations/calendly/webhook`, { method: "POST" }),
+    onSuccess: () => {
+      refresh();
+      toast("Calendly webhook registered — bookings now post back to the pipeline and portal");
+    },
+    onError: (e) => toast(errorMessage(e), "error"),
+  });
   const st = INT_STATUS[view.status];
   const connected = view.status === "connected";
+  const webhookOn = Boolean(view.config.webhooks) && Boolean(view.config.webhookSubscriptionUri);
   return (
     <div className={cn("flex flex-col gap-3 rounded-card border border-line-soft bg-[#F7FBFF] p-[18px]", locked && "opacity-60")}>
       <div className="flex items-center gap-3">
@@ -347,6 +375,22 @@ function IntegrationCard({ companyId, def, view, locked }: { companyId: number; 
             ))}
           </div>
           {view.lastError && view.status !== "connected" && <div className="text-[12.5px] font-bold text-warn-deep">{view.lastError}</div>}
+          {def.provider === "stripe" && !connected && (
+            <Button type="button" size="sm" className="self-start bg-[#635BFF] hover:bg-[#4f46e5] shadow-none" loading={connectStripe.isPending} onClick={() => connectStripe.mutate()}>
+              Connect with Stripe
+            </Button>
+          )}
+          {def.provider === "calendly" && view.secrets.token?.set && (
+            <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-line-soft bg-white px-3 py-2 text-[12.5px] font-semibold text-body">
+              <span className={cn("h-2 w-2 rounded-full", webhookOn ? "bg-success" : "bg-warn")} />
+              {webhookOn ? "Webhook active · invitee.created updates the pipeline and portal" : "Webhook not registered — bookings won't post back yet"}
+              {!webhookOn && connected && (
+                <Button type="button" size="sm" variant="secondary" className="ml-auto h-8 px-3 text-[12px]" loading={registerWebhook.isPending} onClick={() => registerWebhook.mutate()}>
+                  Register webhook
+                </Button>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             <Button type="submit" size="sm" loading={save.isPending}>
               {connected ? "Save changes" : def.connectLabel}

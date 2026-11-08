@@ -25,6 +25,7 @@ export interface PublicCompany {
   status: string;
   branding: PublicBranding;
   publicFeatures: Record<string, boolean>;
+  checkout: { ready: boolean; mode: "live" | "demo" | "off" };
 }
 
 export type TenantState =
