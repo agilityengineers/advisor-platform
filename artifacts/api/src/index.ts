@@ -8,6 +8,7 @@ import { runBootSeed } from "./lib/seed";
 import { mountSpa } from "./lib/spa";
 import { startDomainRecheckScheduler } from "./lib/domains";
 import { startCommerceScheduler } from "./lib/orders";
+import { graderMode } from "./lib/grader";
 
 async function bootstrap(): Promise<void> {
   if (process.env.SKIP_MIGRATIONS === "true") {
@@ -21,6 +22,12 @@ async function bootstrap(): Promise<void> {
   const keySource = await initEncryptionKey();
   logger.info({ keySource }, "Encryption key ready");
   await runBootSeed();
+
+  const grader = graderMode();
+  if (grader === "live") logger.info("Profile Grader: live (Bright Data)");
+  else if (grader === "demo") logger.warn("Profile Grader: DEMO mode — leads are graded on sample profiles, not their LinkedIn data");
+  else logger.warn("Profile Grader: OFF — set BRIGHTDATA_API_KEY to grade leads' LinkedIn profiles");
+  if (env.isProduction && process.env.GRADER_DEMO === "true") logger.warn("GRADER_DEMO=true is ignored in production");
 
   const app = createApp();
   await mountSpa(app);
