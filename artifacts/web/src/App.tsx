@@ -12,9 +12,17 @@ import { StaffSignIn } from "@/pages/auth/StaffSignIn";
 import { ClientSignIn, ClientVerify } from "@/pages/auth/ClientSignIn";
 import { ForgotPassword, ResetPassword } from "@/pages/auth/Password";
 import { AcceptInvite } from "@/pages/auth/AcceptInvite";
-import { ClientPortalPlaceholder } from "@/pages/Placeholders";
 import { PlatformAdmin } from "@/pages/admin";
-import { ConsoleEntry } from "@/pages/console/ConsoleEntry";
+import { AboutPage } from "@/pages/public/AboutPage";
+import { StandardPricing } from "@/pages/public/StandardPricing";
+import { CommercialPricing } from "@/pages/public/CommercialPricing";
+import { ProfileGrade } from "@/pages/public/ProfileGrade";
+import { Checkout } from "@/pages/public/Checkout";
+import { ThankYou } from "@/pages/public/ThankYou";
+import { BookInterview } from "@/pages/public/BookInterview";
+import { IntakePage } from "@/pages/public/IntakePage";
+import { ClientPortal } from "@/pages/portal/ClientPortal";
+import { CompanyConsole } from "@/pages/console/CompanyConsole";
 import { ToastProvider } from "@/hooks/use-toast";
 
 const queryClient = new QueryClient({
@@ -54,6 +62,14 @@ export default function App() {
               <ToastProvider>
               <Switch>
                 <Route path="/" component={Home} />
+                <Route path="/about" component={AboutPage} />
+                <Route path="/pricing" component={StandardPricing} />
+                <Route path="/commercial-pricing" component={CommercialPricing} />
+                <Route path="/grade/:publicId" component={ProfileGrade} />
+                <Route path="/buy" component={Checkout} />
+                <Route path="/thanks" component={ThankYou} />
+                <Route path="/book" component={BookInterview} />
+                <Route path="/intake" component={IntakePage} />
                 <Route path="/login" component={SignInChooser} />
                 <Route path="/staff/login" component={StaffSignIn} />
                 <Route path="/client/login" component={ClientSignIn} />
@@ -63,7 +79,7 @@ export default function App() {
                 <Route path="/accept-invite" component={AcceptInvite} />
                 <Route path="/admin/companies/:companyId/console">
                   <ProtectedRoute roles={["super_admin"]}>
-                    <ConsoleEntry />
+                    <CompanyConsole />
                   </ProtectedRoute>
                 </Route>
                 <Route path="/admin" nest>
@@ -73,12 +89,12 @@ export default function App() {
                 </Route>
                 <Route path="/app" nest>
                   <ProtectedRoute roles={["super_admin", "admin", "manager", "advisor"]}>
-                    <ConsoleEntry />
+                    <CompanyConsole />
                   </ProtectedRoute>
                 </Route>
                 <Route path="/portal" nest>
                   <ProtectedRoute roles={["client"]}>
-                    <ClientPortalPlaceholder />
+                    <ClientPortal />
                   </ProtectedRoute>
                 </Route>
                 <Route component={NotFound} />

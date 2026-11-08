@@ -86,3 +86,44 @@ describe("derived inputs", () => {
     expect(deriveValueScores("Awarded, recognized, promoted leader", "Led teams and managed budgets")).toEqual({ serviceLanguageScore: 0, balanceScore: 0 });
   });
 });
+
+describe("Bright Data normalisation", () => {
+  it("flattens a dataset record into the metrics the rubric scores, with the source repo's rules", async () => {
+    const { normalizeBrightDataProfile, normalizeLinkedinProfileUrl } = await import("./brightData");
+    const { scoreProfile, GRADER_DEFAULT } = await import("./grader");
+    const raw = [
+      {
+        name: "Dana Whitfield",
+        position: "I help COOs at mid-market manufacturers grow margins after a merger | Operations advisor",
+        about: "I help operations leaders improve integration outcomes and scale what works. " + "word ".repeat(140),
+        city: "Chicago",
+        country_code: "US",
+        avatar: "https://media.licdn.com/x.jpg",
+        connections: "500+",
+        followers: "1,310",
+        recommendations_count: 3,
+        posts: [{}, {}, {}, {}, {}],
+        experience: [{ title: "COO", company: "Acme", description: "Ran " + "ops ".repeat(60) }],
+        skills: [{ name: "Operations" }, "Integration", { skill: "Leadership" }],
+        certifications: ["Prosci", { name: "PMP" }],
+        projects: [{ title: "Merger" }],
+        honors_and_awards: [{ title: "Award" }],
+        languages: ["English", { name: "French" }],
+        groups: [{ name: "COO Forum" }],
+      },
+    ];
+    const p = normalizeBrightDataProfile(raw, "https://www.linkedin.com/in/danawhitfield/")!;
+    expect(p).toMatchObject({ name: "Dana Whitfield", location: "Chicago, US", photoPresent: 1, bannerPresent: 0, connectionsCount: 500, followersCount: 1310, recommendationsCount: 3, postsCount: 5, activityFrequency: "weekly", activityScore: 2, skillsCount: 3, certificationsCount: 2, projectsCount: 1, honorsCount: 1, languagesCount: 2, groupsCount: 1, hasCleanUrl: 1, hasCLevelTitle: 0 });
+    expect(p.aboutWordCount).toBeGreaterThan(140);
+    expect(p.profileWordCount).toBeGreaterThan(p.aboutWordCount);
+    expect(p.serviceLanguageScore).toBe(3);
+    const r = scoreProfile(GRADER_DEFAULT, p);
+    expect(r.total).toBeGreaterThan(0);
+    expect(r.categories.find((c) => c.key === "network")?.score).toBe(Math.round(15 * 0.6 * 1 + 15 * 0.4 * 0.7));
+    expect(normalizeBrightDataProfile([{ error: "not found" }], "x")).toBeNull();
+    expect(normalizeBrightDataProfile({ connections: 42, followers: 7 }, "https://www.linkedin.com/in/abc12345678/")).toMatchObject({ connectionsCount: 42, followersCount: 7, hasCleanUrl: 0, activityScore: 0 });
+    expect(normalizeLinkedinProfileUrl("linkedin.com/in/DanaWhitfield")).toBe("https://www.linkedin.com/in/DanaWhitfield/");
+    expect(normalizeLinkedinProfileUrl("https://www.linkedin.com/company/acme")).toBeNull();
+    expect(normalizeLinkedinProfileUrl("example.com/in/x")).toBeNull();
+  });
+});

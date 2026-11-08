@@ -6,3 +6,8 @@ export * from "./reviews";
 export * from "./grader";
 export * from "./schemas";
 export * from "./platformContent";
+export * from "./outreach";
+export * from "./integrations";
+export * from "./offers";
+export * from "./portal";
+export * from "./brightData";

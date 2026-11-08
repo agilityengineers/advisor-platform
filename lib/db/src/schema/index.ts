@@ -6,3 +6,4 @@ export * from "./crm";
 export * from "./grader";
 export * from "./commerce";
 export * from "./ops";
+export * from "./platformLeads";

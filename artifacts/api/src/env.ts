@@ -44,7 +44,16 @@ export const env = {
   platformFromEmail: process.env.PLATFORM_FROM_EMAIL ?? "partner@advisor-platform.findabusinesspro.com",
   platformFromName: process.env.PLATFORM_FROM_NAME ?? "Advisor Platform",
   brightDataApiKey: process.env.BRIGHTDATA_API_KEY ?? "",
+  /** Base64 (SPKI DER) public key of the platform SendGrid account's signed Event Webhook; companies add theirs in Integrations. */
+  sendgridWebhookPublicKey: process.env.SENDGRID_WEBHOOK_PUBLIC_KEY ?? "",
+  /** Grade with deterministic sample profiles instead of Bright Data (automatic outside production without a key). */
+  graderDemo: process.env.GRADER_DEMO === "true" || (!isProduction && !process.env.BRIGHTDATA_API_KEY),
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  /** Stripe Connect OAuth client id (ca_…) for "Connect with Stripe"; pasting an acct_ id still works without it. */
+  stripeConnectClientId: process.env.STRIPE_CONNECT_CLIENT_ID ?? "",
+  /** Lets the checkout run without Stripe outside production (orders are marked paid by a demo button). */
+  checkoutDemo: process.env.CHECKOUT_DEMO === "true" || (!isProduction && !process.env.STRIPE_SECRET_KEY),
   corsAllowedOrigins: list("CORS_ALLOWED_ORIGINS", []),
 };

@@ -1,6 +1,10 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, companyBrandingTable, companyIntegrationsTable, customDomainsTable } from "@workspace/db";
+import { eq as eqOp, and, count } from "drizzle-orm";
+import { db, companyBrandingTable, companyIntegrationsTable, customDomainsTable, leadsTable, reviewsTable, siteContentTable, auditLogsTable } from "@workspace/db";
+import { desc, gt } from "drizzle-orm";
+import { audit } from "../lib/audit";
+import { calendlyUrlFor } from "../lib/integrations";
 import { authMiddleware, requireCompany } from "../lib/auth";
 import { companyFeatureDetail, getPlan } from "../lib/features";
 import { companyBaseUrl } from "../lib/urls";
@@ -10,12 +14,31 @@ const router: IRouter = Router();
 /** Shell data for the company console: identity, plan, features (with sources), integrations status, domain. */
 router.get("/companies/:companyId/summary", authMiddleware, requireCompany, async (req, res) => {
   const company = req.company!;
+  // The super admin stepping into a company is an audited act (once per hour per company, so the trail stays readable).
+  if (req.user!.role === "super_admin") {
+    const since = new Date(Date.now() - 3600_000);
+    const [recent] = await db
+      .select({ id: auditLogsTable.id })
+      .from(auditLogsTable)
+      .where(and(eqOp(auditLogsTable.userId, req.user!.userId), eqOp(auditLogsTable.companyId, company.id), eqOp(auditLogsTable.action, "impersonation"), gt(auditLogsTable.createdAt, since)))
+      .orderBy(desc(auditLogsTable.createdAt))
+      .limit(1);
+    if (!recent) await audit(req, { action: "impersonation", resourceType: "company", resourceId: company.id, companyId: company.id, details: { via: "company_console" } });
+  }
   const [branding] = await db.select().from(companyBrandingTable).where(eq(companyBrandingTable.companyId, company.id)).limit(1);
   const plan = await getPlan(company.plan);
   const features = await companyFeatureDetail(company);
   const integrations = await db.select({ provider: companyIntegrationsTable.provider, status: companyIntegrationsTable.status }).from(companyIntegrationsTable).where(eq(companyIntegrationsTable.companyId, company.id));
   const [domain] = await db.select().from(customDomainsTable).where(eq(customDomainsTable.companyId, company.id)).limit(1);
+  const [[leadCount], [reviewCount], contentRows, calendlyUrl] = await Promise.all([
+    db.select({ n: count() }).from(leadsTable).where(eqOp(leadsTable.companyId, company.id)),
+    db.select({ n: count() }).from(reviewsTable).where(and(eqOp(reviewsTable.companyId, company.id), eqOp(reviewsTable.visible, true))),
+    db.select({ status: siteContentTable.status }).from(siteContentTable).where(eqOp(siteContentTable.companyId, company.id)),
+    calendlyUrlFor(company.id),
+  ]);
   res.json({
+    counts: { leads: Number(leadCount?.n ?? 0), reviewsLive: Number(reviewCount?.n ?? 0), hasDraft: contentRows.some((r) => r.status === "draft") },
+    calendlyUrl,
     company: { id: company.id, name: company.name, slug: company.slug, ownerName: company.ownerName, ownerEmail: company.ownerEmail, plan: company.plan, status: company.status, trialEndsAt: company.trialEndsAt, createdAt: company.createdAt },
     plan: plan ? { key: plan.key, name: plan.name, price: plan.price } : { key: company.plan, name: company.plan, price: null },
     branding: branding ?? null,

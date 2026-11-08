@@ -33,7 +33,7 @@ export interface Overview {
   kpis: { total: number; active: number; trial: number; comp: number; suspended: number; mrr: number };
   companies: CompanyRow[];
   plans: PlanSummary[];
-  counts: { companies: number; templates: number; features: number; plans: number };
+  counts: { companies: number; templates: number; features: number; plans: number; newRequests: number };
   platform: { name: string; domains: string[]; primaryDomain: string; subdomainBase: string; superAdmin: { name: string; email: string; username: string } };
 }
 

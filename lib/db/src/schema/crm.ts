@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, boolean, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import type { StageKind } from "@workspace/shared";
 import { companiesTable } from "./companies";
 
@@ -60,6 +60,9 @@ export const bookingsTable = pgTable("bookings", {
   startAt: timestamp("start_at"),
   endAt: timestamp("end_at"),
   status: text("status").notNull().default("scheduled"),
+  /** Whether the Calendly webhook has confirmed it (a browser event alone is provisional). */
+  confirmed: boolean("confirmed").notNull().default(false),
+  prepSentAt: timestamp("prep_sent_at"),
   raw: jsonb("raw").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => [index("idx_bookings_company").on(t.companyId), uniqueIndex("uq_bookings_invitee").on(t.inviteeUri)]);
