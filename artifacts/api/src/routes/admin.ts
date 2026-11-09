@@ -28,6 +28,8 @@ import { audit } from "../lib/audit";
 import { invalidateTenantCache } from "../lib/tenant";
 import { env } from "../env";
 import { newPlatformLeadCount } from "./platformLeads";
+import { platformEmailStatus } from "../lib/platformEmail";
+import { sendEmail, renderEmail, heading, paragraph, button, PLATFORM_LETTERHEAD } from "../lib/email";
 
 const router: IRouter = Router();
 const guard = [authMiddleware, requireSuperAdmin] as const;
@@ -378,6 +380,52 @@ router.get("/admin/settings", ...guard, async (_req, res) => {
     },
     platformFrom: { email: env.platformFromEmail, name: env.platformFromName },
   });
+});
+
+// ---------------------------------------------------------------------------
+// Platform email: SendGrid health + test sends through the real delivery path
+// ---------------------------------------------------------------------------
+
+router.get("/admin/email/status", ...guard, async (_req, res) => {
+  res.json(await platformEmailStatus());
+});
+
+const TEST_KINDS = ["plain", "invite", "password_reset", "magic_link", "receipt"] as const;
+const TestEmailBody = z.object({ to: emailSchema.optional(), kind: z.enum(TEST_KINDS).default("plain") });
+
+/** Samples of each platform message, so the super admin can see what lands (and where) without minting a live token. */
+function testMessage(kind: (typeof TEST_KINDS)[number]): { subject: string; body: string } {
+  const lh = PLATFORM_LETTERHEAD;
+  const sample = `${env.appUrl}/staff/login`;
+  switch (kind) {
+    case "invite":
+      return { subject: `[Test] You're invited to ${lh.name}`, body: heading("You're invited") + paragraph("This is a test of the invitation email. A real invite carries a one-time link to set a password.") + button(sample, "Accept invitation", lh.primaryColor) };
+    case "password_reset":
+      return { subject: `[Test] Reset your ${lh.name} password`, body: heading("Reset your password") + paragraph("This is a test of the password-reset email. A real one carries a link that works once and expires in 60 minutes.") + button(sample, "Choose a new password", lh.primaryColor) };
+    case "magic_link":
+      return { subject: `[Test] Your ${lh.name} sign-in link`, body: heading("Sign in to your portal") + paragraph("This is a test of the client magic-link email. A real one expires in 15 minutes.") + button(sample, "Open my portal", lh.primaryColor) };
+    case "receipt":
+      return { subject: `[Test] Your receipt from ${lh.name}`, body: heading("Thanks for your purchase") + paragraph("This is a test of the purchase receipt and welcome email clients receive after checkout.") + paragraph("<strong>Sample package</strong> — $0.00") + button(sample, "Open my portal", lh.primaryColor) };
+    default:
+      return { subject: `[Test] ${lh.name} email delivery`, body: heading("Email delivery works") + paragraph(`If you can read this, the platform sender (${env.platformFromEmail}) is delivering mail.`) };
+  }
+}
+
+router.post("/admin/email/test", ...guard, async (req, res) => {
+  const parsed = TestEmailBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "Enter a valid email address." });
+    return;
+  }
+  const to = parsed.data.to ?? req.user!.email;
+  const { subject, body } = testMessage(parsed.data.kind);
+  const result = await sendEmail({ to, subject, html: renderEmail(PLATFORM_LETTERHEAD, body), template: `test_${parsed.data.kind}`, metadata: { test: true } });
+  await audit(req, { action: "platform_email_test", resourceType: "email", resourceId: result.emailLogId ?? null, details: { to, kind: parsed.data.kind, success: result.success } });
+  if (!result.success) {
+    res.status(result.notConfigured ? 503 : 502).json({ error: result.notConfigured ? "SENDGRID_API_KEY is not set — nothing was sent." : `SendGrid refused the message: ${result.error}`, emailLogId: result.emailLogId });
+    return;
+  }
+  res.json({ ok: true, to, kind: parsed.data.kind, emailLogId: result.emailLogId });
 });
 
 /**

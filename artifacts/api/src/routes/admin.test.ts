@@ -153,3 +153,20 @@ describe("platform admin", () => {
     expect((await server.api("/api/admin/platform-content/publish", { method: "POST", token: superToken })).status).toBe(400);
   });
 });
+
+describe("platform email diagnostics", () => {
+  it("reports an unconfigured sender honestly and refuses a test send", async () => {
+    expect((await server.api("/api/admin/email/status", { token: adminToken })).status).toBe(403);
+    const status = await server.api<{ configured: boolean; ready: boolean; webhookUrl: string; checks: { key: string; state: string }[] }>("/api/admin/email/status", { token: superToken });
+    expect(status.status).toBe(200);
+    expect(status.body.webhookUrl).toMatch(/\/api\/webhooks\/sendgrid$/);
+    if (!status.body.configured) {
+      expect(status.body.ready).toBe(false);
+      expect(status.body.checks[0]).toMatchObject({ key: "api_key", state: "fail" });
+      const sent = await server.api<{ error: string }>("/api/admin/email/test", { method: "POST", token: superToken, body: JSON.stringify({ kind: "password_reset" }) });
+      expect(sent.status).toBe(503);
+      expect(sent.body.error).toMatch(/SENDGRID_API_KEY/);
+    }
+    expect((await server.api("/api/admin/email/test", { method: "POST", token: superToken, body: JSON.stringify({ to: "not-an-email" }) })).status).toBe(400);
+  });
+});
