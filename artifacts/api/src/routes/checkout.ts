@@ -4,7 +4,7 @@ import { db, bookingsTable, clientsTable, intakesTable, leadsTable, ordersTable,
 import { CheckoutBody, IntakeBody, BookedBody, ownerFirstName } from "@workspace/shared";
 import { publicFormLimiter } from "../lib/rateLimit";
 import { companyFeatures } from "../lib/features";
-import { checkoutMode, checkoutReady, createCheckoutSession, readCheckoutSession } from "../lib/stripe";
+import { checkoutMode, checkoutReady, createCheckoutSession, readCheckoutSession, sessionMismatch } from "../lib/stripe";
 import { createPendingOrder, fulfillOrder, orderByPublicId, orderLinks, pricingFor, installmentsFor } from "../lib/orders";
 import { loadClientBundle, setStageStatus, stageViews } from "../lib/portal";
 import { logActivity, normalizeLinkedin } from "../lib/leads";
@@ -88,7 +88,8 @@ async function orderPayload(company: Company, orderRow: Order) {
   return {
     order: {
       publicId: orderRow.publicId,
-      status: orderRow.status,
+      // "fulfilling" is a few hundred milliseconds of bookkeeping after the charge; the buyer's pages keep polling.
+      status: orderRow.status === "fulfilling" ? "pending" : orderRow.status,
       offer: { key: orderRow.offerKey, name: pricing.offer.name, sub: pricing.offer.sub, includes: pricing.offer.includes },
       plan: pricing.plan,
       installments: pricing.installments,
@@ -125,10 +126,12 @@ router.get("/public/orders/:publicId", async (req, res) => {
   }
   // The return page beats the webhook: confirm the session directly so nobody waits on Stripe's delivery.
   const sessionId = typeof req.query.session_id === "string" ? req.query.session_id : null;
-  if (order.status === "pending" && sessionId && checkoutMode() === "live" && order.stripeSessionId === sessionId && order.stripeAccountId) {
+  if ((order.status === "pending" || order.status === "fulfilling") && sessionId && checkoutMode() === "live" && order.stripeSessionId === sessionId && order.stripeAccountId) {
     try {
       const paid = await readCheckoutSession(sessionId, order.stripeAccountId);
-      if (paid.paid) order = (await fulfillOrder(order.id, { source: "stripe", sessionId, accountId: order.stripeAccountId, paymentIntentId: paid.paymentIntentId, customerId: paid.customerId, paymentMethodId: paid.paymentMethodId })).order;
+      const mismatch = sessionMismatch(order, { sessionId, accountId: order.stripeAccountId, amountTotal: paid.amountTotal, currency: paid.currency });
+      if (mismatch) logger.error({ orderId: order.id, sessionId, mismatch }, "Checkout session does not match the order — not fulfilled");
+      else if (paid.paid) order = (await fulfillOrder(order.id, { source: "stripe", sessionId, accountId: order.stripeAccountId, paymentIntentId: paid.paymentIntentId, customerId: paid.customerId, paymentMethodId: paid.paymentMethodId })).order;
     } catch (err) {
       logger.warn({ err, orderId: order.id }, "Could not confirm checkout session on return");
     }

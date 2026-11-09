@@ -146,7 +146,7 @@ export function ClientPortal() {
                         Payment {i.seq} of {primary.installments} · {cents(i.amountCents)}
                       </div>
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: i.status === "paid" ? "#1E7A4C" : i.status === "failed" ? "#C2361F" : "#8A6320" }}>
-                        {i.status === "paid" ? `Paid · ${fmtDate(i.paidAt)}` : i.status === "failed" ? "Card declined · we'll be in touch" : i.status === "canceled" ? "Canceled" : `Scheduled · ${fmtDate(i.dueAt)}`}
+                        {i.status === "paid" ? `Paid · ${fmtDate(i.paidAt)}` : i.status === "failed" ? "Card declined · we'll be in touch" : i.status === "canceled" ? "Canceled" : i.status === "refunded" ? "Refunded" : i.status === "processing" ? "Processing…" : `Scheduled · ${fmtDate(i.dueAt)}`}
                       </div>
                     </div>
                   ))}

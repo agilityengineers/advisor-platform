@@ -8,6 +8,7 @@ import { runBootSeed } from "./lib/seed";
 import { mountSpa } from "./lib/spa";
 import { startDomainRecheckScheduler } from "./lib/domains";
 import { startCommerceScheduler } from "./lib/orders";
+import { stripeConfig } from "./lib/stripe";
 import { graderMode } from "./lib/grader";
 
 async function bootstrap(): Promise<void> {
@@ -22,6 +23,11 @@ async function bootstrap(): Promise<void> {
   const keySource = await initEncryptionKey();
   logger.info({ keySource }, "Encryption key ready");
   await runBootSeed();
+
+  // Payments: say plainly why checkout is off rather than let buyers find out.
+  const stripeCfg = stripeConfig();
+  if (stripeCfg.problems.length) logger.warn({ checkout: stripeCfg.mode, problems: stripeCfg.problems }, "Stripe checkout is OFF until the platform keys are fixed");
+  else logger.info({ checkout: stripeCfg.mode, keyMode: stripeCfg.keyMode, connectOAuth: stripeCfg.connectClientId }, stripeCfg.keyMode === "test" ? "Stripe checkout in TEST mode (no real charges)" : stripeCfg.keyMode === "live" ? "Stripe checkout LIVE — real charges" : "Stripe checkout in demo mode");
 
   if (env.isProduction && !env.sendgridApiKey) {
     logger.error("SENDGRID_API_KEY is not set — invitations, password resets, magic links and client mail will NOT be delivered. Add it in Replit Secrets.");

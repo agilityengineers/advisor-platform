@@ -1,9 +1,9 @@
 import { Router, type IRouter } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt, or } from "drizzle-orm";
 import type Stripe from "stripe";
-import { db, webhookEventsTable, ordersTable, orderInstallmentsTable, bookingsTable, leadsTable, clientsTable, type Company } from "@workspace/db";
-import { parseStripeEvent, readCheckoutSession } from "../lib/stripe";
-import { fulfillOrder, markRefunded } from "../lib/orders";
+import { db, webhookEventsTable, ordersTable, bookingsTable, leadsTable, clientsTable, type Company } from "@workspace/db";
+import { parseStripeEvent, readCheckoutSession, sessionMismatch } from "../lib/stripe";
+import { applyInstallmentFailed, applyInstallmentSucceeded, fulfillOrder, recordRefund } from "../lib/orders";
 import { companiesWithCalendlyWebhooks, parseInviteePayload, verifyCalendlySignature } from "../lib/calendly";
 import { setStageStatus } from "../lib/portal";
 import { logActivity } from "../lib/leads";
@@ -15,14 +15,30 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-/** Record the delivery first; a duplicate (same provider + event id) is acknowledged and skipped. */
-async function claimEvent(provider: string, eventId: string, eventType: string, companyId: number | null, payload: unknown): Promise<number | null> {
-  const [row] = await db.insert(webhookEventsTable).values({ provider, eventId, eventType, companyId, payload, status: "received" }).onConflictDoNothing().returning({ id: webhookEventsTable.id });
+/** A "received" row older than this was abandoned mid-processing (crash, deploy) and may be retried. */
+const STALE_CLAIM_MS = 5 * 60_000;
+
+/**
+ * Record the delivery first. A repeat of an event that was processed (or is being processed right now)
+ * is acknowledged and skipped; a repeat of one that **failed** — or was abandoned — is claimed again,
+ * because that repeat is the provider retrying precisely so we get another go.
+ */
+export async function claimEvent(provider: string, eventId: string, eventType: string, companyId: number | null, payload: unknown): Promise<number | null> {
+  const [row] = await db
+    .insert(webhookEventsTable)
+    .values({ provider, eventId, eventType, companyId, payload, status: "received" })
+    .onConflictDoUpdate({
+      target: [webhookEventsTable.provider, webhookEventsTable.eventId],
+      set: { status: "received", error: null, receivedAt: new Date(), processedAt: null },
+      setWhere: or(eq(webhookEventsTable.status, "failed"), and(eq(webhookEventsTable.status, "received"), lt(webhookEventsTable.receivedAt, new Date(Date.now() - STALE_CLAIM_MS)))),
+    })
+    .returning({ id: webhookEventsTable.id });
   return row?.id ?? null;
 }
 
-async function finishEvent(id: number, error: string | null): Promise<void> {
-  await db.update(webhookEventsTable).set({ status: error ? "failed" : "processed", error, processedAt: new Date() }).where(eq(webhookEventsTable.id, id));
+/** processed, failed (will be retried on redelivery), or ignored (verified but not ours to act on — kept with the reason). */
+async function finishEvent(id: number, error: string | null, status?: "ignored"): Promise<void> {
+  await db.update(webhookEventsTable).set({ status: status ?? (error ? "failed" : "processed"), error, processedAt: new Date() }).where(eq(webhookEventsTable.id, id));
 }
 
 // ---------------------------------------------------------------------------
@@ -43,66 +59,65 @@ router.post("/webhooks/stripe", async (req, res) => {
     res.json({ received: true, duplicate: true });
     return;
   }
+  // Connect events carry the connected account they happened on; platform-account events have none.
   const account = (event as Stripe.Event & { account?: string }).account ?? null;
   try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const publicId = session.metadata?.orderPublicId;
-        if (!publicId) break;
-        const [order] = await db.select().from(ordersTable).where(eq(ordersTable.publicId, publicId)).limit(1);
-        if (!order) break;
-        if (session.payment_status !== "paid") break;
-        let facts = { paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null, customerId: typeof session.customer === "string" ? session.customer : null, paymentMethodId: null as string | null };
-        const acct = account ?? order.stripeAccountId;
-        if (acct) {
-          try {
-            const read = await readCheckoutSession(session.id, acct);
-            facts = { paymentIntentId: read.paymentIntentId ?? facts.paymentIntentId, customerId: read.customerId ?? facts.customerId, paymentMethodId: read.paymentMethodId };
-          } catch (err) {
-            logger.warn({ err, orderId: order.id }, "Could not expand session on webhook");
-          }
-        }
-        await fulfillOrder(order.id, { source: "stripe", sessionId: session.id, accountId: acct, ...facts });
-        break;
-      }
-      case "payment_intent.succeeded": {
-        const pi = event.data.object as Stripe.PaymentIntent;
-        const seq = Number(pi.metadata?.installmentSeq);
-        const publicId = pi.metadata?.orderPublicId;
-        if (!publicId || !Number.isInteger(seq)) break;
-        const [order] = await db.select().from(ordersTable).where(eq(ordersTable.publicId, publicId)).limit(1);
-        if (!order) break;
-        await db.update(orderInstallmentsTable).set({ status: "paid", paidAt: new Date(), stripePaymentIntentId: pi.id, lastError: null }).where(and(eq(orderInstallmentsTable.orderId, order.id), eq(orderInstallmentsTable.seq, seq)));
-        break;
-      }
-      case "payment_intent.payment_failed": {
-        const pi = event.data.object as Stripe.PaymentIntent;
-        const seq = Number(pi.metadata?.installmentSeq);
-        const publicId = pi.metadata?.orderPublicId;
-        if (!publicId || !Number.isInteger(seq)) break;
-        const [order] = await db.select().from(ordersTable).where(eq(ordersTable.publicId, publicId)).limit(1);
-        if (!order) break;
-        await db.update(orderInstallmentsTable).set({ status: "failed", lastError: pi.last_payment_error?.message ?? "Payment failed", stripePaymentIntentId: pi.id }).where(and(eq(orderInstallmentsTable.orderId, order.id), eq(orderInstallmentsTable.seq, seq)));
-        break;
-      }
-      case "charge.refunded": {
-        const charge = event.data.object as Stripe.Charge;
-        const pi = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
-        if (pi) await markRefunded(pi, charge.id);
-        break;
-      }
-      default:
-        break;
-    }
-    await finishEvent(claim, null);
-    res.json({ received: true });
+    const ignored = await applyStripeEvent(event, account);
+    if (ignored) logger.warn({ eventId: event.id, type: event.type, account, reason: ignored }, "Stripe event verified but not applied");
+    await finishEvent(claim, ignored, ignored ? "ignored" : undefined);
+    res.json({ received: true, ...(ignored ? { ignored: true } : {}) });
   } catch (err) {
     logger.error({ err, eventId: event.id, type: event.type }, "Stripe webhook processing failed");
     await finishEvent(claim, err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: "Processing failed" });
   }
 });
+
+/** Apply one verified Stripe event. Returns a reason when the event is deliberately not applied. */
+async function applyStripeEvent(event: Stripe.Event, account: string | null): Promise<string | null> {
+  switch (event.type) {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const publicId = session.metadata?.orderPublicId;
+      if (!publicId) return null; // not one of ours
+      const [order] = await db.select().from(ordersTable).where(eq(ordersTable.publicId, publicId)).limit(1);
+      if (!order) return `no order ${publicId}`;
+      const mismatch = sessionMismatch(order, { sessionId: session.id, accountId: account, amountTotal: session.amount_total ?? null, currency: session.currency ?? null });
+      if (mismatch) return `checkout session ${session.id}: ${mismatch}`;
+      if (session.payment_status !== "paid") return null; // async methods: async_payment_succeeded follows
+      let facts = { paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null, customerId: typeof session.customer === "string" ? session.customer : null, paymentMethodId: null as string | null };
+      try {
+        const read = await readCheckoutSession(session.id, account!);
+        facts = { paymentIntentId: read.paymentIntentId ?? facts.paymentIntentId, customerId: read.customerId ?? facts.customerId, paymentMethodId: read.paymentMethodId };
+      } catch (err) {
+        // Without the saved card the plan's later installments can't be charged: let Stripe retry rather than fulfil half-informed.
+        if (order.paymentMode === "split") throw err;
+        logger.warn({ err, orderId: order.id }, "Could not expand session on webhook");
+      }
+      await fulfillOrder(order.id, { source: "stripe", sessionId: session.id, accountId: account, ...facts });
+      return null;
+    }
+    case "payment_intent.succeeded": {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      return applyInstallmentSucceeded(pi, account);
+    }
+    case "payment_intent.payment_failed": {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      await applyInstallmentFailed(pi, account);
+      return null;
+    }
+    case "charge.refunded": {
+      const charge = event.data.object as Stripe.Charge;
+      const pi = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+      if (!pi) return null;
+      const r = await recordRefund({ paymentIntentId: pi, chargeId: charge.id, amountRefundedCents: charge.amount_refunded, fully: charge.refunded, accountId: account });
+      return r ? null : `refund for ${pi} matches no order on account ${account ?? "(platform)"}`;
+    }
+    default:
+      return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Calendly (per-company subscriptions; the signing key identifies the company)

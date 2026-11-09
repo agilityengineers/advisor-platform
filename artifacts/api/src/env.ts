@@ -58,6 +58,11 @@ export const env = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   /** Stripe Connect OAuth client id (ca_…) for "Connect with Stripe"; pasting an acct_ id still works without it. */
   stripeConnectClientId: process.env.STRIPE_CONNECT_CLIENT_ID ?? "",
+  /**
+   * Second key for real money: sk_live_ keys are refused until this is "true", so the platform can only
+   * take live charges after test mode has been verified end to end (see "Payments go-live" in replit.md).
+   */
+  stripeLiveEnabled: process.env.STRIPE_LIVE_ENABLED === "true",
   /** Lets the checkout run without Stripe outside production (orders are marked paid by a demo button). */
   checkoutDemo: process.env.CHECKOUT_DEMO === "true" || (!isProduction && !process.env.STRIPE_SECRET_KEY),
   corsAllowedOrigins: list("CORS_ALLOWED_ORIGINS", []),
