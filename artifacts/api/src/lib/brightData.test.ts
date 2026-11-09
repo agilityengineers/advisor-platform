@@ -24,6 +24,7 @@ describe("Bright Data client", () => {
   it("names an unconfigured key, a rejected key, an empty balance and rate limits", async () => {
     expect(await fetchLinkedInProfile(URL_, { apiKey: "" })).toMatchObject({ ok: false, message: "Bright Data is not configured", retryable: false });
     expect(await run(stub(json(401, "Unauthorized")))).toMatchObject({ ok: false, message: expect.stringContaining("rejected the API key"), retryable: false });
+    expect(await run(stub(json(400, "Customer is not active")))).toMatchObject({ ok: false, message: expect.stringContaining("account is not active"), retryable: false });
     expect(httpFailure("start", 402, "")).toMatchObject({ message: expect.stringContaining("balance"), retryable: false });
     expect(httpFailure("status", 429, "")).toMatchObject({ retryable: true });
     expect(httpFailure("status", 503, "")).toMatchObject({ message: expect.stringContaining("unavailable"), retryable: true });

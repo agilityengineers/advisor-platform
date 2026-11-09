@@ -20,7 +20,7 @@ async function main(): Promise<number> {
     console.error("BRIGHTDATA_API_KEY is not set — add it as a Secret first.");
     return 2;
   }
-  console.log(`Fetching ${url} via Bright Data dataset ${BRIGHTDATA_DATASET_ID} (up to ~60 s)…`);
+  console.log(`Fetching ${url} via Bright Data dataset ${BRIGHTDATA_DATASET_ID} (up to ~2 min)…`);
   const started = Date.now();
   const outcome = await fetchLinkedInProfile(url, { apiKey });
   const secs = ((Date.now() - started) / 1000).toFixed(1);

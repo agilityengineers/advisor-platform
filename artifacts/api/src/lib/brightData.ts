@@ -2,7 +2,7 @@ import { normalizeBrightDataProfile, type GraderProfile } from "@workspace/share
 
 /**
  * Bright Data client for the Profile Grader: trigger the LinkedIn profile
- * dataset job, poll the snapshot every 2 s for up to 60 s. The caller
+ * dataset job, poll the snapshot every 2 s for up to 120 s. The caller
  * (lib/grader.ts) retries the whole fetch once when the failure is retryable.
  *
  * Deliberately free of `env` and the database so `scripts/checkGrader.ts` can
@@ -16,7 +16,8 @@ import { normalizeBrightDataProfile, type GraderProfile } from "@workspace/share
 export const BRIGHTDATA_DATASET_ID = "gd_l1viktl72bvl7bjuj0";
 const API = "https://api.brightdata.com/datasets/v3";
 const POLL_INTERVAL_MS = 2000;
-const POLL_ATTEMPTS = 30;
+// A fresh collection (discover_new) was measured at ~66 s, so allow 2 minutes before calling it a timeout.
+const POLL_ATTEMPTS = 60;
 
 export type FetchFailure = { ok: false; message: string; details: string; retryable: boolean };
 export type FetchOutcome = { ok: true; profile: GraderProfile; raw: Record<string, unknown>; source: "brightdata" | "sample" } | FetchFailure;
@@ -35,6 +36,7 @@ const clip = (s: string, n = 300) => (s.length > n ? `${s.slice(0, n)}…` : s);
 export function httpFailure(stage: "start" | "status", status: number, body: string): FetchFailure {
   const details = `Bright Data ${stage === "start" ? "trigger" : "snapshot"} answered ${status}: ${clip(body) || "(empty body)"}`;
   if (status === 401 || status === 403) return { ok: false, message: "Bright Data rejected the API key (check BRIGHTDATA_API_KEY and its dataset permissions)", details, retryable: false };
+  if (/customer is not active|account (is )?(not active|inactive|suspended)/i.test(body)) return { ok: false, message: "Bright Data account is not active (activate it or add billing in the Bright Data control panel)", details, retryable: false };
   if (status === 402) return { ok: false, message: "Bright Data account has no remaining balance", details, retryable: false };
   if (status === 404 && stage === "start") return { ok: false, message: "Bright Data dataset not found for this account", details, retryable: false };
   if (status === 429) return { ok: false, message: "Bright Data rate limit reached", details, retryable: true };
