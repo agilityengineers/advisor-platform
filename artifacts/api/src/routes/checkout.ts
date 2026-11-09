@@ -190,7 +190,7 @@ router.post("/public/orders/:publicId/intake", publicFormLimiter, async (req, re
     void sendCompanyMail(company, {
       to: company.ownerEmail,
       subject: `Intake received · ${data.name}`,
-      template: "intake_received",
+      template: "intake_received", kind: "system",
       body:
         heading(`${data.name} completed their intake`) +
         paragraph(`<strong>LinkedIn:</strong> ${escapeHtml(data.linkedin)}<br/><strong>Known for:</strong> ${escapeHtml(data.knownFor)}<br/><strong>Audience:</strong> ${escapeHtml(data.audience || "—")}<br/><strong>Publish:</strong> ${data.access === "self" ? "They'll paste it themselves" : "Screen-share upload"}`) +

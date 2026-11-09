@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FEATURE_REGISTRY, INTEGRATION_PROVIDERS, type FeatureKey } from "@workspace/shared";
 import { api, errorMessage } from "@/lib/api";
 import { cn, initials } from "@/lib/utils";
-import { Alert, Button, Drawer, Field, Input, KpiTile, Modal, PageTitle, Pill, SectionLabel, Segmented, Select, Spinner } from "@/components/ui";
+import { Alert, Button, Drawer, Field, Input, KpiTile, Modal, PageTitle, Pill, SectionLabel, Segmented, Select, Spinner, Textarea } from "@/components/ui";
+import { enterImpersonation, type StartImpersonationResponse } from "@/lib/impersonation";
 import { useToast } from "@/hooks/use-toast";
 import { OVERVIEW_KEY, useOverview } from "./AdminLayout";
 import { INTEGRATION_ABBR, INTEGRATION_NAME, INTEGRATION_STYLE, STATUS_TONE, money, type CompanyDetail, type CompanyRow, type Overview } from "./types";
@@ -20,6 +21,7 @@ export function CompaniesPage() {
   const params = new URLSearchParams(useSearch());
   const selectedId = params.get("company") ? Number(params.get("company")) : null;
   const [createOpen, setCreateOpen] = useState(false);
+  const [impersonate, setImpersonate] = useState<{ companyId: number; userId?: number } | null>(null);
 
   if (overview.isLoading || !overview.data) {
     return (
@@ -56,12 +58,15 @@ export function CompaniesPage() {
                     {h}
                   </th>
                 ))}
+                <th scope="col" className="border-b border-line-soft px-5 py-[13px]">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {o.companies.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-[14px] font-semibold text-muted">
+                  <td colSpan={8} className="px-5 py-10 text-center text-[14px] font-semibold text-muted">
                     No companies yet. Create the first one.
                   </td>
                 </tr>
@@ -107,13 +112,27 @@ export function CompaniesPage() {
                       {c.status}
                     </Pill>
                   </td>
+                  <td className="px-5 py-3.5 text-right">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-[32px] whitespace-nowrap px-3 text-[12.5px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImpersonate({ companyId: c.id });
+                      }}
+                    >
+                      Impersonate
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      {selectedId && <CompanyDrawer companyId={selectedId} overview={o} onClose={() => navigate("/")} />}
+      {selectedId && <CompanyDrawer companyId={selectedId} overview={o} onClose={() => navigate("/")} onImpersonate={(userId) => setImpersonate({ companyId: selectedId, userId })} />}
+      {impersonate && <ImpersonateModal companyId={impersonate.companyId} presetUserId={impersonate.userId} onClose={() => setImpersonate(null)} />}
       {createOpen && <CreateCompanyModal overview={o} onClose={() => setCreateOpen(false)} onCreated={(id) => { setCreateOpen(false); navigate(`/?company=${id}`); }} />}
     </div>
   );
@@ -123,7 +142,7 @@ export function CompaniesPage() {
 // Drawer
 // ---------------------------------------------------------------------------
 
-function CompanyDrawer({ companyId, overview, onClose }: { companyId: number; overview: Overview; onClose: () => void }) {
+function CompanyDrawer({ companyId, overview, onClose, onImpersonate }: { companyId: number; overview: Overview; onClose: () => void; onImpersonate: (userId?: number) => void }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const detail = useQuery<CompanyDetail>({ queryKey: ["admin", "company", companyId], queryFn: () => api(`/admin/companies/${companyId}`) });
@@ -194,6 +213,9 @@ function CompanyDrawer({ companyId, overview, onClose }: { companyId: number; ov
                   Open company dashboard →
                 </Button>
               </Link>
+              <Button size="sm" variant="secondary" className="h-[38px] px-4 text-[13.5px]" onClick={() => onImpersonate()}>
+                Impersonate a user…
+              </Button>
               <a href={d.publicUrl} target="_blank" rel="noopener noreferrer">
                 <Button size="sm" variant="secondary" className="h-[38px] px-4 text-[13.5px]">
                   View website ↗
@@ -295,16 +317,162 @@ function CompanyDrawer({ companyId, overview, onClose }: { companyId: number; ov
                       <span className="font-bold text-navy">{m.name}</span> <span className="font-semibold text-muted">· {m.email}</span>
                       {!m.hasPassword && <span className="ml-2 text-[11px] font-bold text-warn-deep">invite pending</span>}
                     </div>
-                    <Pill className="capitalize">{m.role}</Pill>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {m.active && (
+                        <button type="button" onClick={() => onImpersonate(m.id)} className="rounded-pill border border-line bg-white px-2.5 py-[3px] text-[11.5px] font-bold text-blue-hover hover:bg-pale">
+                          Sign in as
+                        </button>
+                      )}
+                      <Pill className="capitalize">{m.role}</Pill>
+                    </div>
                   </div>
                 ))}
                 {d.team.length === 0 && <div className="text-[13px] font-semibold text-muted">No team members yet.</div>}
               </div>
             </div>
+            <SupportSessions companyId={companyId} />
           </div>
         </>
       )}
     </Drawer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Impersonation
+// ---------------------------------------------------------------------------
+
+interface PeopleResponse {
+  company: { id: number; name: string; slug: string; status: string };
+  people: { id: number; name: string; email: string; role: string; roleLabel: string; active: boolean; hasPassword: boolean; lastLoginAt: string | null }[];
+  defaultMinutes: number;
+  maxMinutes: number;
+}
+
+interface SessionsResponse {
+  sessions: { id: number; target: { id: number; name: string; email: string; role: string }; reason: string; startedAt: string; expiresAt: string; endedAt: string | null; endedReason: string | null; active: boolean }[];
+}
+
+const DURATIONS = [15, 30, 60, 120];
+
+/** Pick a person, say why, choose how long. The company Admin is emailed and every step is audited. */
+function ImpersonateModal({ companyId, presetUserId, onClose }: { companyId: number; presetUserId?: number; onClose: () => void }) {
+  const people = useQuery<PeopleResponse>({ queryKey: ["admin", "company", companyId, "people"], queryFn: () => api(`/admin/companies/${companyId}/people`) });
+  const [userId, setUserId] = useState<number | null>(presetUserId ?? null);
+  const [reason, setReason] = useState("");
+  const [minutes, setMinutes] = useState(60);
+  const [error, setError] = useState<string | null>(null);
+  const data = people.data;
+  const active = useMemo(() => (data?.people ?? []).filter((p) => p.active), [data]);
+  useEffect(() => {
+    if (userId == null && active.length) setUserId(active[0].id);
+  }, [active, userId]);
+  const target = active.find((p) => p.id === userId) ?? null;
+  const admins = active.filter((p) => p.role === "admin");
+  const start = useMutation({
+    mutationFn: () => api<StartImpersonationResponse>("/admin/impersonation", { method: "POST", json: { userId, reason: reason.trim(), minutes } }),
+    onSuccess: (r) => enterImpersonation(r, { companySuspended: data?.company.status === "suspended" }),
+    onError: (e) => setError(errorMessage(e)),
+  });
+  const staff = active.filter((p) => p.role !== "client");
+  const clients = active.filter((p) => p.role === "client");
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!userId) return setError("Choose who to sign in as.");
+    if (reason.trim().length < 10) return setError("Give a reason of at least 10 characters (e.g. the support ticket or issue).");
+    start.mutate();
+  }
+
+  return (
+    <Modal title={data ? `Impersonate a user · ${data.company.name}` : "Impersonate a user"} onClose={onClose}>
+      {!data ? (
+        <div className="flex justify-center py-10">
+          <Spinner />
+        </div>
+      ) : active.length === 0 ? (
+        <Alert tone="info">This company has no active users to sign in as yet.</Alert>
+      ) : (
+        <form onSubmit={submit} className="flex flex-col gap-3.5">
+          <div className="text-[13px] font-semibold text-muted">You'll see the platform exactly as this person does, with their permissions, and can act on their behalf. Changes are recorded in the audit log under your name.</div>
+          {error && <Alert tone="danger">{error}</Alert>}
+          <Field label="Sign in as" htmlFor="imp-user">
+            <Select id="imp-user" value={userId ?? ""} onChange={(e) => setUserId(Number(e.target.value))}>
+              {staff.length > 0 && (
+                <optgroup label="Team">
+                  {staff.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {p.roleLabel} · {p.email}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {clients.length > 0 && (
+                <optgroup label="Clients (client portal)">
+                  {clients.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {p.email}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </Select>
+          </Field>
+          <Field label="Reason" htmlFor="imp-reason" hint="Required. Stored in the audit log and included in the email to the company Admin.">
+            <Textarea id="imp-reason" required rows={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Support ticket #4821: Brian can't publish his website changes" />
+          </Field>
+          <Field label="Session length" htmlFor="imp-minutes" hint="The session ends on its own after this, or when you click End session.">
+            <Select id="imp-minutes" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
+              {DURATIONS.filter((m) => m <= data.maxMinutes).map((m) => (
+                <option key={m} value={m}>
+                  {m < 60 ? `${m} minutes` : m === 60 ? "1 hour" : `${m / 60} hours`}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Alert tone="warn">
+            {admins.length ? `${admins.map((a) => a.name).join(", ")} (Admin) will be emailed` : "The company owner will be emailed"} that Advisor Platform support signed in{target ? ` as ${target.name}` : ""}, with your reason.
+          </Alert>
+          <div className="mt-1.5 flex justify-end gap-2.5">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={start.isPending}>
+              Start session
+            </Button>
+          </div>
+        </form>
+      )}
+    </Modal>
+  );
+}
+
+/** The last few support sessions in this company: who, why, and whether they are still open. */
+function SupportSessions({ companyId }: { companyId: number }) {
+  const q = useQuery<SessionsResponse>({ queryKey: ["admin", "company", companyId, "impersonation"], queryFn: () => api(`/admin/impersonation?companyId=${companyId}`) });
+  const sessions = (q.data?.sessions ?? []).slice(0, 5);
+  if (!sessions.length) return null;
+  const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return (
+    <div>
+      <SectionLabel>RECENT SUPPORT SESSIONS</SectionLabel>
+      <div className="mt-2.5 flex flex-col gap-1.5">
+        {sessions.map((s) => (
+          <div key={s.id} className="rounded-[10px] border border-line-soft bg-[#F7FBFF] px-3 py-[9px] text-[13px]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 truncate">
+                <span className="font-bold text-navy">{s.target.name}</span> <span className="font-semibold capitalize text-muted">· {s.target.role}</span>
+              </div>
+              <Pill tone={s.active ? "amber" : "grey"}>{s.active ? "Active" : s.endedReason === "expired" ? "Expired" : "Ended"}</Pill>
+            </div>
+            <div className="mt-[3px] truncate text-[12px] font-semibold text-muted" title={s.reason}>
+              {when(s.startedAt)} · {s.reason}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

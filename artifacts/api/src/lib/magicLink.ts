@@ -1,7 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db, magicLinksTable, companiesTable, type User } from "@workspace/db";
 import { newToken } from "./tokens";
-import { sendEmail, renderEmail, heading, paragraph, button, escapeHtml } from "./email";
+import { heading, paragraph, button, escapeHtml } from "./email";
+import { sendAccountMail } from "./companyMail";
 import { letterheadFor } from "./letterhead";
 import { companyBaseUrl, platformBaseUrl } from "./urls";
 import { env } from "../env";
@@ -20,13 +21,12 @@ export async function issueMagicLink(user: User, requestedIp: string | null): Pr
   }
   const url = `${base}/client/verify?token=${token}`;
   const lh = await letterheadFor(user.companyId);
-  const r = await sendEmail({
+  const r = await sendAccountMail(user.companyId, {
     to: user.email,
     subject: `Your ${lh.name} sign-in link`,
     template: "magic_link",
-    companyId: user.companyId,
     actionUrl: url,
-    html: renderEmail(lh, heading("Sign in to your portal") + paragraph(`Hi ${escapeHtml(user.name)}, tap the button to open your client portal. The link works once and expires in 15 minutes.`) + button(url, "Open my portal", lh.primaryColor)),
+    body: heading("Sign in to your portal") + paragraph(`Hi ${escapeHtml(user.name)}, tap the button to open your client portal. The link works once and expires in 15 minutes.`) + button(url, "Open my portal", lh.primaryColor),
   });
   return { url, sent: r.success, ...(!env.isProduction && !env.sendgridApiKey ? { devLink: url } : {}) };
 }

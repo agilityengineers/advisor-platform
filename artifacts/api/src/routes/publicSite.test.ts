@@ -9,7 +9,7 @@ let server: TestServer;
 let superToken = "";
 let adminToken = "";
 let mtcId = 0;
-const HOST = `${MTC_SLUG}.advisor-platform.findabusinesspro.com`;
+const HOST = `${MTC_SLUG}.advisor-platform.com`;
 const PLATFORM = "advisor-platform.com";
 
 interface SitePayload {

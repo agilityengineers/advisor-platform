@@ -1,4 +1,4 @@
-modules = ["nodejs-22", "postgresql-16"]
+modules = ["web", "nodejs-22", "postgresql-16"]
 run = "pnpm dev"
 entrypoint = "artifacts/api/src/index.ts"
 hidden = [".config", "node_modules", "dist", ".cache", ".local"]
@@ -19,6 +19,10 @@ run = ["sh", "-c", "pnpm start"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 5001
+externalPort = 3000
+
 [workflows]
 runButton = "Dev server"
 
@@ -31,3 +35,13 @@ mode = "sequential"
 task = "shell.exec"
 args = "pnpm dev"
 waitForPort = 5000
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000
+
+[userenv]
+
+[userenv.shared]
+APP_URL = "https://advisor-platform.com"
+PLATFORM_PRIMARY_DOMAIN = "advisor-platform.com"

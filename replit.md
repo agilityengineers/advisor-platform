@@ -4,6 +4,14 @@ White-label SaaS for LinkedIn advisory professionals. Each **company** (an Admin
 
 Production runs on **Replit**: Replit Deployments (autoscale), Replit Postgres (`DATABASE_URL`), Replit Secrets, Replit Object Storage for uploads.
 
+### Public domain assignments
+
+- `advisor-platform.com` is the platform's primary website and platform account-link origin.
+- `mytargetclient.com` belongs to the My Target Client white-label company, not the platform.
+- DNS for `mytargetclient.com` is managed in Cloudflare.
+- Both websites are intended to be publicly accessible at the hosting layer. Staff, admin, and client account access must still use the application's authentication and tenant permissions.
+- Attaching a domain in Replit does not replace the application's company-domain ownership verification. Do not bypass that verification or map My Target Client's domain as a platform host.
+
 ## Layout
 
 pnpm workspace (Node 22, TypeScript 5.9):
@@ -19,11 +27,47 @@ pnpm workspace (Node 22, TypeScript 5.9):
 
 ## Commands
 
+After task merges, Replit runs `scripts/post-merge.sh` to install locked
+dependencies, apply pending development database migrations, and build the app.
+It then reconciles the running workflow automatically. The hook fails fast,
+requires no input, and refuses to run with `NODE_ENV=production`.
+Tests are not part of this hook because they require a separate scratch database.
+
+### Running the imported project on Replit
+
+Use the **Run** button (the `Dev server` workflow), or run `pnpm dev`.
+The existing Express server serves both the API and Vite client on port 5000.
+Replit is configured with Node 22, matching the package's minimum version.
+Run `pnpm install --frozen-lockfile` after importing or changing dependencies.
+The workspace uses Replit's installed pnpm 10; automatic package-manager
+version switching is disabled in `.npmrc`.
+The development watcher excludes Vite's generated client config and build output
+so starting Vite does not repeatedly restart the server.
+Vite hot reload shares the main HTTP server, so preview only needs port 5000.
+
+`DATABASE_URL` is supplied by Replit and `SESSION_SECRET` is already configured.
+The normal boot process applies migrations and seeds the initial company and
+super-admin account. The built-in development password is for local preview only;
+set `SUPER_ADMIN_PASSWORD` in Secrets before publishing. Without provider
+credentials, profile grading and checkout use the existing development demo
+modes, and email is not delivered.
+
+API tests mutate their database (including seeded passwords and CMS content).
+Configure `TEST_DATABASE_URL` with a separate scratch PostgreSQL database whose
+name ends in `_test` (the setup-tested name is `advisor_platform_test`). The
+test runner uses that URL for API tests and refuses to run in production, when
+it matches the active preview database, or when it is not clearly a test
+database. Never set it to a preview or production database.
+Tests keep their changes in this scratch database; the runner does not reset or
+delete existing data. Point `TEST_DATABASE_URL` at a fresh `_test` database
+when you need a clean baseline for another run.
+
 ```bash
 pnpm install                      # pnpm only (preinstall hook blocks npm/yarn)
 pnpm dev                          # API + Vite middleware on $PORT (5000)
 pnpm typecheck                    # tsc --build for libs, then each artifact
-pnpm test                         # vitest in lib/shared and artifacts/api (API tests need DATABASE_URL)
+pnpm test                         # safe tests; requires TEST_DATABASE_URL above
+pnpm test:scratch                 # same protected scratch-database test command
 pnpm build                        # typecheck → web build → api bundle
 pnpm start                        # production: node artifacts/api/dist/index.mjs
 pnpm db:generate                  # drizzle-kit generate: new SQL migration from schema changes
@@ -36,16 +80,18 @@ pnpm db:studio                    # drizzle studio
 | Variable | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | yes | Replit Postgres (set automatically when you add a database). |
+| `TEST_DATABASE_URL` | API tests only | Separate scratch PostgreSQL database ending in `_test`; never use a preview or production database. |
 | `SESSION_SECRET` | yes (prod) | JWT signing secret (7-day tokens). Dev generates a throwaway one and warns. |
 | `SUPER_ADMIN_PASSWORD` | yes (prod) | Password for `emailme@clarencewilliams.com` / `clarencewilliams`. **Re-synced on every boot** — rotate here, not in-app. Dev falls back to `Success2026` with a warning. |
 | `PLATFORM_ENCRYPTION_KEY` | recommended | AES-256-GCM key for per-company integration secrets (`company_secrets`). If unset, one is generated at first boot and stored in `platform_config`; put it in a password manager — a restored database without it is ciphertext. |
-| `PLATFORM_PRIMARY_DOMAIN` | no | Default `advisor-platform.findabusinesspro.com`. |
-| `PLATFORM_SUBDOMAIN_BASE` | no | Company subdomains hang off this (default `advisor-platform.findabusinesspro.com`). |
+| `PLATFORM_PRIMARY_DOMAIN` | no | Default `advisor-platform.com`. |
+| `PLATFORM_SUBDOMAIN_BASE` | no | Company subdomains hang off this (default `advisor-platform.com`). |
+| `PLATFORM_LEGACY_SUBDOMAIN_BASES` | no | Comma list of former subdomain bases that still resolve `<slug>.<base>` (default `advisor-platform.findabusinesspro.com`). |
 | `PLATFORM_HOSTS` | no | Comma list of hosts that resolve to the platform (not a company). Defaults to the three platform domains; localhost and `*.replit.dev/app` always count as platform. |
 | `APP_URL` | no | Public base URL for emails when no tenant host applies. |
 | `SENDGRID_WEBHOOK_PUBLIC_KEY` | optional | Verification key of the platform SendGrid account's signed Event Webhook (`/api/webhooks/sendgrid`). Without any key (platform or company) the endpoint answers 503 rather than recording bounces on anybody's say-so. |
-| `SENDGRID_API_KEY`, `PLATFORM_FROM_EMAIL`, `PLATFORM_FROM_NAME` | for email | Platform sender (`partner@…`) used for invites, resets, magic links. Without a key nothing is sent; in development the action link is logged and returned as `devLink`. |
-| `BRIGHTDATA_API_KEY` | grader | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`), never per company. Unset outside production = **demo grading** with deterministic sample profiles; unset in production = grading off (the drawer says so). `GRADER_DEMO=true` forces demo mode. |
+| `SENDGRID_API_KEY`, `PLATFORM_FROM_EMAIL`, `PLATFORM_FROM_NAME` | for email | Platform sender (`partner@…`) for the platform's own mail (super-admin resets, first-Admin invites, demo requests) and the fallback for companies that haven't connected SendGrid yet. Without a key nothing is sent; in development the action link is logged and returned as `devLink`. |
+| `BRIGHTDATA_API_KEY` | grader | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`), never per company. Unset outside production = **demo grading** with deterministic sample profiles; unset in production = grading off (the drawer says so, and the boot log warns). `GRADER_DEMO=true` forces demo mode **outside production only** — production ignores it, so a lead is graded on their real profile or not at all. Verify a key with `pnpm --filter @workspace/api run grader:check <linkedin URL>`. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | checkout | Platform Stripe account. Company checkouts are **direct charges on each company's connected account** (`stripeAccount` header); the publishable key initialises Stripe.js for the embedded Checkout. Unset outside production = **demo checkout** (orders are marked paid by a demo button, nothing is charged). Both keys and the webhook secret must be set **and from the same mode** or checkout stays off (the boot log and `GET /api/admin/payments/readiness` say why). |
 | `STRIPE_WEBHOOK_SECRET` | checkout | Signing secret (`whsec_…`) of a **Connect** webhook endpoint ("events on connected accounts") pointed at `/api/webhooks/stripe`: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `payment_intent.succeeded` / `payment_failed` (installments), `charge.refunded`. Required for live/test checkout. |
 | `STRIPE_LIVE_ENABLED` | go-live | `true` allows **live** keys (`sk_live_`). Without it live keys are refused and checkout is off, so real charges can only start after the test-mode checklist below passes. Test keys never need it. |
@@ -92,6 +138,7 @@ The SPA asks `GET /api/tenant` first, then injects the company's colours as CSS 
 ## Platform Admin (`/admin`, super admin only)
 
 - **Companies** — KPIs (total, active, trial, MRR), table, drawer. The drawer changes plan and status (suspend / reactivate), sets per-feature overrides (**Plan / On / Off**; the source label says "Included in <plan>", "Not in <plan>", "Forced on/off by super admin"), shows integrations (read-only; owned by the company Admin) and the team, and opens the company console at `/admin/companies/:id/console` with the "Viewing company: X" banner.
+- **Impersonation** — "Impersonate" on every company row, "Impersonate a user…" and per-member "Sign in as" in the drawer. The super admin picks any active staff member (Admin / Manager / Advisor) or client, gives a **required reason** and a session length (15 min – 2 h, default 1 h), and is signed in **as that person** with their exact permissions: staff land in `/t/<slug>/app`, clients in `/t/<slug>/portal` (plain `/app`, `/portal` for a suspended company). The impersonation JWT carries an `impersonation_sessions` row id and is re-checked on every request, so ending or expiring the session revokes it immediately. Every active company Admin is emailed (who, as whom, why). An amber bar on every page shows who/why/time left with **End session**, which restores the super admin's own token (parked in `localStorage`). While impersonating, audited actions record the super admin as actor with `details.actingAs` (shown as "acting as …" on the Audit log); changing the password and all `/admin` routes are blocked. Endpoints: `GET /api/admin/companies/:id/people`, `POST /api/admin/impersonation`, `GET /api/admin/impersonation?companyId=`, `POST /api/auth/impersonation/end`. The drawer lists recent support sessions.
 - **New company** creates the company, its branding row, default stages, integration rows, rubric v1, a CMS **draft** seeded from the default template, and emails the first Admin an invitation from the platform sender.
 - **Templates** — apply a template to a company (writes that company's CMS draft; the Admin publishes it), remove non-default templates; "Save page as template" in the drawer snapshots a company's published page with logo/photos/testimonials stripped and `{company}` / `{owner}` / `{ownerFirst}` tokens restored.
 - **Feature registry** — features × plans tick matrix (edits `plans.feature_keys`). **Plans** — cards with name/price/description editing.
@@ -129,7 +176,7 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 `lib/stripe.ts`, `lib/orders.ts`, `lib/portal.ts`, `lib/calendly.ts`; routes `checkout.ts`, `webhooks.ts`, `portal.ts`, `clients.ts`. Recreated from `Buying Flow.dc.html`.
 
 1. **Checkout (`/buy?offer=&plan=`)** — order summary, pay-in-full / 2× · 3× plan, order bumps (banner +$150, 72-hour rush +30%), buyer details → `POST /api/public/checkout` creates a pending `orders` row and, in live mode, an **embedded Checkout Session on the company's connected account** (bumps and plan lock once the session exists). Prices live in `lib/shared/src/offers.ts` (`priceOrder`), the same catalogue the pricing pages render. A company without `stripe_checkout` or without a connected account gets a 409 and the pricing CTAs fall back to Calendly (`company.checkout.ready` on the public payload).
-2. **Fulfilment** (`fulfillOrder`, idempotent; called by the return page via `session_id` and by the webhook) — lead found or created and moved to the **won** stage; `clients` row + portal login (role `client`, magic-link only); the seven `client_stages`; an empty `intakes` row; `order_installments` every 30 days for plans (charged off-session with the card saved at checkout — `setup_future_usage`); welcome + receipt email to the buyer and an alert to the owner. Company mail goes out on the company's SendGrid when connected, otherwise from the platform key **with the company's name and the owner as Reply-To** (`lib/companyMail.ts`), so a firm mid-setup still reaches its buyers.
+2. **Fulfilment** (`fulfillOrder`, idempotent; called by the return page via `session_id` and by the webhook) — lead found or created and moved to the **won** stage; `clients` row + portal login (role `client`, magic-link only); the seven `client_stages`; an empty `intakes` row; `order_installments` every 30 days for plans (charged off-session with the card saved at checkout — `setup_future_usage`); welcome + receipt email to the buyer and an alert to the owner. Company mail goes out on the company's SendGrid when connected, otherwise from the platform key **with the company's name and the owner as Reply-To** (`lib/companyMail.ts`), so a firm mid-setup still reaches its buyers. See **White-label email senders** below for which identity each message uses.
 3. **Thank-you (`/thanks?order=`)** — confirms the charge (polls while Stripe's redirect beats the webhook) and lays out the three next steps. **Book (`/book?order=`)** — Calendly inline widget prefilled with name, email and LinkedIn, `utm_content=<order id>`; the browser's `calendly.event_scheduled` records a provisional booking, the **Calendly webhook** (`invitee.created` / `invitee.canceled`, HMAC-signed per company, registered from Company settings → Integrations) confirms it with the start time. **Intake (`/intake?order=`)** — the four questions and the publishing choice; marks the stage done, updates the lead, alerts the owner.
 4. **Portal (`/portal`, clients only, magic link)** — stage tracker with actions, payments and schedule, files, the owner's card. `GET /api/portal` serves only the signed-in client's own record.
 5. **Lifecycle** (`startCommerceScheduler`, hourly, not under tests): due installments are charged (live mode only — demo installments are settled from the console), an intake reminder goes out at +48h, interview prep 24h before a booking; stage completions and new files email the client when staff tick "notify". **Autoscale note:** the scheduler runs in-process; if the deployment scales to zero for long stretches, a Replit Scheduled Deployment hitting any page keeps it ticking, or settle installments from the console.
@@ -159,9 +206,9 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 
 ## Profile Grader (Bright Data → rubric → gated report)
 
-`lib/grader.ts` (API), `lib/shared/src/brightData.ts` (normaliser), `routes/leads.ts` (actions), `routes/publicSite.ts` (`GET /api/public/grade/:publicId`). The scoring engine itself is `lib/shared/src/grader.ts` (Phase 1).
+`lib/grader.ts` (API), `lib/brightData.ts` (provider client), `lib/shared/src/brightData.ts` (normaliser), `routes/leads.ts` (actions), `routes/publicSite.ts` (`GET /api/public/grade/:publicId`). The scoring engine itself is `lib/shared/src/grader.ts` (Phase 1).
 
-- **Fetch** — the port of LinkedIn-Profile-Grader's `fetchLinkedInProfile`: trigger the dataset job (`discover_new=true`), poll the snapshot every 2 s for 60 s, retry the whole fetch once, record a clear failure message otherwise. `normalizeBrightDataProfile` keeps the source's field fallbacks, counting rules and activity buckets, and derives the Value & Service inputs from headline + About.
+- **Fetch** — the port of LinkedIn-Profile-Grader's `fetchLinkedInProfile`: trigger the dataset job (`discover_new=true`), poll the snapshot every 2 s for up to 120 s (a fresh collection measured ~66 s), retry the whole fetch once when the failure is retryable (timeouts, 5xx, 429, network), record a clear failure message otherwise. Provider failures are named for the owner — rejected key (401/403), no balance (402), rate limit, Bright Data down, profile not found / not public (the snapshot's error record, `include_errors=true`), timeout — with Bright Data's own words and the snapshot id in `errorMessage`. A failed live fetch is never replaced by sample data. `normalizeBrightDataProfile` keeps the source's field fallbacks, counting rules and activity buckets, and derives the Value & Service inputs from headline + About.
 - **When it runs** — automatically when a landing-form lead arrives with a LinkedIn URL (the journey's "Get your Profile Grade" step), **without emailing anyone**: the owner reviews the grade in the lead drawer first. Staff run or re-run it from the drawer (`POST /companies/:id/leads/:leadId/grade`, optionally supplying the URL) with an "email the lead when graded" tick.
 - **Versioned** — every `profile_assessments` row stamps the published rubric version that scored it; the report footer shows it. When a newer rubric is published the drawer offers **Re-score on vN** (same stored profile, no refetch), so before/after comparisons stay honest.
 - **Gated** — a lead's report (`/grade/:publicId`, unguessable id) shows scores, quick wins and locked findings; staff always see the full report (and can preview the lead's view with `?view=summary`). **Unlock** happens when the lead buys (`fulfillOrder` → `unlockForLead`) or when staff click Unlock. "Email report" sends the summary with the link (`sendGradeEmail`, company letterhead), and says so plainly when email is not configured.
@@ -170,19 +217,24 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 ## Hardening (Phase 7): Twilio, webhooks, audit, empty states, responsive
 
 - **Twilio** (`lib/twilio.ts`) — per company (SID, auth token, number, alert number; toggles *Text clients reminders* and *Text me when a new lead arrives*). A landing-form lead texts the owner; the intake reminder and the 24h interview prep also go by SMS when the client has a phone. Every message is an `sms_logs` row. **Inbound** texts hit `/api/webhooks/twilio` (form-encoded, `X-Twilio-Signature` = HMAC-SHA1 of the called URL + sorted params with the company's auth token, company found by the `To` number), are logged and attached to the lead with that phone as an `sms_received` activity; delivery receipts (`/api/webhooks/twilio/status`) update the row.
+- **White-label email senders** (`lib/shared/src/senders.ts`, `lib/companyMail.ts`) — every company sends from two identities on its own SendGrid domain, set in Company settings → Integrations → SendGrid:
+  - **Personal** (`fromName` / `fromAddress`, e.g. `Brian Traichel <brian@mytargetclient.com>`) — mail a person would write: order welcome, outreach, Profile Grade, intake reminder, interview prep, stage updates, new files. Reply-To is the owner; the footer invites a reply.
+  - **No-reply** (`noReplyName` / `noReplyAddress`, e.g. `My Target Client <no-reply@mytargetclient.com>`) — mail the software sends: password resets, client sign-in links, team invites, installment receipts, and order / intake alerts to the owner (whose Reply-To is the buyer). The footer says replies aren't monitored. Left blank, the address defaults to `no-reply@<domain of the personal address>` and the name to the company name; a no-reply on a different domain is rejected at save.
+  - `sendCompanyMail(company, { kind: "personal" | "system", … })` picks the identity; `sendAccountMail(companyId, …)` routes account mail to the company's no-reply, or the platform sender for users without a company. Without the company's SendGrid both kinds fall back to the platform key wearing the company's name. `email_logs.metadata` records `via` and `kind`.
 - **SendGrid Event Webhook** (`lib/sendgridEvents.ts`, `/api/webhooks/sendgrid`) — ECDSA-signed deliveries verified against the platform key or any company's pasted key; `delivered` / `bounce` / `dropped` / `spamreport` / `deferred` move `email_logs.status`, opens and clicks are recorded in `email_events`; idempotent on `sg_event_id`; **503 when no key is configured anywhere**.
 - **Every webhook** (`routes/webhooks.ts`) verifies its signature over the raw body, writes `webhook_events (provider, event_id)` first, and treats a repeat delivery as a no-op.
-- **Audit log** — `GET /api/admin/audit` with `companyId` / `action` / `userId` / `before` filters, actor and company joined, paged; the Platform Admin → **Audit log** page. Logged: company create / plan / status (suspend, reactivate), feature overrides, **impersonation** (the super admin opening a company console, once per hour per company), template apply/save/delete, plan edits, platform content publish, requests, and company-level acts (stages, branding, integrations, grades, installments).
+- **Audit log** — `GET /api/admin/audit` with `companyId` / `action` / `userId` / `before` filters, actor and company joined, paged; the Platform Admin → **Audit log** page. Logged: company create / plan / status (suspend, reactivate), feature overrides, **impersonation** (the super admin opening a company console, once per hour per company), **impersonation started / ended** (user impersonation, with reason) and every audited change made while impersonating, template apply/save/delete, plan edits, platform content publish, requests, and company-level acts (stages, branding, integrations, grades, installments).
 - **Empty states** — no leads ("your form is live at …" + test lead), no clients, no reviews (CTA), CMS on defaults shows **Start from a template** (company-side `GET /companies/:id/templates` + `POST …/site-content/apply-template`, draft only), default pipeline stages, platform rubric v1, integrations `not_connected` with SendGrid flagged required, domain = subdomain only.
 - **Responsive** — public pages work at 360px; the company console and Platform Admin are desktop-first with a "best on desktop" notice under 1024px while leads, the lead drawer and the compact nav stay usable.
 
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
-2. Add Secrets: `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID`). In the Stripe dashboard add a **Connect** webhook endpoint for `https://<platform host>/api/webhooks/stripe` and, for OAuth, the redirect `https://<platform host>/api/stripe/connect/callback`.
+2. Add Secrets (check **Integrations** first for a provider connection before pasting a key): `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID`). In the Stripe dashboard add a **Connect** webhook endpoint for `https://<platform host>/api/webhooks/stripe` and, for OAuth, the redirect `https://<platform host>/api/stripe/connect/callback`.
+   Then confirm the grader is live: `pnpm --filter @workspace/api run grader:check https://www.linkedin.com/in/<a public profile>/` should print a grade with `source: brightdata` (it exits non-zero and prints the provider's reason otherwise), and the boot log should read `Profile Grader: live (Bright Data)`.
 3. **Run** uses `pnpm dev` (port 5000). **Deploy** (autoscale) builds with `pnpm install --frozen-lockfile && pnpm build` and runs `pnpm start`; both are in `.replit`.
-4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.findabusinesspro.com`).
-5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.findabusinesspro.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.
+4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.com`). Keep `*.advisor-platform.findabusinesspro.com` attached while any company still points at the legacy base.
+5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.
 
 ## Phase status
 

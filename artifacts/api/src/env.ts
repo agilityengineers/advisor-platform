@@ -31,23 +31,28 @@ export const env = {
   superAdminPassword: process.env.SUPER_ADMIN_PASSWORD ?? "",
   mtcAdminPassword: process.env.MTC_ADMIN_PASSWORD ?? "",
   seedDemo: process.env.SEED_DEMO === "true",
-  platformPrimaryDomain: (process.env.PLATFORM_PRIMARY_DOMAIN ?? "advisor-platform.findabusinesspro.com").toLowerCase(),
-  platformSubdomainBase: (process.env.PLATFORM_SUBDOMAIN_BASE ?? "advisor-platform.findabusinesspro.com").toLowerCase(),
+  platformPrimaryDomain: (process.env.PLATFORM_PRIMARY_DOMAIN ?? "advisor-platform.com").toLowerCase(),
+  platformSubdomainBase: (process.env.PLATFORM_SUBDOMAIN_BASE ?? "advisor-platform.com").toLowerCase(),
+  /** Older subdomain bases that still resolve `<slug>.<base>` (links and CNAMEs issued before the move to advisor-platform.com). */
+  platformLegacySubdomainBases: list("PLATFORM_LEGACY_SUBDOMAIN_BASES", ["advisor-platform.findabusinesspro.com"]),
   platformHosts: list("PLATFORM_HOSTS", [
     "advisor-platform.com",
     "www.advisor-platform.com",
     "advisor-platform.findabusinesspro.com",
     "advisor-platform.authority-desk.com",
   ]),
-  appUrl: (process.env.APP_URL ?? (isProduction ? "https://advisor-platform.findabusinesspro.com" : `http://localhost:${process.env.PORT ?? 5000}`)).replace(/\/$/, ""),
+  appUrl: (process.env.APP_URL ?? (isProduction ? "https://advisor-platform.com" : `http://localhost:${process.env.PORT ?? 5000}`)).replace(/\/$/, ""),
   sendgridApiKey: process.env.SENDGRID_API_KEY ?? "",
   platformFromEmail: process.env.PLATFORM_FROM_EMAIL ?? "partner@advisor-platform.findabusinesspro.com",
   platformFromName: process.env.PLATFORM_FROM_NAME ?? "Advisor Platform",
   brightDataApiKey: process.env.BRIGHTDATA_API_KEY ?? "",
   /** Base64 (SPKI DER) public key of the platform SendGrid account's signed Event Webhook; companies add theirs in Integrations. */
   sendgridWebhookPublicKey: process.env.SENDGRID_WEBHOOK_PUBLIC_KEY ?? "",
-  /** Grade with deterministic sample profiles instead of Bright Data (automatic outside production without a key). */
-  graderDemo: process.env.GRADER_DEMO === "true" || (!isProduction && !process.env.BRIGHTDATA_API_KEY),
+  /**
+   * Grade with deterministic sample profiles instead of Bright Data (automatic outside production without a key).
+   * Never in production: GRADER_DEMO is ignored there, so a lead is graded on their real profile or not at all.
+   */
+  graderDemo: !isProduction && (process.env.GRADER_DEMO === "true" || !process.env.BRIGHTDATA_API_KEY),
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",

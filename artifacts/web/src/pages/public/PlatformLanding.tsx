@@ -461,7 +461,6 @@ function PlatformBody({ content: c, preview }: { content: PlatformContent; previ
           </div>
           <div style={{ fontSize: 13, display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
             <span>advisor-platform.com</span>
-            <span>advisor-platform.findabusinesspro.com</span>
             <span>advisor-platform.authority-desk.com</span>
             <a href="/staff/login">Sign in</a>
           </div>

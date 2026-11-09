@@ -26,7 +26,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed bottom-5 right-5 z-[100] flex w-[360px] max-w-[calc(100vw-40px)] flex-col gap-2">
+      <div className="pointer-events-none fixed bottom-[var(--toast-offset,20px)] right-5 z-[100] flex w-[360px] max-w-[calc(100vw-40px)] flex-col gap-2">
         {toasts.map((t) => (
           <div key={t.id} role="status" className={cn("pointer-events-auto flex items-start gap-2.5 rounded-[12px] border px-4 py-3 text-[13.5px] font-semibold shadow-card", t.tone === "error" ? "border-[#F2C2B9] bg-[#FDECE9] text-danger" : t.tone === "info" ? "border-line bg-white text-navy" : "border-[#BFE7D2] bg-[#EAF8F0] text-success-deep")}>
             {t.tone === "error" ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}

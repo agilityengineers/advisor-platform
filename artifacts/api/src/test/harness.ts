@@ -1,5 +1,6 @@
 import type { Server } from "node:http";
 import { createApp } from "../app";
+import { assertTestDatabaseConnection } from "./databaseSafety";
 
 export interface TestServer {
   url: string;
@@ -8,6 +9,7 @@ export interface TestServer {
 }
 
 export async function startTestServer(): Promise<TestServer> {
+  assertTestDatabaseConnection(process.env);
   const app = createApp();
   const server: Server = await new Promise((resolve) => {
     const s = app.listen(0, "127.0.0.1", () => resolve(s));

@@ -8,6 +8,7 @@ import { inviteLimiter } from "../lib/rateLimit";
 import { newToken } from "../lib/tokens";
 import { sendEmail, renderEmail, heading, paragraph, button, escapeHtml } from "../lib/email";
 import { letterheadFor } from "../lib/letterhead";
+import { sendCompanyMail } from "../lib/companyMail";
 import { companyBaseUrl } from "../lib/urls";
 import { audit } from "../lib/audit";
 import { env } from "../env";
@@ -44,22 +45,18 @@ export async function createInvite(opts: {
   const acceptUrl = `${await companyBaseUrl(opts.company)}/accept-invite?token=${token}`;
   const lh = opts.sender === "platform" ? { name: "Advisor Platform", primaryColor: "#13231C", logoUrl: null } : await letterheadFor(opts.company.id);
   const roleLabel = opts.role === "admin" ? "Admin" : opts.role === "manager" ? "Manager" : "Client advisor";
-  const result = await sendEmail({
-    to: email,
-    subject: opts.sender === "platform" ? `You're invited to run ${opts.company.name} on Advisor Platform` : `You're invited to join ${lh.name}`,
-    template: "team_invite",
-    companyId: opts.company.id,
-    sender: opts.sender,
-    actionUrl: acceptUrl,
-    html: renderEmail(
-      lh,
-      heading(opts.sender === "platform" ? `Your ${opts.company.name} console is ready` : `Join ${lh.name} as ${roleLabel}`) +
-        paragraph(opts.name ? `Hi ${escapeHtml(opts.name)},` : "Hello,") +
-        paragraph(opts.sender === "platform" ? `Clarence has set up <strong>${escapeHtml(opts.company.name)}</strong> on Advisor Platform and made you its Admin. Accept the invitation to choose a password and open your console.` : `You've been invited to join <strong>${escapeHtml(lh.name)}</strong> as ${roleLabel}. Accept the invitation to choose a password.`) +
-        button(acceptUrl, "Accept invitation", lh.primaryColor) +
-        paragraph(`This link expires in ${INVITE_TTL_DAYS} days.`),
-    ),
-  });
+  const subject = opts.sender === "platform" ? `You're invited to run ${opts.company.name} on Advisor Platform` : `You're invited to join ${lh.name}`;
+  const body =
+    heading(opts.sender === "platform" ? `Your ${opts.company.name} console is ready` : `Join ${lh.name} as ${roleLabel}`) +
+    paragraph(opts.name ? `Hi ${escapeHtml(opts.name)},` : "Hello,") +
+    paragraph(opts.sender === "platform" ? `Clarence has set up <strong>${escapeHtml(opts.company.name)}</strong> on Advisor Platform and made you its Admin. Accept the invitation to choose a password and open your console.` : `You've been invited to join <strong>${escapeHtml(lh.name)}</strong> as ${roleLabel}. Accept the invitation to choose a password.`) +
+    button(acceptUrl, "Accept invitation", lh.primaryColor) +
+    paragraph(`This link expires in ${INVITE_TTL_DAYS} days.`);
+  // The platform's own invite (first Admin of a new company) comes from the platform; a company inviting its staff sends from its no-reply address.
+  const result =
+    opts.sender === "platform"
+      ? await sendEmail({ to: email, subject, template: "team_invite", companyId: opts.company.id, sender: "platform", actionUrl: acceptUrl, html: renderEmail(lh, body) })
+      : await sendCompanyMail(opts.company, { to: email, subject, template: "team_invite", actionUrl: acceptUrl, body, kind: "system" });
   return { inviteId: invite.id, acceptUrl, emailed: result.success, ...(result.notConfigured && !env.isProduction ? { devLink: acceptUrl } : {}) };
 }
 

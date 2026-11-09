@@ -279,7 +279,7 @@ async function notifyOwnerOfOrder(company: Company, order: Order, pricing: Order
   await sendCompanyMail(company, {
     to: company.ownerEmail,
     subject: `New order · ${pricing.offer.name} · ${order.customerName}`,
-    template: "order_owner_alert",
+    template: "order_owner_alert", kind: "system",
     body:
       heading(`${order.customerName} just bought the ${pricing.offer.name}`) +
       paragraph(`${cents(order.amountCents)} ${pricing.split ? `today, ${pricing.installments - 1} more installment${pricing.installments > 2 ? "s" : ""} scheduled` : "paid in full"}${pricing.bumps.length ? ` · ${pricing.bumps.map((b) => b.label).join(", ")}` : ""}.`) +
@@ -429,7 +429,7 @@ async function afterInstallmentPaid(order: Order, installment: OrderInstallment)
     await sendCompanyMail(company, {
       to: order.customerEmail,
       subject: `Receipt · payment ${installment.seq} of ${order.installments} · ${order.offerName}`,
-      template: "installment_receipt",
+      template: "installment_receipt", kind: "system",
       body: heading(`Payment ${installment.seq} of ${order.installments} received`) + paragraph(`${cents(installment.amountCents)} for your ${escapeHtml(order.offerName)} went through on ${installment.paidAt?.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) ?? "today"}. Reference ${escapeHtml(order.publicId.toUpperCase())}.`),
       metadata: { orderId: order.id, installmentId: installment.id },
     });

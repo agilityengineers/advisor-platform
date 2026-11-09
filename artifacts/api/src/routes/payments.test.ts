@@ -78,7 +78,7 @@ import { checkoutMode, stripeConfig } from "../lib/stripe";
 
 const ACCT = "acct_1TestMtcConnected";
 const OTHER = "acct_1SomeoneElse";
-const HOST = `${MTC_SLUG}.advisor-platform.findabusinesspro.com`;
+const HOST = `${MTC_SLUG}.advisor-platform.com`;
 const signer = new Stripe("sk_test_signer");
 
 let server: TestServer;

@@ -364,9 +364,9 @@ router.get("/admin/settings", ...guard, async (_req, res) => {
   res.json({
     superAdmin: PLATFORM.superAdmin,
     domains: [
-      { host: "advisor-platform.com", tag: "MARKETING", role: "marketing" },
       { host: env.platformPrimaryDomain, tag: "PRIMARY · SUBDOMAINS", role: "primary" },
       { host: "advisor-platform.authority-desk.com", tag: "SEO SURFACE", role: "seo" },
+      ...PLATFORM.legacyDomains.filter((h) => h !== env.platformPrimaryDomain).map((host) => ({ host, tag: "LEGACY ALIAS", role: "legacy" as const })),
     ],
     subdomainBase: env.platformSubdomainBase,
     keys: {

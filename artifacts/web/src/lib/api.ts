@@ -1,4 +1,4 @@
-import { getToken, setToken } from "./session";
+import { finishImpersonation, getToken, isImpersonating, setToken } from "./session";
 
 /**
  * A path-based tenant (`/t/:slug/...`) sends its API calls as `/api/t/:slug/...`
@@ -51,10 +51,20 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
   if (!res.ok) {
     const obj = data && typeof data === "object" ? (data as Record<string, unknown>) : null;
     const message = (obj?.error as string | undefined) ?? `Request failed (${res.status})`;
-    if (res.status === 401 && token && path !== "/auth/login") setToken(null);
+    if (res.status === 401 && token && path !== "/auth/login") {
+      // An impersonation session that ended or expired drops the super admin back into their own session.
+      if (isImpersonating()) {
+        const back = finishImpersonation();
+        window.location.assign(withNotice(back ?? "/admin"));
+      } else setToken(null);
+    }
     throw new ApiError(res.status, message, obj);
   }
   return data as T;
+}
+
+function withNotice(path: string): string {
+  return `${path}${path.includes("?") ? "&" : "?"}impersonation=ended`;
 }
 
 export function errorMessage(err: unknown): string {
