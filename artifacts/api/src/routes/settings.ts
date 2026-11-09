@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, companyBrandingTable, customDomainsTable } from "@workspace/db";
-import { BrandingBody, DomainBody, DomainProviderBody, IntegrationSaveBody, INTEGRATION_DEFS, DNS_PROVIDER_STEPS, integrationProviderSchema } from "@workspace/shared";
+import { BrandingBody, DomainBody, DomainProviderBody, IntegrationSaveBody, INTEGRATION_DEFS, DNS_PROVIDER_STEPS, integrationProviderSchema, validateSenderConfig } from "@workspace/shared";
 import { authMiddleware, requireCompany, requireRole } from "../lib/auth";
 import { companyFeatures, requireFeature } from "../lib/features";
 import { checkTxtRecord, dnsInstructions, newVerificationToken } from "../lib/domains";
@@ -179,6 +179,13 @@ router.put("/companies/:companyId/settings/integrations/:provider", ...owner, as
     const have = f.secret ? Boolean(parsed.data.secrets[f.key]?.trim()) || current.secrets[f.key]?.set : Boolean(String(parsed.data.config[f.key] ?? current.config[f.key] ?? "").trim());
     if (!have) {
       res.status(400).json({ error: `${f.label} is required` });
+      return;
+    }
+  }
+  if (provider.data === "sendgrid") {
+    const senderError = validateSenderConfig({ ...current.config, ...parsed.data.config });
+    if (senderError) {
+      res.status(400).json({ error: senderError });
       return;
     }
   }

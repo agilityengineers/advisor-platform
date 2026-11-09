@@ -356,13 +356,13 @@ function IntegrationCard({ companyId, def, view, locked }: { companyId: number; 
               if (f.secret) {
                 const s = view.secrets[f.key];
                 return (
-                  <Field key={f.key} label={f.label} hint={s?.set ? `Saved · ends in ${s.last4}. Enter a new value to replace it.` : undefined} htmlFor={id}>
+                  <Field key={f.key} label={f.label} hint={s?.set ? `Saved · ends in ${s.last4}. Enter a new value to replace it.` : f.hint} htmlFor={id}>
                     <Input id={id} type="password" autoComplete="off" className="h-10 bg-white text-[13.5px]" placeholder={s?.set ? "••••••••" : f.placeholder} value={secrets[f.key] ?? ""} onChange={(e) => setSecrets({ ...secrets, [f.key]: e.target.value })} />
                   </Field>
                 );
               }
               return (
-                <Field key={f.key} label={f.label} htmlFor={id}>
+                <Field key={f.key} label={f.label} hint={f.hint} htmlFor={id}>
                   <Input id={id} type={f.type} className="h-10 bg-white text-[13.5px]" placeholder={f.placeholder} value={String(config[f.key] ?? "")} onChange={(e) => setConfig({ ...config, [f.key]: e.target.value })} />
                 </Field>
               );

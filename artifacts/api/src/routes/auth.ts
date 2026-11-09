@@ -5,7 +5,8 @@ import { db, usersTable, companiesTable, companyBrandingTable, passwordResetsTab
 import { LoginBody, ForgotPasswordBody, ResetPasswordBody, MagicLinkRequestBody, MagicLinkVerifyBody, AcceptInviteBody, ChangePasswordBody, normalizePerms, type Role } from "@workspace/shared";
 import { authMiddleware, signToken, SUSPENDED_COMPANY_ERROR, DEACTIVATED_USER_ERROR } from "../lib/auth";
 import { hashToken, newToken } from "../lib/tokens";
-import { sendEmail, renderEmail, button, heading, paragraph, escapeHtml, PLATFORM_LETTERHEAD } from "../lib/email";
+import { button, heading, paragraph, escapeHtml, PLATFORM_LETTERHEAD } from "../lib/email";
+import { sendAccountMail } from "../lib/companyMail";
 import { letterheadFor } from "../lib/letterhead";
 import { companyBaseUrl, platformBaseUrl } from "../lib/urls";
 import { env } from "../env";
@@ -143,13 +144,12 @@ router.post("/auth/forgot", async (req, res) => {
   await db.insert(passwordResetsTable).values({ userId: user.id, tokenHash: hash, expiresAt: new Date(Date.now() + RESET_TTL_MS), requestedIp: req.ip ?? null });
   const url = `${await baseUrlForUser(user)}/reset-password?token=${token}`;
   const lh = await letterheadFor(user.companyId);
-  await sendEmail({
+  await sendAccountMail(user.companyId, {
     to: user.email,
     subject: `Reset your ${lh.name} password`,
     template: "password_reset",
-    companyId: user.companyId,
     actionUrl: url,
-    html: renderEmail(lh, heading("Reset your password") + paragraph(`Hi ${escapeHtml(user.name)}, use the button below to choose a new password. The link works once and expires in 60 minutes.`) + button(url, "Choose a new password", lh.primaryColor) + paragraph("If you didn't ask for this, you can ignore this email.")),
+    body: heading("Reset your password") + paragraph(`Hi ${escapeHtml(user.name)}, use the button below to choose a new password. The link works once and expires in 60 minutes.`) + button(url, "Choose a new password", lh.primaryColor) + paragraph("If you didn't ask for this, you can ignore this email."),
   });
   res.json({ ...generic, ...devLink(url) });
 });
@@ -203,13 +203,12 @@ router.post("/auth/magic-link", async (req, res) => {
   await db.insert(magicLinksTable).values({ userId: user.id, tokenHash: hash, expiresAt: new Date(Date.now() + MAGIC_TTL_MS), requestedIp: req.ip ?? null });
   const url = `${await baseUrlForUser(user)}/client/verify?token=${token}`;
   const lh = await letterheadFor(user.companyId);
-  await sendEmail({
+  await sendAccountMail(user.companyId, {
     to: user.email,
     subject: `Your ${lh.name} sign-in link`,
     template: "magic_link",
-    companyId: user.companyId,
     actionUrl: url,
-    html: renderEmail(lh, heading("Sign in to your portal") + paragraph(`Hi ${escapeHtml(user.name)}, tap the button to open your client portal. The link works once and expires in 15 minutes.`) + button(url, "Open my portal", lh.primaryColor)),
+    body: heading("Sign in to your portal") + paragraph(`Hi ${escapeHtml(user.name)}, tap the button to open your client portal. The link works once and expires in 15 minutes.`) + button(url, "Open my portal", lh.primaryColor),
   });
   res.json({ ...generic, ...devLink(url) });
 });
