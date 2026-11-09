@@ -15,8 +15,8 @@ The `.dc.html` files are the visual spec; this is the behavioral spec for everyt
 - Invites: `team_invites` (token, role, perms, expires). Accept → create user bound to company. Company creation from Platform Admin sends the first Admin invite via **platform** SendGrid (`partner@`).
 
 ## 2. Tenant resolution & domains
-- Resolve company per request, in order: exact `custom_domains.domain` (verified + active) → `<slug>.advisor-platform.findabusinesspro.com` → `/t/:slug` path → platform surfaces (`advisor-platform.com`, `advisor-platform.authority-desk.com`) resolve to the **platform**, not a company.
-- `custom_domains` as in Tax-Strategies: `domain, verification_token, verification_method (dns_txt), verified, verified_at, ssl_status, active`. Verify by TXT `_advisor-verify.<domain>` = token; CNAME `www` → `<slug>.advisor-platform.findabusinesspro.com`; apex via A/ALIAS per Replit's custom-domain instructions. Re-check every 10 min for 48h; show status + provider-specific steps (GoDaddy, Cloudflare — set "DNS only" during issuance —, Namecheap, Squarespace, Other).
+- Resolve company per request, in order: exact `custom_domains.domain` (verified + active) → `<slug>.advisor-platform.com` → `/t/:slug` path → platform surfaces (`advisor-platform.com`, `advisor-platform.authority-desk.com`) resolve to the **platform**, not a company.
+- `custom_domains` as in Tax-Strategies: `domain, verification_token, verification_method (dns_txt), verified, verified_at, ssl_status, active`. Verify by TXT `_advisor-verify.<domain>` = token; CNAME `www` → `<slug>.advisor-platform.com`; apex via A/ALIAS per Replit's custom-domain instructions. Re-check every 10 min for 48h; show status + provider-specific steps (GoDaddy, Cloudflare — set "DNS only" during issuance —, Namecheap, Squarespace, Other).
 - SSL: Replit Deployments issues certs for attached custom domains; surface `ssl_status` from the deployment API or mark `active` once the domain resolves over HTTPS.
 
 ## 3. Secrets & integrations (per company, BYO)

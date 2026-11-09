@@ -108,7 +108,7 @@ export async function tenantResolver(req: Request, _res: Response, next: NextFun
         next();
         return;
       }
-      const sub = extractSubdomain(host);
+      const sub = [env.platformSubdomainBase, ...env.platformLegacySubdomainBases].map((base) => extractSubdomain(host, base)).find(Boolean);
       if (sub) {
         const c = await resolveBySlug(sub);
         if (c) {

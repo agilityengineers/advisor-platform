@@ -5,7 +5,7 @@
 ## Overview
 A multi-tenant platform where each **company** (a LinkedIn professional / consultant / coach) gets its own branded landing page, lead-to-close CRM, Brand Voice capture, Profile Grader, checkout, client portal, and integrations — on its own subdomain or custom domain. A **super admin** (Clarence Williams) runs the platform: companies, plans, feature flags, landing-page templates. **My Target Client (Brian Traichel) is the first company**, not the platform.
 
-Platform domains: `advisor-platform.com`, `advisor-platform.findabusinesspro.com` (primary; company subdomains hang off it), `advisor-platform.authority-desk.com` (SEO surface).
+Platform domains: `advisor-platform.com` (primary; company subdomains hang off it), `advisor-platform.authority-desk.com` (SEO surface). `advisor-platform.findabusinesspro.com` is a legacy alias that still resolves.
 
 ## About the design files
 Everything in this bundle is a **design reference built in HTML** (`.dc.html` Design Components + small JS data files). They show intended look, copy, and behavior. **Do not ship them.** Recreate the screens in the production stack. Templates use `{{ hole }}` bindings and `<sc-if>`/`<sc-for>` blocks — read them as component props and conditionals. `platform.js`, `site-content.js`, `templates.js`, `grader.js`, `reviews.js` are the **data model and business rules** — port their shapes and logic faithfully; they are the closest thing to a spec for the tables and the scorer.

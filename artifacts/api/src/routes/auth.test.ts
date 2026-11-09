@@ -26,7 +26,9 @@ describe("tenant resolution", () => {
     expect(path.body.kind).toBe("company");
     expect(path.body.company.slug).toBe(MTC_SLUG);
     expect(path.body.company.branding.primaryColor).toBe("#1668F0");
-    const sub = await server.api<{ kind: string; via: string }>("/api/tenant", { host: `${MTC_SLUG}.advisor-platform.findabusinesspro.com` });
+    const sub = await server.api<{ kind: string; via: string }>("/api/tenant", { host: `${MTC_SLUG}.advisor-platform.com` });
+    const legacy = await server.api<{ kind: string; via: string }>("/api/tenant", { host: `${MTC_SLUG}.advisor-platform.findabusinesspro.com` });
+    expect(legacy.body).toMatchObject({ kind: "company", via: "subdomain" });
     expect(sub.body.kind).toBe("company");
     expect(sub.body.via).toBe("subdomain");
   });
@@ -50,14 +52,14 @@ describe("auth", () => {
   });
 
   it("signs the MTC admin in at the company door but not at another company's door", async () => {
-    const ok = await server.api<LoginResponse>("/api/auth/login", { method: "POST", host: `${MTC_SLUG}.advisor-platform.findabusinesspro.com`, body: JSON.stringify({ identifier: MTC_ADMIN_EMAIL, password: mtcPassword }) });
+    const ok = await server.api<LoginResponse>("/api/auth/login", { method: "POST", host: `${MTC_SLUG}.advisor-platform.com`, body: JSON.stringify({ identifier: MTC_ADMIN_EMAIL, password: mtcPassword }) });
     expect(ok.status).toBe(200);
     expect(ok.body.user.role).toBe("admin");
     const [mtc] = await db.select().from(companiesTable).where(eq(companiesTable.slug, MTC_SLUG));
     expect(ok.body.user.companyId).toBe(mtc.id);
 
     await db.insert(companiesTable).values({ name: "Other Co", slug: "other-co", plan: "starter", status: "active" }).onConflictDoNothing();
-    const wrongDoor = await server.api("/api/auth/login", { method: "POST", host: "other-co.advisor-platform.findabusinesspro.com", body: JSON.stringify({ identifier: MTC_ADMIN_EMAIL, password: mtcPassword }) });
+    const wrongDoor = await server.api("/api/auth/login", { method: "POST", host: "other-co.advisor-platform.com", body: JSON.stringify({ identifier: MTC_ADMIN_EMAIL, password: mtcPassword }) });
     expect(wrongDoor.status).toBe(401);
   });
 
@@ -139,9 +141,9 @@ describe("auth", () => {
     await db.insert(usersTable).values({ name: "A Client", email, role: "client", companyId: mtc.id });
     const staffDoor = await server.api("/api/auth/login", { method: "POST", body: JSON.stringify({ identifier: email, password: "whatever-whatever" }) });
     expect(staffDoor.status).toBe(401);
-    const wrong = await server.api<{ devLink?: string }>("/api/auth/magic-link", { method: "POST", host: "other-co.advisor-platform.findabusinesspro.com", body: JSON.stringify({ email }) });
+    const wrong = await server.api<{ devLink?: string }>("/api/auth/magic-link", { method: "POST", host: "other-co.advisor-platform.com", body: JSON.stringify({ email }) });
     expect(wrong.body.devLink).toBeUndefined();
-    const right = await server.api<{ devLink?: string }>("/api/auth/magic-link", { method: "POST", host: `${MTC_SLUG}.advisor-platform.findabusinesspro.com`, body: JSON.stringify({ email }) });
+    const right = await server.api<{ devLink?: string }>("/api/auth/magic-link", { method: "POST", host: `${MTC_SLUG}.advisor-platform.com`, body: JSON.stringify({ email }) });
     expect(right.body.devLink).toBeDefined();
     const token = new URL(right.body.devLink!).searchParams.get("token")!;
     const verified = await server.api<LoginResponse>("/api/auth/magic-link/verify", { method: "POST", body: JSON.stringify({ token }) });

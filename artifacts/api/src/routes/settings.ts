@@ -86,7 +86,8 @@ router.post("/companies/:companyId/settings/domain", ...owner, requireFeature("w
     return;
   }
   const domain = parsed.data.domain;
-  if (domain.endsWith(env.platformSubdomainBase) || env.platformHosts.includes(domain)) {
+  const platformBases = [env.platformSubdomainBase, ...env.platformLegacySubdomainBases];
+  if (env.platformHosts.includes(domain) || platformBases.some((b) => domain === b || domain.endsWith(`.${b}`))) {
     res.status(400).json({ error: "That host belongs to the platform" });
     return;
   }

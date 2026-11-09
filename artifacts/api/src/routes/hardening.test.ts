@@ -10,7 +10,7 @@ let server: TestServer;
 let adminToken = "";
 let superToken = "";
 let mtcId = 0;
-const HOST = `${MTC_SLUG}.advisor-platform.findabusinesspro.com`;
+const HOST = `${MTC_SLUG}.advisor-platform.com`;
 const APP_URL = process.env.APP_URL ?? "http://localhost:5000";
 const TWILIO_NUMBER = "+15550109999";
 const AUTH_TOKEN = "twilio-test-auth-token";

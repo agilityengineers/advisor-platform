@@ -84,8 +84,9 @@ pnpm db:studio                    # drizzle studio
 | `SESSION_SECRET` | yes (prod) | JWT signing secret (7-day tokens). Dev generates a throwaway one and warns. |
 | `SUPER_ADMIN_PASSWORD` | yes (prod) | Password for `emailme@clarencewilliams.com` / `clarencewilliams`. **Re-synced on every boot** — rotate here, not in-app. Dev falls back to `Success2026` with a warning. |
 | `PLATFORM_ENCRYPTION_KEY` | recommended | AES-256-GCM key for per-company integration secrets (`company_secrets`). If unset, one is generated at first boot and stored in `platform_config`; put it in a password manager — a restored database without it is ciphertext. |
-| `PLATFORM_PRIMARY_DOMAIN` | no | Default `advisor-platform.findabusinesspro.com`. |
-| `PLATFORM_SUBDOMAIN_BASE` | no | Company subdomains hang off this (default `advisor-platform.findabusinesspro.com`). |
+| `PLATFORM_PRIMARY_DOMAIN` | no | Default `advisor-platform.com`. |
+| `PLATFORM_SUBDOMAIN_BASE` | no | Company subdomains hang off this (default `advisor-platform.com`). |
+| `PLATFORM_LEGACY_SUBDOMAIN_BASES` | no | Comma list of former subdomain bases that still resolve `<slug>.<base>` (default `advisor-platform.findabusinesspro.com`). |
 | `PLATFORM_HOSTS` | no | Comma list of hosts that resolve to the platform (not a company). Defaults to the three platform domains; localhost and `*.replit.dev/app` always count as platform. |
 | `APP_URL` | no | Public base URL for emails when no tenant host applies. |
 | `SENDGRID_WEBHOOK_PUBLIC_KEY` | optional | Verification key of the platform SendGrid account's signed Event Webhook (`/api/webhooks/sendgrid`). Without any key (platform or company) the endpoint answers 503 rather than recording bounces on anybody's say-so. |
@@ -208,8 +209,8 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 2. Add Secrets (check **Integrations** first for a provider connection before pasting a key): `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID`). In the Stripe dashboard add a **Connect** webhook endpoint for `https://<platform host>/api/webhooks/stripe` and, for OAuth, the redirect `https://<platform host>/api/stripe/connect/callback`.
    Then confirm the grader is live: `pnpm --filter @workspace/api run grader:check https://www.linkedin.com/in/<a public profile>/` should print a grade with `source: brightdata` (it exits non-zero and prints the provider's reason otherwise), and the boot log should read `Profile Grader: live (Bright Data)`.
 3. **Run** uses `pnpm dev` (port 5000). **Deploy** (autoscale) builds with `pnpm install --frozen-lockfile && pnpm build` and runs `pnpm start`; both are in `.replit`.
-4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.findabusinesspro.com`).
-5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.findabusinesspro.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.
+4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.com`). Keep `*.advisor-platform.findabusinesspro.com` attached while any company still points at the legacy base.
+5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.
 
 ## Phase status
 

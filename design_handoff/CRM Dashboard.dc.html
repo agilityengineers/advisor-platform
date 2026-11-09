@@ -840,7 +840,7 @@ class Component extends DCLogic {
     };
     const co = this.company();
     const feats = this.feats();
-    const P = window.PLATFORM || { primaryDomain: "advisor-platform.findabusinesspro.com" };
+    const P = window.PLATFORM || { primaryDomain: "advisor-platform.com" };
     const planName = ((window.PLANS || []).find(p => p.key === co.plan) || {}).name || co.plan;
     const REG = window.FEATURE_REGISTRY || [];
     const lockedKeys = REG.filter(f => !feats[f.key]).map(f => f.label);
