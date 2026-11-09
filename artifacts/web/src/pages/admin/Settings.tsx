@@ -5,7 +5,7 @@ import { Alert, Button, Card, Input, PageTitle, Pill, SectionLabel, Select, Spin
 
 interface SettingsResponse {
   superAdmin: { name: string; email: string; username: string };
-  domains: { host: string; tag: string; role: "marketing" | "primary" | "seo" }[];
+  domains: { host: string; tag: string; role: "marketing" | "primary" | "seo" | "legacy" }[];
   subdomainBase: string;
   keys: { sendgrid: boolean; brightdata: boolean; stripe: boolean; stripeWebhook: boolean; encryptionKeyFromEnv: boolean };
   platformFrom: { email: string; name: string };
@@ -71,7 +71,8 @@ function PlatformEmailCard({ defaultTo }: { defaultTo: string }) {
   );
 }
 
-const TAG_TONE = { marketing: "grey", primary: "blue", seo: "amber" } as const;
+const TAG_TONE = { marketing: "grey", primary: "blue", seo: "amber", legacy: "grey" } as const;
+
 
 export function SettingsPage() {
   const q = useQuery<SettingsResponse>({ queryKey: ["admin", "settings"], queryFn: () => api("/admin/settings") });
@@ -111,7 +112,7 @@ export function SettingsPage() {
         </Card>
         <Card className="p-[22px] shadow-none">
           <SectionLabel>PLATFORM DOMAINS</SectionLabel>
-          <div className="mt-2 text-[13.5px] leading-[1.6] text-body-2">All three resolve to this platform. Company subdomains hang off the primary; the Authority Desk domain carries the SEO-optimized public surface.</div>
+          <div className="mt-2 text-[13.5px] leading-[1.6] text-body-2">All of these resolve to this platform. Company subdomains hang off the primary; the Authority Desk domain carries the SEO-optimized public surface. The legacy alias keeps older links and company CNAMEs working.</div>
           <div className="mt-3 flex flex-col gap-2">
             {s.domains.map((d) => (
               <div key={d.host} className="flex flex-wrap items-center justify-between gap-2.5 rounded-[12px] border border-line-soft bg-[#F7FBFF] px-3.5 py-3">

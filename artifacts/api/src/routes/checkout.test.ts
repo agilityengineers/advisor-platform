@@ -9,7 +9,7 @@ import { createHmac } from "node:crypto";
 let server: TestServer;
 let adminToken = "";
 let mtcId = 0;
-const HOST = `${MTC_SLUG}.advisor-platform.findabusinesspro.com`;
+const HOST = `${MTC_SLUG}.advisor-platform.com`;
 const email = `buyer-${Date.now()}@example.com`;
 let orderId = "";
 

@@ -30,7 +30,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const overview = useOverview();
   const o = overview.data;
-  const domains = o?.platform.domains ?? ["advisor-platform.com", "advisor-platform.findabusinesspro.com", "advisor-platform.authority-desk.com"];
+  const domains = o?.platform.domains ?? ["advisor-platform.com", "advisor-platform.authority-desk.com"];
 
   return (
     <div className="flex min-h-screen bg-page">

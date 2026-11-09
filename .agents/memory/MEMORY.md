@@ -1,0 +1,1 @@
+- [Imported toolchain pins](imported-toolchain-pins.md) — pnpm self-install can recurse in the Replit environment; retain the provisioned toolchain.

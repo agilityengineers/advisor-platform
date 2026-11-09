@@ -26,6 +26,11 @@ interface AuditResponse {
 const TONE = (action: string): "red" | "amber" | "navy" | "green" | "blue" | "grey" => (/suspend|delete|revoke|cancel|refund/.test(action) ? "red" : /override|impersonation|unlock/.test(action) ? "amber" : /created|published|connected|paid|registered/.test(action) ? "green" : /updated|changed|applied|rescored|run|sent/.test(action) ? "blue" : "grey");
 const fmt = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit" });
 const label = (action: string) => action.replace(/_/g, " ");
+/** Changes made while impersonating carry who the super admin was signed in as. */
+const actingAs = (e: AuditEntry): string | null => {
+  const a = e.details.actingAs as { email?: string; role?: string } | undefined;
+  return a?.email ? `${a.email}${a.role ? ` (${a.role})` : ""}` : null;
+};
 
 /** Who did what, where, when — every super-admin and staff action that changes a company. */
 export function AuditPage() {
@@ -48,7 +53,7 @@ export function AuditPage() {
 
   return (
     <div>
-      <PageTitle title="Audit log" sub="Every action that changes a company — plan and status changes, feature overrides, the super admin stepping into a console, template and rubric changes, payments, grades. Append-only; rows outlive the people and companies they describe." />
+      <PageTitle title="Audit log" sub="Every action that changes a company — plan and status changes, feature overrides, the super admin stepping into a console or impersonating a user (and everything done while impersonating), template and rubric changes, payments, grades. Append-only; rows outlive the people and companies they describe." />
       <div className="mt-[22px] flex flex-wrap items-center gap-2.5">
         <Select className="h-10 w-[240px] text-[13px]" value={companyId} onChange={(e) => { setCompanyId(e.target.value); reset(); }} aria-label="Company">
           <option value="">All companies</option>
@@ -98,7 +103,11 @@ export function AuditPage() {
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-pale text-[11px] font-bold text-blue-hover">{initials(e.actor?.name ?? "—")}</div>
                   <div className="min-w-0">
                     <div className="truncate text-[13px] font-bold text-navy">{e.actor?.name ?? "System"}</div>
-                    <div className="truncate text-[11.5px] font-semibold text-muted">{e.actor?.email ?? e.ipAddress ?? ""}</div>
+                    {actingAs(e) ? (
+                      <div className="truncate text-[11.5px] font-bold text-warn-deep">acting as {actingAs(e)}</div>
+                    ) : (
+                      <div className="truncate text-[11.5px] font-semibold text-muted">{e.actor?.email ?? e.ipAddress ?? ""}</div>
+                    )}
                   </div>
                 </div>
               </button>

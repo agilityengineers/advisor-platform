@@ -11,10 +11,11 @@ export const PLATFORM = {
   shortName: "AP",
   domains: [
     "advisor-platform.com",
-    "advisor-platform.findabusinesspro.com",
     "advisor-platform.authority-desk.com",
   ],
-  primaryDomain: "advisor-platform.findabusinesspro.com",
+  primaryDomain: "advisor-platform.com",
+  /** Former primary; still resolves (platform + `<slug>.` subdomains) so existing links and CNAMEs keep working. */
+  legacyDomains: ["advisor-platform.findabusinesspro.com"],
   superAdmin: {
     name: "Clarence Williams",
     email: "emailme@clarencewilliams.com",

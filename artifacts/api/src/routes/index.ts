@@ -17,6 +17,7 @@ import checkoutRouter from "./checkout";
 import webhooksRouter from "./webhooks";
 import portalRouter from "./portal";
 import clientsRouter from "./clients";
+import impersonationRouter from "./impersonation";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -24,6 +25,7 @@ router.use(authRouter);
 router.use(tenantRouter);
 router.use(companiesRouter);
 router.use(teamRouter);
+router.use(impersonationRouter);
 router.use(adminRouter);
 router.use(platformContentRouter);
 router.use(leadsRouter);

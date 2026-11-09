@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import type { Perms, Role } from "@workspace/shared";
 import { api } from "@/lib/api";
-import { getToken, setToken, recallDoor } from "@/lib/session";
+import { getToken, setToken, recallDoor, isImpersonating } from "@/lib/session";
+import { exitImpersonation, type ImpersonationInfo } from "@/lib/impersonation";
 
 export interface AuthUser {
   id: number;
@@ -17,6 +18,8 @@ export interface AuthUser {
   phone: string | null;
   avatarUrl: string | null;
   hasPassword: boolean;
+  /** Set while the super admin is signed in as this user. */
+  impersonation?: ImpersonationInfo | null;
 }
 
 export interface SessionResponse {
@@ -70,6 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    // Signing out of an impersonated session ends it and returns the super admin to their own.
+    if (isImpersonating()) {
+      void exitImpersonation();
+      return;
+    }
     setToken(null);
     queryClient.setQueryData(ME_KEY, null);
     queryClient.removeQueries();

@@ -3,11 +3,13 @@ import { extractPathSlug, extractSubdomain, isPlatformHost } from "./tenant";
 
 describe("tenant helpers", () => {
   it("extracts a company subdomain only under the configured base", () => {
-    expect(extractSubdomain("mytargetclient.advisor-platform.findabusinesspro.com", "advisor-platform.findabusinesspro.com")).toBe("mytargetclient");
-    expect(extractSubdomain("www.advisor-platform.findabusinesspro.com", "advisor-platform.findabusinesspro.com")).toBeNull();
-    expect(extractSubdomain("advisor-platform.findabusinesspro.com", "advisor-platform.findabusinesspro.com")).toBeNull();
-    expect(extractSubdomain("a.b.advisor-platform.findabusinesspro.com", "advisor-platform.findabusinesspro.com")).toBeNull();
-    expect(extractSubdomain("mytargetclient.com", "advisor-platform.findabusinesspro.com")).toBeNull();
+    expect(extractSubdomain("mytargetclient.advisor-platform.com", "advisor-platform.com")).toBe("mytargetclient");
+    expect(extractSubdomain("www.advisor-platform.com", "advisor-platform.com")).toBeNull();
+    expect(extractSubdomain("advisor-platform.com", "advisor-platform.com")).toBeNull();
+    expect(extractSubdomain("a.b.advisor-platform.com", "advisor-platform.com")).toBeNull();
+    expect(extractSubdomain("mytargetclient.com", "advisor-platform.com")).toBeNull();
+    expect(extractSubdomain("myadvisor-platform.com", "advisor-platform.com")).toBeNull();
+    expect(extractSubdomain("mytargetclient.advisor-platform.findabusinesspro.com", "advisor-platform.com")).toBeNull();
   });
   it("extracts /t/:slug from page and api paths", () => {
     expect(extractPathSlug("/t/mytargetclient")).toBe("mytargetclient");

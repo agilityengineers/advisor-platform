@@ -71,3 +71,23 @@ export const auditLogsTable = pgTable("audit_logs", {
   ipAddress: text("ip_address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => [index("idx_audit_logs_company").on(t.companyId), index("idx_audit_logs_user").on(t.userId)]);
+
+/**
+ * A super admin signed in *as* another user (staff or client) to audit or fix their account.
+ * The impersonation JWT carries this row's id; a session is live only while `endedAt` is null
+ * and `expiresAt` is in the future, so ending it here revokes the token immediately.
+ */
+export const impersonationSessionsTable = pgTable("impersonation_sessions", {
+  id: serial("id").primaryKey(),
+  superAdminId: integer("super_admin_id").notNull(),
+  targetUserId: integer("target_user_id").notNull(),
+  companyId: integer("company_id"),
+  reason: text("reason").notNull(),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  endedAt: timestamp("ended_at"),
+  /** "ended" (by the super admin), "expired", or "revoked". */
+  endedReason: text("ended_reason"),
+  ipAddress: text("ip_address"),
+}, (t) => [index("idx_impersonation_sessions_admin").on(t.superAdminId), index("idx_impersonation_sessions_company").on(t.companyId)]);
+export type ImpersonationSession = typeof impersonationSessionsTable.$inferSelect;

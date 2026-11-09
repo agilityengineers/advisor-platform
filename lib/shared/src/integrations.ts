@@ -8,6 +8,8 @@ export interface IntegrationFieldDef {
   /** Secrets are encrypted at rest and never returned; the UI shows last-4 only. */
   secret?: boolean;
   required?: boolean;
+  /** One line under the input explaining what the field is for. */
+  hint?: string;
 }
 
 export interface IntegrationToggleDef {
@@ -29,11 +31,13 @@ export interface IntegrationDef {
 /** CRM Dashboard → Company settings → Integrations. Field keys are the `config` / `company_secrets` names. */
 export const INTEGRATION_DEFS: readonly IntegrationDef[] = [
   {
-    provider: "sendgrid", abbr: "SG", name: "SendGrid", purpose: "Receipts, welcome emails, reminders — from your domain",
+    provider: "sendgrid", abbr: "SG", name: "SendGrid", purpose: "Personal mail from you, account mail from no-reply@ — all from your domain",
     fields: [
       { key: "apiKey", label: "API key", type: "password", placeholder: "SG.xxxxxxxx", secret: true, required: true },
-      { key: "fromName", label: "From name", type: "text", required: true },
-      { key: "fromAddress", label: "From address", type: "email", placeholder: "you@yourcompany.com", required: true },
+      { key: "fromName", label: "Personal sender name", type: "text", placeholder: "Brian Traichel", required: true, hint: "The owner or admin your clients know." },
+      { key: "fromAddress", label: "Personal sender address", type: "email", placeholder: "you@yourcompany.com", required: true, hint: "Welcome notes, outreach, grades and progress updates. Replies come to this inbox." },
+      { key: "noReplyName", label: "No-reply sender name", type: "text", placeholder: "Your Company", hint: "Defaults to your company name." },
+      { key: "noReplyAddress", label: "No-reply address", type: "email", placeholder: "no-reply@yourcompany.com", hint: "Password resets, sign-in links, team invites, receipts and alerts. Defaults to no-reply@ on your personal address's domain." },
       { key: "sendingDomain", label: "Sending domain", type: "text", placeholder: "mail.yourcompany.com" },
       { key: "eventWebhookPublicKey", label: "Event Webhook verification key (SendGrid → Mail Settings → Event Webhook → Signed)", type: "text", placeholder: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE…" },
     ],

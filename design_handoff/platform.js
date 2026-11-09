@@ -2,8 +2,8 @@
 // Production: feature_registry, pricing_plans, tenants, tenant_features, branding_settings, custom_domains, tenant_email_settings, team_members.
 window.PLATFORM = {
   name: "Advisor Platform",
-  domains: ["advisor-platform.findabusinesspro.com", "advisor-platform.authority-desk.com"],
-  primaryDomain: "advisor-platform.findabusinesspro.com",
+  domains: ["advisor-platform.com", "advisor-platform.authority-desk.com"],
+  primaryDomain: "advisor-platform.com",
   superAdmin: { name: "Clarence Williams", email: "emailme@clarencewilliams.com", username: "clarencewilliams" }
 };
 

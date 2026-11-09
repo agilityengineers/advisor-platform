@@ -7,7 +7,7 @@ import { MTC_ADMIN_EMAIL, MTC_SLUG } from "../lib/seed";
 let server: TestServer;
 let adminToken = "";
 let mtcId = 0;
-const HOST = `${MTC_SLUG}.advisor-platform.findabusinesspro.com`;
+const HOST = `${MTC_SLUG}.advisor-platform.com`;
 const email = `grade-${Date.now()}@example.com`;
 let leadId = 0;
 let assessmentId = 0;

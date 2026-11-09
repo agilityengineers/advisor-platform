@@ -8,6 +8,7 @@ import { runBootSeed } from "./lib/seed";
 import { mountSpa } from "./lib/spa";
 import { startDomainRecheckScheduler } from "./lib/domains";
 import { startCommerceScheduler } from "./lib/orders";
+import { graderMode } from "./lib/grader";
 
 async function bootstrap(): Promise<void> {
   if (process.env.SKIP_MIGRATIONS === "true") {
@@ -28,9 +29,15 @@ async function bootstrap(): Promise<void> {
     logger.warn("SENDGRID_WEBHOOK_PUBLIC_KEY is not set — delivery and bounce tracking for platform mail is off.");
   }
 
+  const grader = graderMode();
+  if (grader === "live") logger.info("Profile Grader: live (Bright Data)");
+  else if (grader === "demo") logger.warn("Profile Grader: DEMO mode — leads are graded on sample profiles, not their LinkedIn data");
+  else logger.warn("Profile Grader: OFF — set BRIGHTDATA_API_KEY to grade leads' LinkedIn profiles");
+  if (env.isProduction && process.env.GRADER_DEMO === "true") logger.warn("GRADER_DEMO=true is ignored in production");
+
   const app = createApp();
-  await mountSpa(app);
   const server = createServer(app);
+  await mountSpa(app, server);
 
   server.listen(env.port, "0.0.0.0", () => {
     logger.info({ port: env.port, env: process.env.NODE_ENV }, "Advisor Platform listening");
