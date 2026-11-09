@@ -4,6 +4,14 @@ White-label SaaS for LinkedIn advisory professionals. Each **company** (an Admin
 
 Production runs on **Replit**: Replit Deployments (autoscale), Replit Postgres (`DATABASE_URL`), Replit Secrets, Replit Object Storage for uploads.
 
+### Public domain assignments
+
+- `advisor-platform.com` is the platform's primary website and platform account-link origin.
+- `mytargetclient.com` belongs to the My Target Client white-label company, not the platform.
+- DNS for `mytargetclient.com` is managed in Cloudflare.
+- Both websites are intended to be publicly accessible at the hosting layer. Staff, admin, and client account access must still use the application's authentication and tenant permissions.
+- Attaching a domain in Replit does not replace the application's company-domain ownership verification. Do not bypass that verification or map My Target Client's domain as a platform host.
+
 ## Layout
 
 pnpm workspace (Node 22, TypeScript 5.9):
@@ -19,11 +27,47 @@ pnpm workspace (Node 22, TypeScript 5.9):
 
 ## Commands
 
+After task merges, Replit runs `scripts/post-merge.sh` to install locked
+dependencies, apply pending development database migrations, and build the app.
+It then reconciles the running workflow automatically. The hook fails fast,
+requires no input, and refuses to run with `NODE_ENV=production`.
+Tests are not part of this hook because they require a separate scratch database.
+
+### Running the imported project on Replit
+
+Use the **Run** button (the `Dev server` workflow), or run `pnpm dev`.
+The existing Express server serves both the API and Vite client on port 5000.
+Replit is configured with Node 22, matching the package's minimum version.
+Run `pnpm install --frozen-lockfile` after importing or changing dependencies.
+The workspace uses Replit's installed pnpm 10; automatic package-manager
+version switching is disabled in `.npmrc`.
+The development watcher excludes Vite's generated client config and build output
+so starting Vite does not repeatedly restart the server.
+Vite hot reload shares the main HTTP server, so preview only needs port 5000.
+
+`DATABASE_URL` is supplied by Replit and `SESSION_SECRET` is already configured.
+The normal boot process applies migrations and seeds the initial company and
+super-admin account. The built-in development password is for local preview only;
+set `SUPER_ADMIN_PASSWORD` in Secrets before publishing. Without provider
+credentials, profile grading and checkout use the existing development demo
+modes, and email is not delivered.
+
+API tests mutate their database (including seeded passwords and CMS content).
+Configure `TEST_DATABASE_URL` with a separate scratch PostgreSQL database whose
+name ends in `_test` (the setup-tested name is `advisor_platform_test`). The
+test runner uses that URL for API tests and refuses to run in production, when
+it matches the active preview database, or when it is not clearly a test
+database. Never set it to a preview or production database.
+Tests keep their changes in this scratch database; the runner does not reset or
+delete existing data. Point `TEST_DATABASE_URL` at a fresh `_test` database
+when you need a clean baseline for another run.
+
 ```bash
 pnpm install                      # pnpm only (preinstall hook blocks npm/yarn)
 pnpm dev                          # API + Vite middleware on $PORT (5000)
 pnpm typecheck                    # tsc --build for libs, then each artifact
-pnpm test                         # vitest in lib/shared and artifacts/api (API tests need DATABASE_URL)
+pnpm test                         # safe tests; requires TEST_DATABASE_URL above
+pnpm test:scratch                 # same protected scratch-database test command
 pnpm build                        # typecheck → web build → api bundle
 pnpm start                        # production: node artifacts/api/dist/index.mjs
 pnpm db:generate                  # drizzle-kit generate: new SQL migration from schema changes
@@ -36,6 +80,7 @@ pnpm db:studio                    # drizzle studio
 | Variable | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | yes | Replit Postgres (set automatically when you add a database). |
+| `TEST_DATABASE_URL` | API tests only | Separate scratch PostgreSQL database ending in `_test`; never use a preview or production database. |
 | `SESSION_SECRET` | yes (prod) | JWT signing secret (7-day tokens). Dev generates a throwaway one and warns. |
 | `SUPER_ADMIN_PASSWORD` | yes (prod) | Password for `emailme@clarencewilliams.com` / `clarencewilliams`. **Re-synced on every boot** — rotate here, not in-app. Dev falls back to `Success2026` with a warning. |
 | `PLATFORM_ENCRYPTION_KEY` | recommended | AES-256-GCM key for per-company integration secrets (`company_secrets`). If unset, one is generated at first boot and stored in `platform_config`; put it in a password manager — a restored database without it is ciphertext. |
@@ -45,7 +90,7 @@ pnpm db:studio                    # drizzle studio
 | `APP_URL` | no | Public base URL for emails when no tenant host applies. |
 | `SENDGRID_WEBHOOK_PUBLIC_KEY` | optional | Verification key of the platform SendGrid account's signed Event Webhook (`/api/webhooks/sendgrid`). Without any key (platform or company) the endpoint answers 503 rather than recording bounces on anybody's say-so. |
 | `SENDGRID_API_KEY`, `PLATFORM_FROM_EMAIL`, `PLATFORM_FROM_NAME` | for email | Platform sender (`partner@…`) for the platform's own mail (super-admin resets, first-Admin invites, demo requests) and the fallback for companies that haven't connected SendGrid yet. Without a key nothing is sent; in development the action link is logged and returned as `devLink`. |
-| `BRIGHTDATA_API_KEY` | grader | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`), never per company. Unset outside production = **demo grading** with deterministic sample profiles; unset in production = grading off (the drawer says so). `GRADER_DEMO=true` forces demo mode. |
+| `BRIGHTDATA_API_KEY` | grader | Platform-level Bright Data key for the Profile Grader (dataset `gd_l1viktl72bvl7bjuj0`), never per company. Unset outside production = **demo grading** with deterministic sample profiles; unset in production = grading off (the drawer says so, and the boot log warns). `GRADER_DEMO=true` forces demo mode **outside production only** — production ignores it, so a lead is graded on their real profile or not at all. Verify a key with `pnpm --filter @workspace/api run grader:check <linkedin URL>`. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | checkout | Platform Stripe account. Company checkouts are **direct charges on each company's connected account** (`stripeAccount` header); the publishable key initialises Stripe.js for the embedded Checkout. Unset outside production = **demo checkout** (orders are marked paid by a demo button, nothing is charged). |
 | `STRIPE_WEBHOOK_SECRET` | checkout | Signing secret of a **Connect** webhook endpoint ("events on connected accounts") pointed at `/api/webhooks/stripe`: `checkout.session.completed`, `payment_intent.succeeded` / `payment_failed` (installments), `charge.refunded`. |
 | `STRIPE_CONNECT_CLIENT_ID` | optional | OAuth client id (`ca_…`) behind "Connect with Stripe" (Standard accounts, redirect `/api/stripe/connect/callback`). Without it owners paste their `acct_` id. |
@@ -135,9 +180,9 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 
 ## Profile Grader (Bright Data → rubric → gated report)
 
-`lib/grader.ts` (API), `lib/shared/src/brightData.ts` (normaliser), `routes/leads.ts` (actions), `routes/publicSite.ts` (`GET /api/public/grade/:publicId`). The scoring engine itself is `lib/shared/src/grader.ts` (Phase 1).
+`lib/grader.ts` (API), `lib/brightData.ts` (provider client), `lib/shared/src/brightData.ts` (normaliser), `routes/leads.ts` (actions), `routes/publicSite.ts` (`GET /api/public/grade/:publicId`). The scoring engine itself is `lib/shared/src/grader.ts` (Phase 1).
 
-- **Fetch** — the port of LinkedIn-Profile-Grader's `fetchLinkedInProfile`: trigger the dataset job (`discover_new=true`), poll the snapshot every 2 s for 60 s, retry the whole fetch once, record a clear failure message otherwise. `normalizeBrightDataProfile` keeps the source's field fallbacks, counting rules and activity buckets, and derives the Value & Service inputs from headline + About.
+- **Fetch** — the port of LinkedIn-Profile-Grader's `fetchLinkedInProfile`: trigger the dataset job (`discover_new=true`), poll the snapshot every 2 s for up to 120 s (a fresh collection measured ~66 s), retry the whole fetch once when the failure is retryable (timeouts, 5xx, 429, network), record a clear failure message otherwise. Provider failures are named for the owner — rejected key (401/403), no balance (402), rate limit, Bright Data down, profile not found / not public (the snapshot's error record, `include_errors=true`), timeout — with Bright Data's own words and the snapshot id in `errorMessage`. A failed live fetch is never replaced by sample data. `normalizeBrightDataProfile` keeps the source's field fallbacks, counting rules and activity buckets, and derives the Value & Service inputs from headline + About.
 - **When it runs** — automatically when a landing-form lead arrives with a LinkedIn URL (the journey's "Get your Profile Grade" step), **without emailing anyone**: the owner reviews the grade in the lead drawer first. Staff run or re-run it from the drawer (`POST /companies/:id/leads/:leadId/grade`, optionally supplying the URL) with an "email the lead when graded" tick.
 - **Versioned** — every `profile_assessments` row stamps the published rubric version that scored it; the report footer shows it. When a newer rubric is published the drawer offers **Re-score on vN** (same stored profile, no refetch), so before/after comparisons stay honest.
 - **Gated** — a lead's report (`/grade/:publicId`, unguessable id) shows scores, quick wins and locked findings; staff always see the full report (and can preview the lead's view with `?view=summary`). **Unlock** happens when the lead buys (`fulfillOrder` → `unlockForLead`) or when staff click Unlock. "Email report" sends the summary with the link (`sendGradeEmail`, company letterhead), and says so plainly when email is not configured.
@@ -159,7 +204,8 @@ Every company site is served from the same SPA, resolved by host (`/`, `/about`,
 ## Deploying on Replit
 
 1. Create the Repl from this repo; add a **PostgreSQL** database (sets `DATABASE_URL`).
-2. Add Secrets: `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID`). In the Stripe dashboard add a **Connect** webhook endpoint for `https://<platform host>/api/webhooks/stripe` and, for OAuth, the redirect `https://<platform host>/api/stripe/connect/callback`.
+2. Add Secrets (check **Integrations** first for a provider connection before pasting a key): `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `PLATFORM_ENCRYPTION_KEY`, and the provider keys you have (`SENDGRID_API_KEY`, `BRIGHTDATA_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID`). In the Stripe dashboard add a **Connect** webhook endpoint for `https://<platform host>/api/webhooks/stripe` and, for OAuth, the redirect `https://<platform host>/api/stripe/connect/callback`.
+   Then confirm the grader is live: `pnpm --filter @workspace/api run grader:check https://www.linkedin.com/in/<a public profile>/` should print a grade with `source: brightdata` (it exits non-zero and prints the provider's reason otherwise), and the boot log should read `Profile Grader: live (Bright Data)`.
 3. **Run** uses `pnpm dev` (port 5000). **Deploy** (autoscale) builds with `pnpm install --frozen-lockfile && pnpm build` and runs `pnpm start`; both are in `.replit`.
 4. Attach the platform domains to the deployment (`advisor-platform.com`, `advisor-platform.findabusinesspro.com`, `advisor-platform.authority-desk.com`) and a wildcard for company subdomains (`*.advisor-platform.findabusinesspro.com`).
 5. Company custom domains: the company adds `_advisor-verify.<domain>` TXT (token shown in Company settings → Domain) and a `www` CNAME to `<slug>.advisor-platform.findabusinesspro.com`; the apex follows Replit's custom-domain instructions. The server re-checks pending domains every 10 minutes for 48 hours.

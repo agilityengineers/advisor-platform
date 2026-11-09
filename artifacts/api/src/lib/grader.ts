@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { and, eq, inArray, lt } from "drizzle-orm";
 import { db, companiesTable, leadsTable, profileAssessmentsTable, type Company, type Lead, type ProfileAssessment } from "@workspace/db";
-import { normalizeBrightDataProfile, normalizeLinkedinProfileUrl, scoreProfile, type GraderProfile, type GraderResult } from "@workspace/shared";
+import { normalizeLinkedinProfileUrl, scoreProfile, type GraderProfile, type GraderResult } from "@workspace/shared";
 import { publishedRubric } from "../routes/rubric";
 import { logActivity } from "./leads";
 import { calendlyUrlFor } from "./integrations";
@@ -10,69 +10,29 @@ import { button, escapeHtml, heading, paragraph } from "./email";
 import { companyBaseUrl } from "./urls";
 import { newPublicId } from "./tokens";
 import { env } from "../env";
+import { fetchLinkedInProfile as fetchBrightData, type FetchOutcome } from "./brightData";
 import { logger } from "./logger";
 
 /**
- * Profile Grader: Bright Data fetch → normalise → score against the company's
- * published rubric → gated report. The fetch is the port of
- * LinkedIn-Profile-Grader's fetchLinkedInProfile: trigger the dataset job,
- * poll the snapshot every 2 s for up to 60 s, retry the whole thing once.
+ * Profile Grader: Bright Data fetch (lib/brightData.ts) → normalise → score
+ * against the company's published rubric → gated report. A retryable fetch
+ * failure is retried once; anything else fails the assessment with the
+ * provider's reason. Demo data is used only in demo mode, which production
+ * never enters (see env.graderDemo).
  */
-export const BRIGHTDATA_DATASET_ID = "gd_l1viktl72bvl7bjuj0";
-const POLL_INTERVAL_MS = 2000;
-const POLL_ATTEMPTS = 30;
+export { BRIGHTDATA_DATASET_ID, type FetchOutcome } from "./brightData";
 const MAX_ATTEMPTS = 2;
 const STALE_AFTER_MS = 15 * 60_000;
 
 export type GraderMode = "live" | "demo" | "off";
 export function graderMode(): GraderMode {
-  if (env.graderDemo) return "demo";
+  if (env.graderDemo && !env.isProduction) return "demo";
   if (env.brightDataApiKey) return "live";
   return "off";
 }
 
-export type FetchOutcome = { ok: true; profile: GraderProfile; raw: Record<string, unknown>; source: "brightdata" | "sample" } | { ok: false; message: string; details: string; retryable: boolean };
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export async function fetchLinkedInProfile(linkedinUrl: string): Promise<FetchOutcome> {
-  const apiKey = env.brightDataApiKey;
-  if (!apiKey) return { ok: false, message: "Bright Data is not configured", details: "BRIGHTDATA_API_KEY is unset", retryable: false };
-  try {
-    const trigger = await fetch(`https://api.brightdata.com/datasets/v3/trigger?dataset_id=${BRIGHTDATA_DATASET_ID}&include_errors=true&discover_new=true`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify([{ url: linkedinUrl }]),
-    });
-    if (!trigger.ok) return { ok: false, message: "Failed to start profile fetch", details: `Status ${trigger.status}: ${(await trigger.text()).slice(0, 300)}`, retryable: trigger.status >= 500 };
-    const snapshotId = ((await trigger.json()) as { snapshot_id?: string }).snapshot_id;
-    if (!snapshotId) return { ok: false, message: "No snapshot id returned", details: "Bright Data answered without a snapshot_id", retryable: true };
-    for (let attempt = 0; attempt < POLL_ATTEMPTS; attempt++) {
-      await sleep(POLL_INTERVAL_MS);
-      const res = await fetch(`https://api.brightdata.com/datasets/v3/snapshot/${snapshotId}?format=json`, { headers: { authorization: `Bearer ${apiKey}` } });
-      if (res.status === 202) continue;
-      if (res.status !== 200) return { ok: false, message: "Error checking fetch status", details: `Status ${res.status}: ${(await res.text()).slice(0, 300)}`, retryable: res.status >= 500 };
-      const raw = (await res.json()) as unknown;
-      const profile = normalizeBrightDataProfile(raw, linkedinUrl);
-      if (!profile) return { ok: false, message: "Profile data could not be processed", details: `Bright Data returned ${JSON.stringify(raw).slice(0, 300)}`, retryable: false };
-      const record = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown>;
-      return { ok: true, profile, raw: trimRaw(record), source: "brightdata" };
-    }
-    return { ok: false, message: "Request timed out", details: `Profile fetch did not complete within ${(POLL_ATTEMPTS * POLL_INTERVAL_MS) / 1000} seconds. The profile may be private or LinkedIn slow to respond.`, retryable: true };
-  } catch (err) {
-    return { ok: false, message: "Network or system error", details: err instanceof Error ? err.message : String(err), retryable: true };
-  }
-}
-
-/** Keep the snapshot small: scalar fields plus the counts; long arrays are summarised. */
-function trimRaw(record: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(record)) {
-    if (Array.isArray(v)) out[k] = { count: v.length };
-    else if (typeof v === "string") out[k] = v.slice(0, 2000);
-    else if (v === null || typeof v !== "object") out[k] = v;
-  }
-  return out;
+export function fetchLinkedInProfile(linkedinUrl: string): Promise<FetchOutcome> {
+  return fetchBrightData(linkedinUrl, { apiKey: env.brightDataApiKey });
 }
 
 /** Demo mode: a deterministic profile shaped by the URL, so the same link always grades the same. */
@@ -146,7 +106,8 @@ export async function runAssessment(id: number, opts: { notify: boolean; mode: G
   let last: FetchOutcome | null = null;
   for (let attempt = row.attempt; attempt <= MAX_ATTEMPTS; attempt++) {
     await db.update(profileAssessmentsTable).set({ status: attempt === 1 ? "fetching" : "retrying", attempt, updatedAt: new Date() }).where(eq(profileAssessmentsTable.id, id));
-    const outcome: FetchOutcome = opts.mode === "demo" ? { ok: true, profile: syntheticProfile(row.linkedinUrl, lead?.name ?? "Your"), raw: { source: "sample" }, source: "sample" } : await fetchLinkedInProfile(row.linkedinUrl);
+    // Sample data only ever comes from demo mode; a live failure stays a failure.
+    const outcome: FetchOutcome = opts.mode === "demo" && !env.isProduction ? { ok: true, profile: syntheticProfile(row.linkedinUrl, lead?.name ?? "Your"), raw: { source: "sample" }, source: "sample" } : await fetchLinkedInProfile(row.linkedinUrl);
     last = outcome;
     if (outcome.ok) {
       const { rubric, version } = await publishedRubric(company.id);
