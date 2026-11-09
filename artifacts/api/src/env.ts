@@ -46,8 +46,11 @@ export const env = {
   brightDataApiKey: process.env.BRIGHTDATA_API_KEY ?? "",
   /** Base64 (SPKI DER) public key of the platform SendGrid account's signed Event Webhook; companies add theirs in Integrations. */
   sendgridWebhookPublicKey: process.env.SENDGRID_WEBHOOK_PUBLIC_KEY ?? "",
-  /** Grade with deterministic sample profiles instead of Bright Data (automatic outside production without a key). */
-  graderDemo: process.env.GRADER_DEMO === "true" || (!isProduction && !process.env.BRIGHTDATA_API_KEY),
+  /**
+   * Grade with deterministic sample profiles instead of Bright Data (automatic outside production without a key).
+   * Never in production: GRADER_DEMO is ignored there, so a lead is graded on their real profile or not at all.
+   */
+  graderDemo: !isProduction && (process.env.GRADER_DEMO === "true" || !process.env.BRIGHTDATA_API_KEY),
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",

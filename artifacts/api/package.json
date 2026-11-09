@@ -8,7 +8,8 @@
     "build": "node ./build.mjs",
     "start": "NODE_ENV=production node --enable-source-maps ./dist/index.mjs",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "grader:check": "tsx src/scripts/checkGrader.ts"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
