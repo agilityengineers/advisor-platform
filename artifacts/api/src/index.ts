@@ -23,6 +23,12 @@ async function bootstrap(): Promise<void> {
   logger.info({ keySource }, "Encryption key ready");
   await runBootSeed();
 
+  if (env.isProduction && !env.sendgridApiKey) {
+    logger.error("SENDGRID_API_KEY is not set — invitations, password resets, magic links and client mail will NOT be delivered. Add it in Replit Secrets.");
+  } else if (env.isProduction && !env.sendgridWebhookPublicKey) {
+    logger.warn("SENDGRID_WEBHOOK_PUBLIC_KEY is not set — delivery and bounce tracking for platform mail is off.");
+  }
+
   const grader = graderMode();
   if (grader === "live") logger.info("Profile Grader: live (Bright Data)");
   else if (grader === "demo") logger.warn("Profile Grader: DEMO mode — leads are graded on sample profiles, not their LinkedIn data");
