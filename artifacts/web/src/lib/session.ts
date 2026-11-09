@@ -35,3 +35,39 @@ export function tokenExpiry(token: string | null = getToken()): number | null {
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Impersonation: the super admin's own token is parked here while they are
+// signed in as someone else, and restored when the session ends.
+// ---------------------------------------------------------------------------
+
+const IMP_RETURN_KEY = "ap_imp_return";
+
+interface ImpersonationReturn {
+  token: string;
+  path: string;
+}
+
+/** Swap to the impersonation token, remembering the super admin's session and where to come back to. */
+export function beginImpersonation(impersonationToken: string, returnPath: string): void {
+  const own = getToken();
+  if (own && !read(IMP_RETURN_KEY)) write(IMP_RETURN_KEY, JSON.stringify({ token: own, path: returnPath } satisfies ImpersonationReturn));
+  setToken(impersonationToken);
+}
+
+export const isImpersonating = (): boolean => Boolean(read(IMP_RETURN_KEY));
+
+/** Restore the super admin's own token. Returns where to send them, or null if nothing was parked. */
+export function finishImpersonation(): string | null {
+  const raw = read(IMP_RETURN_KEY);
+  write(IMP_RETURN_KEY, null);
+  if (!raw) return null;
+  try {
+    const parked = JSON.parse(raw) as ImpersonationReturn;
+    setToken(parked.token);
+    return parked.path || "/admin";
+  } catch {
+    setToken(null);
+    return "/staff/login";
+  }
+}
